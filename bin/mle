@@ -1,0 +1,213 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+ROOT="$(cd -- "$SCRIPT_DIR/.." && pwd -P)"
+ORIGINAL_PWD="$PWD"
+
+usage() {
+  cat <<'EOF'
+MLE Library librarian
+
+Usage:
+  mle [chat] [prompt ...]             Start the interactive librarian
+  mle ask <question ...>              Run a read-only one-shot query
+  mle ingest [--print] <raw-path>      Ingest one source already under raw/
+  mle render <raw-pdf> <page>          Render one PDF page into .cache/
+  mle lint [--dry-run]                Run supervised lint or a read-only report
+  mle search [options] <query ...>     Search current Markdown/text files
+  mle mcp                              Start the read-only stdio MCP server
+  mle doctor                           Check dependencies and library state
+  mle help                             Show this help
+
+Search options:
+  --scope all|wiki|raw                 Restrict the search layer
+  --limit N                            Return at most N documents (default 8)
+  --json                               Emit structured JSON
+
+Interactive ingest and lint are the default human-supervised workflows.
+Non-interactive ingest leaves changes for review; dry-run lint never writes.
+EOF
+}
+
+fail() {
+  echo "mle: $*" >&2
+  exit 1
+}
+
+require_command() {
+  command -v "$1" >/dev/null 2>&1 || fail "required command not found: $1"
+}
+
+skill_args() {
+  PI_SKILL_ARGS=(
+    --skill "$ROOT/skills/obsidian"
+    --skill "$ROOT/skills/marp"
+    --skill "$ROOT/skills/dataview"
+  )
+}
+
+run_librarian() {
+  require_command pi
+  skill_args
+  cd "$ROOT"
+  pi \
+    --no-context-files \
+    --append-system-prompt "$ROOT/AGENTS.md" \
+    --no-skills \
+    "${PI_SKILL_ARGS[@]}" \
+    "$@"
+}
+
+run_read_only_pi() {
+  require_command pi
+  cd "$ROOT"
+  pi \
+    --print \
+    --no-session \
+    --no-context-files \
+    --append-system-prompt "$ROOT/AGENTS.md" \
+    --no-skills \
+    --no-extensions \
+    --no-mcp \
+    --tools read,grep,find,ls \
+    "$@"
+}
+
+resolve_source() {
+  local input="$1"
+  local dir
+  [[ -n "$input" ]] || fail "a source path is required"
+  if [[ "$input" != /* ]]; then
+    input="$ORIGINAL_PWD/$input"
+  fi
+  dir="$(cd -- "$(dirname -- "$input")" 2>/dev/null && pwd -P)" || fail "source directory not found: $input"
+  RESOLVED_SOURCE="$dir/$(basename -- "$input")"
+  [[ -f "$RESOLVED_SOURCE" ]] || fail "source is not a file: $RESOLVED_SOURCE"
+  case "$RESOLVED_SOURCE" in
+    "$ROOT/raw/"*) ;;
+    *) fail "source must already be inside $ROOT/raw/" ;;
+  esac
+}
+
+run_ingest() {
+  local print_mode=0
+  local input
+  if [[ "${1:-}" == "--print" ]]; then
+    print_mode=1
+    shift
+  fi
+  input="${1:-}"
+  [[ $# -eq 1 ]] || fail "usage: mle ingest [--print] <raw-path>"
+  resolve_source "$input"
+  local source="$RESOLVED_SOURCE"
+  local relative="${source#"$ROOT/"}"
+  local extracted=""
+  case "$source" in
+    *.[pP][dD][fF])
+      require_command node
+      require_command pdftotext
+      extracted="$(cd "$ROOT" && node lib/pdf.mjs extract "$source")"
+      ;;
+  esac
+  local prompt="Ingest the source at $relative following AGENTS.md."
+  if [[ -n "$extracted" ]]; then
+    prompt="$prompt Its extracted Markdown is at $extracted. Use visual page inspection for important figures, formulas, tables, or malformed extraction when supported."
+  fi
+  if [[ "$print_mode" -eq 1 ]]; then
+    prompt="$prompt Run the complete ingest and leave all changes uncommitted for human review. Summarize the changed paths and citations."
+    run_librarian --print --no-session -- "$prompt"
+  else
+    prompt="$prompt Work interactively, discuss the proposed updates, and do not commit until I confirm the reviewed diff."
+    run_librarian -- "$prompt"
+  fi
+}
+
+run_lint() {
+  if [[ "${1:-}" == "--dry-run" ]]; then
+    [[ $# -eq 1 ]] || fail "usage: mle lint [--dry-run]"
+    run_read_only_pi -- "Perform a dry-run lint of the knowledge base following AGENTS.md. Do not modify files or Git state. Report concrete findings with paths and proposed fixes."
+  else
+    [[ $# -eq 0 ]] || fail "usage: mle lint [--dry-run]"
+    run_librarian -- "Lint the knowledge base following AGENTS.md. Report findings and proposed fixes first. Apply only fixes I accept, then update the log and commit once after I confirm the final diff."
+  fi
+}
+
+run_doctor() {
+  local missing=0
+  local cmd
+  for cmd in pi node rg pdftotext pdftoppm git; do
+    if command -v "$cmd" >/dev/null 2>&1; then
+      printf '%-12s %s\n' "$cmd" "$(command -v "$cmd")"
+    else
+      printf '%-12s MISSING\n' "$cmd"
+      missing=1
+    fi
+  done
+  local path
+  for path in AGENTS.md wiki/index.md wiki/log.md skills/obsidian/SKILL.md skills/marp/SKILL.md skills/dataview/SKILL.md mcp/server.mjs; do
+    if [[ -f "$ROOT/$path" ]]; then
+      printf 'ok           %s\n' "$path"
+    else
+      printf 'missing      %s\n' "$path"
+      missing=1
+    fi
+  done
+  if git -C "$ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    printf 'git          %s\n' "$(git -C "$ROOT" branch --show-current)"
+    git -C "$ROOT" status --short
+  else
+    echo 'git          not a work tree'
+    missing=1
+  fi
+  return "$missing"
+}
+
+command="${1:-chat}"
+if [[ $# -gt 0 ]]; then
+  shift
+fi
+
+case "$command" in
+  chat)
+    run_librarian "$@"
+    ;;
+  ask)
+    [[ $# -gt 0 ]] || fail "usage: mle ask <question ...>"
+    run_read_only_pi -- "Answer this question using the library. Search and read full relevant pages, cite actual paths, state uncertainty, and do not modify files or Git state. Question: $*"
+    ;;
+  ingest)
+    run_ingest "$@"
+    ;;
+  render)
+    [[ $# -eq 2 ]] || fail "usage: mle render <raw-pdf> <page>"
+    resolve_source "$1"
+    require_command node
+    require_command pdftoppm
+    cd "$ROOT"
+    node lib/pdf.mjs render "$RESOLVED_SOURCE" "$2"
+    ;;
+  lint)
+    run_lint "$@"
+    ;;
+  search)
+    require_command node
+    require_command rg
+    cd "$ROOT"
+    node lib/search.mjs "$@"
+    ;;
+  mcp)
+    require_command node
+    cd "$ROOT"
+    exec node mcp/server.mjs
+    ;;
+  doctor)
+    run_doctor
+    ;;
+  help|--help|-h)
+    usage
+    ;;
+  *)
+    fail "unknown command: $command (run mle help)"
+    ;;
+esac
