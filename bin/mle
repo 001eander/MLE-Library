@@ -55,6 +55,8 @@ run_librarian() {
     --no-context-files \
     --append-system-prompt "$ROOT/AGENTS.md" \
     --no-skills \
+    --no-extensions \
+    --no-mcp \
     "${PI_SKILL_ARGS[@]}" \
     "$@"
 }
@@ -115,8 +117,8 @@ run_ingest() {
     prompt="$prompt Its extracted Markdown is at $extracted. Use visual page inspection for important figures, formulas, tables, or malformed extraction when supported."
   fi
   if [[ "$print_mode" -eq 1 ]]; then
-    prompt="$prompt Run the complete ingest and leave all changes uncommitted for human review. Summarize the changed paths and citations."
-    run_librarian --print --no-session -- "$prompt"
+    prompt="$prompt Run the complete ingest without asking questions. Actually create and edit the required source, wiki, index, and log files rather than only proposing changes. Leave all changes uncommitted for human review, then summarize the changed paths and citations."
+    run_librarian --exclude-tools ask_question --print --no-session -- "$prompt"
   else
     prompt="$prompt Work interactively, discuss the proposed updates, and do not commit until I confirm the reviewed diff."
     run_librarian -- "$prompt"
