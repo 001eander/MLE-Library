@@ -4,5 +4,6 @@
   "newLinkFormat": "shortest",
   "showUnsupportedFiles": false,
   "useMarkdownLinks": false,
-  "defaultViewMode": "preview"
+  "defaultViewMode": "preview",
+  "promptDelete": false
 }
