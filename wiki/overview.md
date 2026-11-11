@@ -26,4 +26,4 @@ tags:
 
 从 [[index|知识索引]] 开始。主题页面位于 `concepts/`，工程指导位于 `practices/`，特定工具的笔记位于 `tools/`，来源摘要位于 `sources/`。研究草稿保留在 `research/`，直到有人决定将其提升为稳定知识。
 
-目前尚未收录任何来源。随着所有者添加资料和问题，知识库的范围将逐步扩大。
+目前收录的首个来源是 [[hyra-1-0|Hyra-1.0 官方博客]]，由此展开了 [[recursive-self-improvement]]、[[experience-bank]]、[[evaluator-solution-co-evolution]] 三个概念与两篇工程实践页面。随着所有者添加资料和问题，知识库的范围将逐步扩大。
