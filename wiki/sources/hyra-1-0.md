@@ -91,7 +91,7 @@ source_kind: article
 - **口径差异**：SOL-ExecBench 的 0.771 带 † 标记，评测设定为 Evaluation Stack v1.0 且为本地运行，与 Recursive 报道数值的可比性需读者自行核验。
 - **未披露项**：未给出算力/预算规模、单任务耗时、Proposal Agent 数量、EB 规模与检索策略、reward hacking 检测的具体机制；文中也没有消融实验区分「框架设计」与「底层模型能力」的贡献。
 - **证据成熟度不均**：PARP1 分子设计是初步模拟筛选；3D 建模、配器、黑白棋 bot 依赖主观或平台内部评分，缺少可复核的量化协议。
-- **同族资料**：`raw/articles/` 中另有「Hyra 2.0」剪藏，尚未收录为来源页面，本页不引用其内容。
+- **同族资料**：同系列另有 [[hyra-2-0|Hyra 2.0 官方博客]]（`raw/articles/Hyra 2.0.md`），主张从解题转向工具研发；两版差异见 [[hyra-1-0-vs-2-0]]。
 
 ## 来源位置索引
 
@@ -107,7 +107,8 @@ source_kind: article
 
 ## 关联页面
 
-- 工具：[[hyra-1-0]]
-- 概念：[[recursive-self-improvement]]、[[experience-bank]]、[[evaluator-solution-co-evolution]]
+- 后续版本：[[hyra-2-0]]（对照：[[hyra-1-0-vs-2-0]]）
+- 工具：[[hyra]]
+- 概念：[[tool-centric-research]]、[[research-memory-tiers]]、[[recursive-self-improvement]]、[[experience-bank]]、[[evaluator-solution-co-evolution]]
 - 实践：[[research-agent-harness]]、[[evaluator-design-and-reward-hacking]]
 - 待验证问题：[[automated-research-open-questions]]

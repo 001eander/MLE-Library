@@ -9,12 +9,13 @@ tags:
   - research-agent
 sources:
   - "[[hyra-1-0]]"
+  - "[[hyra-2-0]]"
 status: draft
 ---
 
 # 评估器与解的共进化（Evaluator–Solution Co-evolution）
 
-当自动化研究面对**没有现成评估器**或**评估器会被搜索策略绕过**的任务时，只优化 solution 会遇到天花板。共进化指的是：内层循环在固定评估器下优化 solution，外层循环用积累的经验升级评估器，再开启下一轮，使两者交替上升。本页依据 Hyra-1.0 的表述（[[hyra-1-0]]）。
+当自动化研究面对**没有现成评估器**或**评估器会被搜索策略绕过**的任务时，只优化 solution 会遇到天花板。共进化指的是：内层循环在固定评估器下优化 solution，外层循环用积累的经验升级评估器，再开启下一轮，使两者交替上升。本页的主体依据 Hyra-1.0 的表述（[[hyra-1-0]]），并记录 2.0 把一部分「共进化」外化为独立复核与人工审批的做法（[[hyra-2-0]]）。
 
 ## 来源论述
 
@@ -45,6 +46,23 @@ status: draft
 
 （[[hyra-1-0]], section "AI for AI"，`raw/articles/Hyra.md:55`；机制整理见 [[evaluator-design-and-reward-hacking]]。）
 
+## 2.0 的变化：把「评估器升级」折成「验证流程」
+
+2.0 的项目周期长（数天到数周）、单次尝试贵，因此外层循环不再只靠「改评估器代码」，而是加入一组**成本更高、但更可靠的验证措施**（[[hyra-2-0]], section "为升级工具而生的 Harness" 与 section "初步成果"）：
+
+| 外层信号 | 形式 | 相比 1.0 的变化 |
+| --- | --- | --- |
+| 独立复核 | 新启动 Review Worker，从原始问题与证据入手 | 从「评估器改代码」到「另一个 agent 重做论证」 |
+| 人工审批 | 大算力与共享知识同步需批准（`raw/articles/Hyra 2.0.md:65`） | 把「是否值得继续」交给人类 |
+| 形式化判据 | TLA+ 反例；码距上下界一致认证 | 从打分转为可检查的证明/反例 |
+| 知识分级 | 观察/已验证/约定（`raw/articles/Hyra 2.0.md:83`） | 外层结论本身带成熟度标签 |
+
+（本库整理，依据 [[hyra-2-0]]；1.0 的双层循环见上一节。）
+
+**风险因此从「自洽退化」转成「人工吞吐」**：评估器不再被 agent 单独改写，但复核与审批成了新的瓶颈；若每个结论都要独立复现，系统的产出速度将由人类与复核 agent 的供给能力决定。这是本库的推断（**综合**），2.0 的来源未量化复核成本。
+
+另一个值得注意的细节：旋梯手案例说明比较设计类方案时必须固定后训练预算（`raw/articles/Hyra 2.0.md:149-151`）。这其实是「评估器设计」的一部分——如果评估协议不固定预算，比较就隐式奖励了初始更好但学习潜力更差的设计。
+
 ## 假设（待验证）
 
 - 假设：外层升级频率应随内层收益递减而提高，而非固定轮数。
@@ -59,4 +77,8 @@ status: draft
 
 ## 关联页面
 
-- [[hyra-1-0]]、[[hyra]]、[[experience-bank]]、[[recursive-self-improvement]]、[[evaluator-design-and-reward-hacking]]、[[research-agent-harness]]
+- 来源：[[hyra-1-0]]、[[hyra-2-0]]
+- 工具：[[hyra]]
+- 概念：[[experience-bank]]、[[research-memory-tiers]]、[[recursive-self-improvement]]
+- 实践：[[evaluator-design-and-reward-hacking]]、[[research-agent-harness]]
+- 对照：[[hyra-1-0-vs-2-0]]

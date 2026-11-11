@@ -9,12 +9,13 @@ tags:
   - memory
 sources:
   - "[[hyra-1-0]]"
+  - "[[hyra-2-0]]"
 status: draft
 ---
 
 # 经验库（Experience Bank, EB）
 
-在自动化研究智能体里，EB 是一个显式的、结构化的「失败与成功的记忆」：记录每个被提出过的 solution、它的运行日志、评估器反馈与源码，并在需要时被合成为新的探索起点。本页主要依据 Hyra-1.0 的描述（[[hyra-1-0]]），属于**来源论述 + 综合**。
+在自动化研究智能体里，EB 是一个显式的、结构化的「失败与成功的记忆」：记录每个被提出过的 solution、它的运行日志、评估器反馈与源码，并在需要时被合成为新的探索起点。本页主要依据 Hyra-1.0 的描述（[[hyra-1-0]]），并记录 2.0 如何把它扩成三层记忆 + 共享知识库（[[hyra-2-0]]）；属于**来源论述 + 综合**。
 
 ## 来源论述
 
@@ -40,6 +41,22 @@ status: draft
 - 灵感合成是「检索 + 重写」而非简单拼接；如果只看高分 solution，搜索必然收敛到同一盆地，因此失败案例与低分分支同样需要入库。
 - EB 也承担反 reward hacking 的取证作用：异常高分的 solution 应可被回溯审计（参见 [[evaluator-design-and-reward-hacking]]）。
 
+## 版本演进（Hyra 2.0）
+
+2.0 不再只用一个 EB，而是把「项目状态 / agent 工作记忆 / 跨任务知识」分开存（[[hyra-2-0]], section "为升级工具而生的 Harness"，`raw/articles/Hyra 2.0.md:81`）：
+
+| 1.0 的 EB | 2.0 的对应物 | 变化 |
+| --- | --- | --- |
+| 存 solution + 日志 + 评分 | agent 分层记忆（当前认识、关键假设、已排除路线、下一步） | 从「存产物」变成「存认知状态」 |
+| 跨轮灵感队列 | 项目状态（队列 + Research Board） | 加入协作与决策记录 |
+| （无） | 共享知识库 Books | 首次做**跨项目**复用，并要求写适用条件与原始证据 |
+| 高分即优质 | 观察 / 已验证 / 约定 三级 | 引入**成熟度**而非仅凭分数判断可信度 |
+| 灵感（上下文） | skill（可执行方法） | 复用单位从文本变成可测试资产 |
+
+（来源论述对应 [[hyra-2-0]], `raw/articles/Hyra 2.0.md:81-85`；对比列为本库整理。机制细节见 [[research-memory-tiers]]。）
+
+需保留的未解点：剪藏没有说明 2.0 是否仍保留 1.0 的「灵感合成」机制，还是已被 skill + Books 取代（见 [[hyra-1-0-vs-2-0]] 待解问题）。
+
 ## 假设（待验证）
 
 - 假设：灵感多样性比灵感「质量」更影响长期搜索上限。
@@ -53,4 +70,8 @@ status: draft
 
 ## 关联页面
 
-- [[hyra-1-0]]、[[hyra]]、[[research-agent-harness]]、[[recursive-self-improvement]]、[[evaluator-solution-co-evolution]]
+- 来源：[[hyra-1-0]]、[[hyra-2-0]]
+- 概念：[[research-memory-tiers]]、[[tool-centric-research]]、[[recursive-self-improvement]]、[[evaluator-solution-co-evolution]]
+- 工具：[[hyra]]
+- 实践：[[research-agent-harness]]、[[evaluator-design-and-reward-hacking]]
+- 对照：[[hyra-1-0-vs-2-0]]

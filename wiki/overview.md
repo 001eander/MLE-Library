@@ -26,4 +26,4 @@ tags:
 
 从 [[index|知识索引]] 开始。主题页面位于 `concepts/`，工程指导位于 `practices/`，特定工具的笔记位于 `tools/`，来源摘要位于 `sources/`。研究草稿保留在 `research/`，直到有人决定将其提升为稳定知识。
 
-目前收录的首个来源是 [[hyra-1-0|Hyra-1.0 官方博客]]，由此展开了 [[recursive-self-improvement]]、[[experience-bank]]、[[evaluator-solution-co-evolution]] 三个概念与两篇工程实践页面。随着所有者添加资料和问题，知识库的范围将逐步扩大。
+目前收录两个来源：[[hyra-1-0|Hyra-1.0 官方博客]]与 [[hyra-2-0|Hyra 2.0 官方博客]]。前者展开了「单循环 + 经验库 + 双层评估器」的解题范式，后者把它推进到多项目长周期的工具研发，并新增了分层记忆与知识分级。两代差异的集中对照见 [[hyra-1-0-vs-2-0]]，范式讨论见 [[tool-centric-research]]。随着所有者添加资料和问题，知识库的范围将逐步扩大。
