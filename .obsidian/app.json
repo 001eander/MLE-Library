@@ -3,5 +3,6 @@
   "attachmentFolderPath": "raw/assets",
   "newLinkFormat": "shortest",
   "showUnsupportedFiles": true,
-  "useMarkdownLinks": false
+  "useMarkdownLinks": false,
+  "defaultViewMode": "preview"
 }

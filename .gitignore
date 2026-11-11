@@ -6,3 +6,4 @@ node_modules/
 .obsidian/workspace
 .obsidian/workspace.json
 .obsidian/workspace-mobile.json
+.obsidian/plugins/
