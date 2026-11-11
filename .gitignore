@@ -1,0 +1,8 @@
+node_modules/
+.cache/
+.pi/
+.DS_Store
+*.tmp
+.obsidian/workspace
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
