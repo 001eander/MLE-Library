@@ -15,6 +15,7 @@ The librarian updates this catalog whenever a page is added, renamed, or materia
 ## Start
 
 - [[overview|MLE Library Overview]] — Purpose, layers, and reading paths.
+- [[catalog|Dynamic Catalog]] — Dataview table of wiki pages and freshness metadata.
 
 ## Sources
 
