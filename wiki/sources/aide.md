@@ -183,4 +183,5 @@ status: stable
 - 实践：[[research-agent-harness]]、[[evaluator-design-and-reward-hacking]]
 - 待验证问题：[[automated-research-open-questions]]
 - 对照阅读：[[hyra-1-0]]、[[hyra-2-0]]（同为「提出—评估—迭代」范式，但组织方式与验证制度不同）
-- 相关但**尚未入库**的原始来源（仅存在于 `raw/articles/`）：`raw/articles/MLE-Bench.md`、`raw/articles/R&D-Agent.md`、`raw/articles/MLE-STAR.md`、`raw/articles/AlphaEvolve.md`
+- 相关但**尚未入库**的原始来源（仅存在于 `raw/articles/`）：`raw/articles/MLE-Bench.md`、`raw/articles/R&D-Agent.md`、`raw/articles/MLE-STAR.md`
+- 已入库的相关来源：[[alphaevolve]]（同在代码空间搜索，但用程序数据库与进化选择，而非解树）

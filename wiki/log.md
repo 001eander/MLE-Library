@@ -31,3 +31,11 @@
 - 分歧：① 论文 p. 9 的「4 倍于 OpenHands」是跨模型比较（16.9% vs GPT-4o+OpenHands 4.4%），p. 2 的同模型口径约 2 倍；② 正文称 Weco-Kaggle 有 63 个竞赛，附录 C 逐行统计为 80 行；③ RE-Bench 的 6h / 8h / 64h 三个时间口径未说明。三项均保留在来源页「分歧」与待验证问题页，未做取舍。
 - 命名：按所有者要求统一用 AIDE 命名——`wiki/sources/aide.md`（论文/来源页，引用写作 `[[aide]], p. N`）与 `wiki/tools/aide-scaffold.md`（脚手架页）；两页不能同名，否则 `[[aide]]` 在 Obsidian 中歧义。
 - 复核：交互式 ingest，未提交，等待所有者复核 diff 后再提交 `ingest: AIDE: AI-Driven Exploration in the Space of Code`。
+
+## [2026-11-11] ingest | AlphaEvolve：由 Gemini 驱动的算法设计编码智能体（Google DeepMind 官方博客）
+- 文件：`wiki/sources/alphaevolve.md`、`wiki/concepts/code-space-search.md`、`wiki/practices/research-agent-harness.md`、`wiki/practices/evaluator-design-and-reward-hacking.md`、`wiki/concepts/recursive-self-improvement.md`、`wiki/research/automated-research-open-questions.md`、`wiki/sources/aide.md`、`wiki/index.md`、`wiki/overview.md`
+- 摘要：第四个来源入库。新建来源页（元数据、六组关键主张、成果数字一览、图表核查、局限、待解问题、行号索引）；把 `code-space-search` 的组织方式表扩为四类并新增「程序数据库 vs 解树」对照，把 harness 实践页扩为四形态（新增进化式程序数据库一节与对照表列），在评估器实践页新增「生产环境验证」一类（0.7%/23%/1%/32.5% 与 Verilog 正确性硬门），在 RSI 页补入「改进自身训练栈的最小案例」并明确其边界（不改写 scaffold），在待验证问题页新增 7 项数字疑点、4 项机制假设与 4 项工程风险。所有数字标注为厂商自述；0.7% 分母、23%/1% 基线、75%+20% 加总、48 次乘法的最优性均列入待解。
+- 来源：`raw/articles/AlphaEvolve.md`（71 行，sha256 `ebc5728e47bd8c2df839379674eb68026adb376e00e0fab8283f2c6b581069b3`），原文 <https://deepmind.google/blog/alphaevolve-a-gemini-powered-coding-agent-for-designing-advanced-algorithms/>，发布 2025-05-14。
+- 图表核查：剪藏只有 1 张外链流程图（L29），以三种尺寸参数下载均返回 HTTP 400，本地无副本，**未目视核查**；图内信息仅据 alt 文本转述，不引用任何图内读数。
+- 未做：白皮书 PDF（正文 L19 链接）未下载、未入库，作为下一个单独 ingest 的候选；未创建 `wiki/tools/alphaevolve.md`（无公开实现、无版本、仅筹划早期访问）。
+- 复核：交互式 ingest，已与所有者确认页面范围与四项决策；变更保持未提交状态，等待复核 diff 后再提交 `ingest: AlphaEvolve: A Gemini-powered coding agent`。
