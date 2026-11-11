@@ -1,5 +1,5 @@
 ---
-title: "把线性模型当基线：预处理约束、正则强度选择与常见坑（含 LDA/QDA 生成式对照）"
+title: "把线性模型当基线：预处理约束、正则强度选择与常见坑（含 LDA/QDA 与线性核 SVM 对照）"
 type: practice
 created: 2026-11-11
 updated: 2026-11-11
@@ -9,15 +9,18 @@ tags:
   - linear-model
   - regularization
   - baseline
+  - svm
   - workflow
 sources:
   - "[[sklearn-linear-models]]"
   - "[[sklearn-lda-qda]]"
+  - "[[sklearn-svm]]"
 status: draft
 verified: 2026-11-11
 applies_to:
   - scikit-learn 1.8.x – 1.9.x（linear_model；推断，见 [[sklearn-linear-models]] 的版本判定）
   - scikit-learn 1.9.x（discriminant_analysis，见 [[sklearn-lda-qda]] 的版本判定）
+  - scikit-learn 1.7.x – 1.9.1（svm 的线性部分，见 [[sklearn-svm]]）
   - 表格型中小规模数据上的线性/生成式基线
 ---
 
@@ -89,6 +92,36 @@ applies_to:
 - `lsqr`/`eigen` 必须算出协方差，高维下不适用（L117、L119）。
 
 **本库综合**：`svd` 路径的主要成本是一次 SVD，没有迭代与 CV 循环的重复拟合，因此在同一特征集上，LDA 单次 `fit` 通常比带内置 CV 的 `LogisticRegression` 便宜；但这是定性推理，本库无可引的计时数据。
+
+## 线性核 SVM：规模上界更高的第三个选择
+
+线性基线不只 logistic 与 Ridge 两家。[[sklearn-svm]] 给出第三条路：`LinearSVC`（liblinear 实现）在**线性情形下**比核 SVM 高效得多，且“can scale almost linearly to millions of samples and/or features”（[[sklearn-svm]], L194）。它的定位不是“更准”，而是**在 $n$ 很大时仍能跑完**。
+
+### 三个“线性分类器”不是同一个模型
+
+| | `LogisticRegression` | `LinearSVC` | `SVC(kernel='linear')` |
+| --- | --- | --- | --- |
+| 损失 | 交叉熵 + 系数惩罚 | `squared_hinge` + 惩罚 | hinge（带松弛） |
+| 截距 | 不进正则（`liblinear` 求解器例外） | **进正则**，可用 `intercept_scaling` 削弱 | 不进正则 |
+| 有 `predict_proba` | 有（默认就有） | 无 | 仅 `probability=True`（1.9 已弃用） |
+| 稀疏解（特征维） | `penalty='l1'` | `penalty='l1', dual=False` | 无 |
+| 规模 | 中–大（saga） | **大**（近线性） | 中（$O(n_s^2)$–$O(n_s^3)$） |
+| 随机性 | `saga`/`liblinear` 部分 | 仅 `dual=True` 时 | 仅 `probability=True` 时 |
+
+依据：[[sklearn-svm]], L32（`squared_hinge` 与截距正则）、L194（规模）、L216（L1）、L214–L215（随机性）。
+
+**本库综合**：因此**不能用同一个 `C` 在 logistic 与 `LinearSVC` 之间迁移**，也不能在两者之间直接比较系数大小。它们连“正则化什么”都不同。
+
+### 先跑哪个
+
+- 需要**概率或系数可解释性** → `LogisticRegression`（它自带 `predict_proba` 与稳定的系数）。
+- 只在意**分类边界且 $n$ 很大** → `LinearSVC`（更快，且能用 `l1` 直接产特征稀疏）。
+- 要**非线性**且 $n$ 不大 → 才轮到 `SVC(kernel='rbf')`（[[svm-selection-and-tuning]]）。
+
+### 两条额外约束
+
+1. **缩放要求比惩罚模型更强**。来源的原话是 “not scale invariant … **highly recommended** to scale your data”（L203）——这不只是数值稳定性问题（区别于上面「尺度」一节的求解器角度），而是**决策面本身由距离定义**。
+2. **类权重就是乘 `C`**。`class_weight`/`sample_weight` 把对应 `C` 乘上系数（L146、L150），加权后需重扫 `C`。
 
 ## 三条硬约束
 
@@ -168,6 +201,7 @@ applies_to:
 | OMP | 每步正交投影 | 未给 |
 | Theil-Sen | 子样本组合数 | $\binom{n}{n_{\text{subsamples}}}$（L720） |
 | RANSAC | `max_trials` × 每次拟合 | 未给 |
+| LinearSVC / LinearSVR | liblinear 坐标下降 | 近线性，可到百万样本（[[sklearn-svm]], L194） |
 | QuantileRegressor | 线性规划 | 未给（L794） |
 | `*CV` 系列 | 上述成本 × (k+1) | 见「三条路」表 |
 
@@ -198,7 +232,7 @@ applies_to:
 
 ## 关联页面
 
-- 来源：[[sklearn-linear-models]]、[[sklearn-lda-qda]]、[[kaggle-getting-started]]
+- 来源：[[sklearn-linear-models]]、[[sklearn-lda-qda]]、[[kaggle-getting-started]]、[[sklearn-svm]]
 - 工具：[[scikit-learn]]
-- 概念：[[regularization-and-sparsity]]、[[gaussian-discriminant-analysis]]、[[leaderboard-vs-cv]]
-- 实践：[[competition-ml-workflow]]（七段流程与阶段自动化程度）、[[evaluator-design-and-reward-hacking]]（验证切分与代理指标）
+- 概念：[[regularization-and-sparsity]]、[[gaussian-discriminant-analysis]]、[[support-vector-machines]]、[[leaderboard-vs-cv]]
+- 实践：[[competition-ml-workflow]]（七段流程与阶段自动化程度）、[[evaluator-design-and-reward-hacking]]（验证切分与代理指标）、[[svm-selection-and-tuning]]（SVM 侧的选择与调参）

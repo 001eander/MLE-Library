@@ -14,6 +14,7 @@ sources:
   - "[[aide]]"
   - "[[autoresearch]]"
   - "[[sklearn-linear-models]]"
+  - "[[sklearn-svm]]"
 status: draft
 verified: 2026-11-11
 applies_to:
@@ -103,6 +104,7 @@ applies_to:
 - **同时记录两个分数**：只留 running best 的日志无法区分「代理指标提升」与「目标提升」；CV 与 LB 的方向性背离本身就是一条需要解释的信号。
 - **优先相信跨折稳定的改动**：在折间方差大的改动上做选择，等价于在噪声上做选择。
 - **不要把「同步上升」当作因果证据**：它可能只是改动幅度变小导致的（见上一节的替代解释）。
+- **先确定指标算在模型的哪一层**：同一模型至少有原始分数（`decision_function`）、判决（`predict`，含平局规则）与校准概率（`predict_proba`）三个可评估对象，三者在多类与非保序校准时可以互相矛盾（[[support-vector-machines]], 四个输出面；[[sklearn-svm]], L135–L140）。"提升"如果没说在哪个对象上，就不可比。
 
 ## 待解问题
 
@@ -115,7 +117,7 @@ applies_to:
 
 ## 关联页面
 
-- 来源：[[kaggle-getting-started]]（核心）、[[aide]]（分位指标与外置 holdout）、[[autoresearch]]（单指标 + 高频迭代）、[[sklearn-linear-models]]（内置 CV 与信息准则）
+- 来源：[[kaggle-getting-started]]（核心）、[[aide]]（分位指标与外置 holdout）、[[autoresearch]]（单指标 + 高频迭代）、[[sklearn-linear-models]]（内置 CV 与信息准则）、[[sklearn-svm]]（分数/判决/概率的三层与平局规则）
 - 实践：[[evaluator-design-and-reward-hacking]]（含「第六类：验证切分与真实划分结构不一致」）、[[competition-ml-workflow]]、[[linear-models-as-baselines]]（正则强度选择的三条路）
-- 概念：[[regularization-and-sparsity]]（信息准则的假设强度）
+- 概念：[[regularization-and-sparsity]]（信息准则的假设强度）、[[support-vector-machines]]（同一模型的三个可评估对象）
 - 研究：[[automated-research-open-questions]]

@@ -12,6 +12,7 @@ tags:
 sources:
   - "[[sklearn-naive-bayes]]"
   - "[[sklearn-lda-qda]]"
+  - "[[sklearn-svm]]"
 status: draft
 verified: 2026-11-11
 applies_to:
@@ -93,7 +94,9 @@ applies_to:
 | 多模型概率**加权融合** / 概率乘积 | **受影响** | 若其他模型校准良好，权重会系统性偏向 NB |
 | 期望收益、成本敏感决策 | **受影响** | 需要的是校准后的概率，不是"自信度" |
 
-来源没有给"多坏"的量化，也没有给校准方法（Platt scaling、isotonic 等一律未提）。因此上表第 3–5 行是**本库综合**，可作为假设检验的起点，不能当来源结论引用。
+来源没有给“多坏”的量化，也没有给校准方法（Platt scaling、isotonic 等一律未提）。因此上表第 3–5 行是**本库综合**，可作为假设检验的起点，不能当来源结论引用。
+
+**与 SVM 的对照（跨来源综合）**：[[sklearn-svm]] 是本库第二份说“分数 ≠ 概率”的来源，但它给了一条具体修法（Platt 校准，[[sklearn-svm]], L128），并同时列出修法与分数不一致的两种可观测情形（L135–L136）。两条合起来读数：**校准把“不够可信”换成“可信但非保序”**，不保证分数与概率的 argmax 一致。四层输出对照见 [[support-vector-machines]] 的「一个分类器的四个输出面」。
 
 ## 失效模式
 
@@ -115,7 +118,7 @@ applies_to:
 
 ## 待解问题
 
-- **NB 的概率"多坏"、能不能救？** 来源只给警告（L42）。需要 `sklearn.calibration` 作为独立来源。
+- **NB 的概率“多坏”、能不能救？** 来源只给警告（L42）。需要 `sklearn.calibration` 作为独立来源。**部分线索**：[[sklearn-svm]] 的 Platt 校准是同一问题的另一条已知路径，但它在 1.9 已被弃用（理由是非线程安全），且不保证与分数同序——说明“校准”本身是一个有代价的独立步骤。
 - **特征冗余导致的过度自信能否量化？** 本库没有来源；可作为假设做实验（构造 $k$ 份相关特征，观察 `predict_proba` 的漂移）。
 - **Zhang 2004 的"最优性"是在什么条件下成立的？** 文献条目已在剪藏（L44–L47），论文未入库。
 - **`alpha` 与词表大小的交互**：是否存在让 $\alpha n$ 归一化的等价写法（如按平均文档长度缩放）？
@@ -125,5 +128,5 @@ applies_to:
 
 - 来源：[[sklearn-naive-bayes]]
 - 工具：[[scikit-learn]]（`naive_bayes` 估计器矩阵与默认值）
-- 概念：[[gaussian-discriminant-analysis]]（`GaussianNB` ⊂ LDA ⊂ QDA 的嵌套与参数代价推导）、[[regularization-and-sparsity]]（平滑作为第四个正则化面）、[[leaderboard-vs-cv]]（排序指标 vs 概率指标）
+- 概念：[[gaussian-discriminant-analysis]]（`GaussianNB` ⊂ LDA ⊂ QDA 的嵌套与参数代价推导）、[[regularization-and-sparsity]]（平滑作为第四个正则化面）、[[support-vector-machines]]（另一个“分数 ≠ 概率”的来源与四层输出）、[[leaderboard-vs-cv]]（排序指标 vs 概率指标）
 - 实践：[[linear-models-as-baselines]]（零成本基线族的定位与尺度约束）

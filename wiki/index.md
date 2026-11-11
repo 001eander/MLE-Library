@@ -28,6 +28,7 @@ tags:
 - [[sklearn-linear-models|scikit-learn 用户指南 1.1「Linear Models」（stable 文档剪藏）]] — OLS/Ridge/Lasso/ElasticNet/LARS/OMP/贝叶斯/GLM/稳健/分位数/多项式共 13 节的估计器与求解器约定；剪藏残缺严重（折叠块全缺 29.3%、内部引用文字丢失、1.1.14 由所有者手工补入且仍有 3 处公式空缺），已附逐项外部核查表与 18 张图的目视核查。
 - [[sklearn-lda-qda|scikit-learn 用户指南 1.2「Linear and Quadratic Discriminant Analysis」（stable 文档剪藏）]] — 生成式一侧：类条件高斯 + 贝叶斯、Mahalanobis 几何与 K−1 维降维、shrinkage（Ledoit-Wolf）/OAS 与三个求解器；正文完整但**三条参考文献全丢**（被 4 段重复正文冒充）、4 处引用标记被吞；版本判定到 1.9.x（QDA 公式 1/n），已附两张图的目视读数。
 - [[sklearn-naive-bayes|scikit-learn 用户指南 1.9「Naive Bayes」（stable 文档剪藏，含所有者授权的 raw 回填）]] — 条件独立 + MAP 框架、五个变体各自的 $P(x_i\mid y)$、平滑 α（Laplace/Lidstone）与外存 `partial_fit`；抓取时**丢了 5 个 `<details>` 折叠块（318 词 ≈ 21.4%）**——CNB 权重公式与 Categorical 概率公式两个数学节、三个 References 块——已按所有者授权回填（原始 sha256 `5e0e5299…` → 现 `85c4050b…`，行号全库重写）；外部核查补 7 个文档未提的默认值与一处「`partial_fit` 实际五个类都有」的分歧。
+- [[sklearn-svm|scikit-learn 用户指南 1.4「Support Vector Machines」（stable 文档剪藏，含所有者授权的 raw 回填）]] — 最大间隔 + hinge/ε-insensitive、C 与 ν 两种参数化、四个内置核与两个自定义核契约；libsvm（$O(n_f n_s^2\text{–}n_s^3)$）与 liblinear（近线性）的规模判据；**抓取时丢了 6 个折叠块（898 词 ≈ 19.0%）、10 处页内锚点文字、8 条文献与 6 个引用标记**，已按授权回填（`021bd03b…` → `af5ba9e8…`）；外部核查发现 **1.9 已弃用 `probability=True`（非线程安全，1.11 移除）而文档未反映**，另补 `gamma='scale'`、`dual='auto'` 等 11 条默认值。
 
 ## 概念
 
@@ -38,23 +39,25 @@ tags:
 - [[experience-bank|经验库（Experience Bank）]] — 结构化记录 solution/日志/评分，并合成为多样化「灵感」的机制；含与 2.0 Books 的对照。
 - [[evaluator-solution-co-evolution|评估器与解的共进化]] — 无现成评估器时的双层循环，以及 2.0 把外层折成独立复核与人工审批后的新瓶颈。
 - [[leaderboard-vs-cv|排行榜与本地验证（Leaderboard vs CV）]] — 本地 CV / Public LB / Private LB 三套分数的分工；「信 CV」的前提是切分复刻真实划分结构；人类竞赛经验与 AIDE / autoresearch 的同一张力对照，并新增内置 CV（LOO 与 K 折）与 AIC/BIC 作为第三种代理指标来源。
-- [[regularization-and-sparsity|正则化与稀疏性（Regularization and Sparsity）]] — 五种惩罚项的目标对照、软阈值与 ARD 两条稀疏来源、$ℓ_2$ 的贝叶斯读法、**协方差收缩（shrinkage/reg_param）作为第二个正则化面**、AIC/BIC 的假设强度，以及「稀疏 ≠ 不重要」的三条边界。
+- [[regularization-and-sparsity|正则化与稀疏性（Regularization and Sparsity）]] — 五种惩罚项的目标对照、软阈值与 ARD 两条稀疏来源、$ℓ_2$ 的贝叶斯读法、**三个额外的正则化面**（协方差收缩 shrinkage/reg_param、平滑、SVM 的 `C`/margin）、四种面在作用对象与“能否产生 0”上的对照（含样本维稀疏 vs 特征维稀疏）、AIC/BIC 的假设强度，以及「稀疏 ≠ 不重要」的三条边界。
 - [[gaussian-discriminant-analysis|高斯判别分析（Gaussian Discriminant Analysis）]] — 生成式分类器：`GaussianNB` ⊂ LDA ⊂ QDA 的嵌套、Mahalanobis 下的线性决策面、白化 + 对类均值做 PCA 的降维、参数个数随 $d$ 的二次增长与协方差收缩的动机。
 - [[naive-bayes|朴素贝叶斯（Naive Bayes）]] — 条件独立买到的两个好处（$O(d)$ 参数、可增量）与代价（相关性不可见）；五个变体各自的分布假设与 4 个易读漏的点；「分类器好、估计量坏」派生出的五条用法受影响度；平滑 α 与 `var_smoothing` 作为第三个正则化面（与 shrinkage/reg_param 的区别）。
+- [[support-vector-machines|支持向量机（Support Vector Machines）]] — 从几何出发而非损失/分布出发的第五个模型族；三层结构（最大间隔 → hinge → 对偶核技巧）、α 三态与**样本维稀疏（≠ 系数稀疏）**、C 与 ν 的两种刻度、四个输出面（分数/判决/概率/破平局）、按规模选实现的复杂度阶梯。
 
 ## 实践
 
 - [[research-agent-harness|科研智能体 Harness 设计]] — 五种形态：树搜索脚手架（AIDE）、单任务搜索循环（Hyra 1.0）、多项目长周期组织（2.0，含队列、唤醒、看板、审批门与证据要求）、进化式程序数据库（AlphaEvolve）与单文件贪心 + 人类维护指令（autoresearch）。
 - [[evaluator-design-and-reward-hacking|评估器设计与 reward hacking 防护]] — 1.0 的两个作弊案例、2.0 的证据提交与独立复核、AIDE 暴露的「在固定验证划分上搜索」、AlphaEvolve 的生产指标证据、autoresearch 的「固定预算下的噪声选择」（含种子入选的可观测信号），以及 Kaggle 竞赛的「验证切分与真实划分结构不一致」。
 - [[competition-ml-workflow|竞赛型 MLE 工作流（Kaggle 类任务）]] — 七段流程的分阶段判据与时效性对照（哪些仍成立、哪些已过时）、三个张力与一个坑（特征多反变差、合并 train/test 做变换）、以及各阶段对智能体的可自动化程度。
-- [[linear-models-as-baselines|把线性模型当基线：预处理约束、正则强度选择与常见坑（含 LDA/QDA）]] — 尺度与共线性的四条硬约束、alpha 选择的三条路（内置 K 折 / LOO / 信息准则）及其失效条件、五个默认值陷阱、稳健回归三张示例图的误差读数与官方「拿不准用 RANSAC」的反例，以及 **LDA/QDA 生成式基线**何时先试、`shrinkage`/`OAS` 三条必跑配置与图 2 的准确率读数。
+- [[linear-models-as-baselines|把线性模型当基线：预处理约束、正则强度选择与常见坑（含 LDA/QDA 与线性核 SVM）]] — 尺度与共线性的四条硬约束、alpha 选择的三条路（内置 K 折 / LOO / 信息准则）及其失效条件、五个默认值陷阱、稳健回归三张示例图的误差读数与官方「拿不准用 RANSAC」的反例、**LDA/QDA 生成式基线**何时先试、`shrinkage`/`OAS` 三条必跑配置，以及**三个“线性分类器”（Logistic / LinearSVC / SVC(linear)）不是同一个模型**的对照。
+- [[svm-selection-and-tuning|SVM 的选型与调参]] — 先按规模选实现再做超参、缩放作为硬前提（“highly recommended”且与 C/γ 耦合）、C/γ 指数网格、概率的三层输出与 1.9 弃用后的迁移写法、多类 ovo/ovr 与平局规则、加权即乘 C、cache_size/拷贝/SGDClassifier 四个速度项，以及 12 条“踩到才发现”清单与可自动化程度表。
 
 ## 工具
 
 - [[aide-scaffold|AIDE 脚手架（aideml）]] — 开源脚手架：解树、三算子、摘要算子的实现形态，作为基线的用法与版本风险。
 - [[autoresearch-repo|autoresearch 仓库]] — 单卡 nanochat 简化实现：三文件契约、快速开始、小机器降规模参数表 7 条与使用边界；未固定 commit，仅对 2026-03 剪藏负责。
 - [[hyra|Hyra（Hunyuan Research Agent）]] — 腾讯混元科研智能体的双版本页：1.0 单循环架构、2.0 多项目架构、两代结果表与使用边界。
-- [[scikit-learn|scikit-learn（工具页）]] — 18 篇同批剪藏的模块覆盖表；`linear_model` / `discriminant_analysis` / `naive_bayes` 三个模块的估计器矩阵、22 条会沉默改变结果的默认值（class_weight×C、`RidgeCV` 的 LOO、`svd` 不能配 shrinkage、`priors` 默认类比例、`var_smoothing` 默认方差下限、`binarize=0.0` 静默二值化、`norm=False` 不归一化等）与版本边界（linear_model ≥1.8、discriminant_analysis 与 naive_bayes 1.9.x）。
+- [[scikit-learn|scikit-learn（工具页）]] — 18 篇同批剪藏的模块覆盖表；`linear_model` / `discriminant_analysis` / `naive_bayes` / `svm` 四个模块的估计器矩阵、**33 条会沉默改变结果的默认值**（class_weight×C、`RidgeCV` 的 LOO、`svd` 不能配 shrinkage、`var_smoothing` 默认方差下限、`binarize=0.0` 静默二值化、`probability` 在 1.9 弃用、`gamma='scale'`、`break_ties=False` 不破平局、`cache_size=200` 等）与版本边界（linear_model ≥1.8、discriminant_analysis 与 naive_bayes 1.9.x、svm 1.7–1.9.1）。
 
 ## 比较
 

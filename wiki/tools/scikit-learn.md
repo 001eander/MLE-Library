@@ -1,5 +1,5 @@
 ---
-title: "scikit-learn（工具页）：linear_model / discriminant_analysis / naive_bayes 的估计器矩阵、默认值与版本边界"
+title: "scikit-learn（工具页）：linear_model / discriminant_analysis / naive_bayes / svm 的估计器矩阵、默认值与版本边界"
 type: tool
 created: 2026-11-11
 updated: 2026-11-11
@@ -9,23 +9,26 @@ tags:
   - linear-model
   - discriminant-analysis
   - naive-bayes
+  - svm
   - tooling
 sources:
   - "[[sklearn-linear-models]]"
   - "[[sklearn-lda-qda]]"
   - "[[sklearn-naive-bayes]]"
+  - "[[sklearn-svm]]"
 status: draft
 verified: 2026-11-11
 applies_to:
   - scikit-learn 1.8.x – 1.9.x（linear_model：据官方 1.8.0 / 1.9.1 页比对推断，剪藏未记录版本）
   - scikit-learn 1.9.x（discriminant_analysis：QDA 协方差公式写 1/n，1.8 及更早写 1/(n-1)，见 [[sklearn-lda-qda]]）
   - scikit-learn 1.9.x（naive_bayes：仅两个措辞级证据，推断，见 [[sklearn-naive-bayes]] 的版本判定）
-  - 本文只覆盖 `sklearn.linear_model`、`sklearn.discriminant_analysis` 与 `sklearn.naive_bayes` 三个模块
+  - scikit-learn 1.7.x – 1.9.1（svm：1.7/1.8/1.9.1 三版该节字面相同，剪藏与 1.9.1 逐句一致，见 [[sklearn-svm]] 的版本判定）
+  - 本文只覆盖 `sklearn.linear_model`、`sklearn.discriminant_analysis`、`sklearn.naive_bayes` 与 `sklearn.svm` 四个模块
 ---
 
 # scikit-learn（工具页）
 
-本页记录 scikit-learn 的**当前行为**：模块里有哪些估计器、默认值是什么、哪些默认值会沉默地改变结果。事实来自 [[sklearn-linear-models]]（官方用户指南 1.1 节）、[[sklearn-lda-qda]]（1.2 节）与 [[sklearn-naive-bayes]]（1.9 节），引用写作 `[[sklearn-linear-models]], L146`。
+本页记录 scikit-learn 的**当前行为**：模块里有哪些估计器、默认值是什么、哪些默认值会沉默地改变结果。事实来自 [[sklearn-linear-models]]（官方用户指南 1.1 节）、[[sklearn-lda-qda]]（1.2 节）、[[sklearn-naive-bayes]]（1.9 节）与 [[sklearn-svm]]（1.4 节），引用写作 `[[sklearn-linear-models]], L146`。
 
 ## 收录范围与覆盖状态
 
@@ -35,7 +38,7 @@ applies_to:
 | --- | --- | --- |
 | 1.1 Linear Models | `sklearn.linear_model` | **已入库**（本页 + [[linear-models-as-baselines]] + [[regularization-and-sparsity]]） |
 | 1.2 LDA / QDA | `sklearn.discriminant_analysis` | **已入库**（本页 + [[gaussian-discriminant-analysis]]，来源页 [[sklearn-lda-qda]]） |
-| 1.4 Support Vector Machines | `sklearn.svm` | 未入库 |
+| 1.4 Support Vector Machines | `sklearn.svm` | **已入库**（本页 + [[support-vector-machines]] + [[svm-selection-and-tuning]]，来源页 [[sklearn-svm]]） |
 | 1.6 Nearest Neighbors | `sklearn.neighbors` | 未入库 |
 | 1.9 Naive Bayes | `sklearn.naive_bayes` | **已入库**（本页 + [[naive-bayes]]，来源页 [[sklearn-naive-bayes]]） |
 | 1.10 Decision Trees | `sklearn.tree` | 未入库 |
@@ -116,6 +119,27 @@ applies_to:
 - **`GaussianNB` 是 QDA 的对角特例**（[[sklearn-lda-qda]], L60–L63），参数 $2Kd+K-1$（[[gaussian-discriminant-analysis]] 的推导）——三者嵌套关系不变。
 - **五个都有 `partial_fit`**（外部核查：`_BaseDiscreteNB.partial_fit` 被三个离散类继承，`CategoricalNB` 自行覆写），而文档 L165 仍只列了三类——已知分歧，记录在 [[sklearn-naive-bayes]]。首次调用必须传 `classes`（L167）。
 
+## 估计器矩阵（svm）
+
+`sklearn.svm` 里是**两套实现**（libsvm 与 liblinear，[[sklearn-svm]], L396），不是同一模型的后端。默认值来自 `sklearn/svm/_classes.py` @ 1.9.1（**外部核查**）；“文档是否提及”指剪藏 [[sklearn-svm]]。
+
+| 估计器 | 实现 | 目标／损失 | 关键超参（默认值） | 多类策略 | 文档位置 |
+| --- | --- | --- | --- | --- | --- |
+| `SVC` | libsvm | hinge（原问题）+ 松弛 | `C=1.0`、`kernel='rbf'`、`gamma='scale'`、`degree=3`、`coef0=0.0`、`probability`**（1.9 弃用）**、`cache_size=200`、`decision_function_shape='ovr'`、`break_ties=False` | 内部 ovo，接口 ovr | L28–L65、L75 |
+| `NuSVC` | libsvm | ν 参数化（与 SVC 等价） | `nu=0.5`，其余同 `SVC`；`class_weight` 见下方说明 | 内部 ovo，接口 ovr | L146、L356–L358 |
+| `LinearSVC` | liblinear | `squared_hinge` + `ℓ2`/`ℓ1` 惩罚 | `penalty='l2'`、`loss='squared_hinge'`、`dual='auto'`、`C=1.0`、`intercept_scaling=1`、`multi_class='ovr'` | 真 ovr | L32、L92、L346–L352 |
+| `SVR` | libsvm | ε-insensitive | `C=1.0`、`epsilon=0.1`、`kernel='rbf'`、`gamma='scale'` | — | L362–L384 |
+| `NuSVR` | libsvm | ν 参数化 | `nu=0.5`、`C=1.0` | — | L165 |
+| `LinearSVR` | liblinear | ε-insensitive | `epsilon=0.0`、`C=1.0`、`dual='auto'` | — | L165、L386–L392 |
+| `OneClassSVM` | libsvm | 单类（无监督） | `nu=0.5`、`kernel='rbf'`、`gamma='scale'` | — | L186–L188 |
+
+三点结构性事实：
+
+- **`SVC(kernel='linear')` ≠ `LinearSVC`**：前者 hinge、截距**不进**正则；后者 `squared_hinge`、截距**进**正则（可选 `intercept_scaling` 削弱）。同一 `C` 下结果不同，官方直接警告（[[sklearn-svm]], L32）。
+- **`LinearSVC`/`LinearSVR` 只支持线性核**，因为它们的原问题不含样本内积，核技巧用不上（L352、L392）。
+- **三个 `dual_coef_` 语义各不相同**：分类存 $y_i\alpha_i$（L341），回归存 $\alpha_i-\alpha_i^*$（L384），且多类 ovo 下按列（支持向量）× 行（其余类）排布（L113）。
+- **`NuSVC` 的 `class_weight` 有分歧**：文档说“SVC（but not NuSVC）实现了 `class_weight`”（L146），但 1.9.1 的源码里 `NuSVC` 签名接受该参数并在 `_validate_targets` 计入 `class_weight_`（外部核查，1.6.1 起已如此）。本页不对此下结论，详见 [[sklearn-svm]] 的分歧节第 2 条。
+
 ## 会沉默改变结果的默认值
 
 按"踩到才会发现"的顺序排：
@@ -149,11 +173,28 @@ LDA / QDA 一侧的默认值陷阱（引用 `[[sklearn-lda-qda]], L…`；标「
 21. **`ComplementNB(norm=False)` 默认不做权重归一化**（外部核查），而文档 L103 的三步公式里包含按 $\sum_j\lvert w_{cj}\rvert$ 归一化——按文档实现和用默认参数跑不是同一件事。
 22. **`CategoricalNB` 要求每个特征已编码为 $0..n_i-1$**（L161），且 `min_categories=None`（外部核查）时类别数从训练集推断；未见类别与编码不一致的行为文档未说明。
 
+svm 一侧（引用 `[[sklearn-svm]], L…`；标「外部核查」的取自 `sklearn/svm/_classes.py` @ 1.9.1 与 `whats_new/v1.9`，不在剪藏内）：
+
+23. **`SVC(probability=True)` 与 `NuSVC(probability=True)` 在 1.9 已弃用**（外部核查，1.11 移除），原因是**非线程安全**；替代写法 `CalibratedClassifierCV(SVC(), ensemble=False)`，`probA_`/`probB_` 同时弃用。**剪藏正文（就是 1.9.1 那一页）完全没反映这一点**——已知分歧，记录在 [[sklearn-svm]]。
+24. **`probability` 默认 `False`**（外部核查）。所以默认的 `SVC` 没有 `predict_proba`；需要概率就得付内部交叉验证的代价（L22、L133）。
+25. **`gamma='scale'`**（外部核查，即 $1/(n_{\text{features}}\cdot\mathrm{Var}(X))$）。**正文完全不提 gamma 的默认值**，只描述其语义（L242、L224）——所以“用默认 gamma 跑一次”在文档里查不到。
+26. **`decision_function_shape='ovr'` 但内部永远 ovo**（L75）。改这个参数只改**输出形状**，不重训；且它可以在 `fit` 之后改（L86）。
+27. **`break_ties=False`**：多类 ovr 下 `predict` **默认不破平局**（返回第一个并列类），与 `np.argmax(decision_function(...), axis=1)` 不等（L140）。报准确率必须声明这个开关。
+28. **`class_weight` 就是乘入 `C`**（L146）；`sample_weight` 同理（L150）。加权后必须重扫 `C`。另：文档说 `class_weight` 仅 `SVC` 有，但 1.9.1 的 `NuSVC` 签名也接受（外部核查）——该句存档，见 [[sklearn-svm]] 的分歧节。
+29. **`cache_size=200`**（MB，外部核查）：不改结果只改时间，且无任何提示；大问题上建议 500–1000（L200）。
+30. **`LinearSVC` 默认 `loss='squared_hinge'`，不是 hinge**（外部核查）：与 `SVC` 的根本差异之一，叠加“截距进正则”（L32）后，同一 `C` 的结果不同。`dual='auto'`（外部核查）决定随机性是否生效（L215）。
+31. **`shrinking=True`**：迭代多时有益，但**松散求解（大 `tol`）时不开反而快**（L211，引 [12]）。
+32. **`SVR.epsilon=0.1`、`LinearSVR.epsilon=0.0`**（外部核查）：两个默认值不同，前者是容忍带宽度，后者对 `LinearSVR` 意味着零容忍带。
+33. **`nu=0.5`** 是 `NuSVC`/`NuSVR`/`OneClassSVM` 的共同默认（外部核查）；文档只给语义（“近似训练误差与支持向量的比例”，L212）。
+
 ## 版本边界
 
 - `linear_model` 部分对应**官方 1.8–1.9.1 的 stable 文档**。1.9 重写了 1.1.3.1 gap safe screening 的正文，1.7.2 及更早没有这一小节 → 引用该小节时应注明版本。
 - `discriminant_analysis` 部分对应 **1.9.x**：1.9 把 QDA 的 SVD 推导从 $\frac{1}{n-1}X_k^{T}X_k$ 改为 $\frac{1}{n}X_k^{T}X_k$（与实现的最大似然估计一致），1.8 及更早仍是 $\frac{1}{n-1}$。两份剪藏因此可互证版本：1.1 判到 ≥1.8、1.2 判到 1.9.x（见 [[sklearn-lda-qda]] 的版本判定表）。
 - `naive_bayes` 部分判为 **1.9.x，但证据弱**：1.8→1.9.1 在本节只改了 `one dimensional` → `one-dimensional`、`through \(x_n\), :` → `through \(x_n\):` 两处措辞。功能层面两版无差别，因此上面 17–22 条的默认值结论不依赖这条判定。
+- `svm` 部分对应 **1.7.x – 1.9.1**：本节在 1.7 改过 ovo 措辞，之后 1.7/1.8/1.9.1 **字面完全相同**，剪藏与 1.9.1 逐句一致（见 [[sklearn-svm]]）。
+- **`svm` 存在文档与 API 错位**：1.9 弃用了 `probability` 参数（外部核查），而用户指南正文仍以 `probability=True` 为正规写法。引用第 23–24 条时必须以 API 页/源码为准，不能引剪藏。
+- `gamma` 默认值（`'scale'`）与 `LinearSVC.dual='auto'` 的选取规则**在任何版本的这一节里都没有**，属外部核查所得；它们的行为随版本可能变化，引用时应注明取自 1.9.1。
 - 剪藏里 logistic 的惩罚只通过 `C` 与 `l1_ratio` 表达（L473），没有出现 `penalty=` 参数的说明；这与旧版本 docstring 的写法不同。**本文不对 `penalty=` 的弃用状态下结论**，需要时查目标版本的 API 文档。
 - `np.float64(...)` 形式的 doctest 输出（L84）要求 NumPy ≥ 2 的 repr 习惯，与代码行为无关。
 
@@ -164,10 +205,13 @@ LDA / QDA 一侧的默认值陷阱（引用 `[[sklearn-lda-qda]], L…`；标「
 - 1.2 节的用户指南**不覆盖** `priors`、`reg_param`、`store_covariance`、`tol` 四个参数；本页第 13、15、16 条与估计器矩阵中这些项全部来自官方 API 页（外部核查），不是剪藏的论述（第 14 条的两个估计器来自 L101–L103）。
 - 官方页有 29.3% 的正文在折叠块里，剪藏全缺（详见 [[sklearn-linear-models]] 的「转换损失与外部核查」）。本页因此**不声称穷尽了文档的所有约束**：`Solvers’ details`、`Practical considerations` 里的细则（如 `l1_min_c`、GLM 的 exposure 用法）本页没有。
 - 稳健回归的取舍（RANSAC / Theil-Sen / Huber）不宜按一句话规则选，见 [[linear-models-as-baselines]] 里由官方示例图读数得到的反例。
+- 1.4 节的用户指南**不覆盖** `sklearn.calibration`（`CalibratedClassifierCV` 的 `ensemble` 语义）、`sklearn.kernel_approximation`（Nyström / RBFSampler）、`sklearn.multiclass` 与 `l1_min_c` 的细节，因此本页**不提供**核近似或校准曲线的用法。
+- 1.4 节对 `OneClassSVM` 只有两句话（[[sklearn-svm]], L186–L188），novelty detection 的实际用法在 2.7 节（未入库），本页不对此下结论。
+- svm 的 `gamma`、`dual`、`probability` 三个关键默认值都不在用户指南里；本页把它们标为外部核查而不是文档论述，引用时应保留该区分。
 
 ## 关联页面
 
-- 来源：[[sklearn-linear-models]]、[[sklearn-lda-qda]]、[[sklearn-naive-bayes]]
-- 实践：[[linear-models-as-baselines]]
-- 概念：[[regularization-and-sparsity]]、[[gaussian-discriminant-analysis]]、[[naive-bayes]]、[[leaderboard-vs-cv]]
+- 来源：[[sklearn-linear-models]]、[[sklearn-lda-qda]]、[[sklearn-naive-bayes]]、[[sklearn-svm]]
+- 实践：[[linear-models-as-baselines]]、[[svm-selection-and-tuning]]
+- 概念：[[regularization-and-sparsity]]、[[gaussian-discriminant-analysis]]、[[naive-bayes]]、[[support-vector-machines]]、[[leaderboard-vs-cv]]
 - 对照来源：[[kaggle-getting-started]]（2016 年的 sklearn 用法，多数 API 已移除）

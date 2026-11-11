@@ -9,16 +9,19 @@ tags:
   - sparsity
   - linear-model
   - feature-selection
+  - margin
 sources:
   - "[[sklearn-linear-models]]"
   - "[[sklearn-lda-qda]]"
   - "[[sklearn-naive-bayes]]"
+  - "[[sklearn-svm]]"
   - "[[kaggle-getting-started]]"
 status: draft
 verified: 2026-11-11
 applies_to:
   - scikit-learn 1.8.x – 1.9.x 的 linear_model 模块（推断）
   - scikit-learn 1.9.x 的 discriminant_analysis 与 naive_bayes 模块（平滑部分）
+  - scikit-learn 1.7.x – 1.9.1 的 svm 模块（`C` 与 margin 部分，见 [[sklearn-svm]]）
 ---
 
 # 正则化与稀疏性
@@ -119,6 +122,30 @@ $$w_j = \frac{S\left(x_j^{T}\left(y - X_{-j}w_{-j}\right), \alpha\right)}{\|x_j\
 
 **未收录**：平滑到底对应什么先验（离散族通常读作 Dirichlet、`var_smoothing` 读作方差的弱先验）本来源**未讨论**，因此本库不作断言，与 Lasso 的 Laplace 先验同列为“未收录”。
 
+## 第四个正则化面：C 与 margin（SVM）
+
+前三个面都在改**模型参数**的分布（系数、协方差、频率）；SVM 的正则化在**约束的松弛量**上（[[sklearn-svm]], L317–L323）：
+
+$$\min_{w,b,\xi}\ \frac{1}{2}w^{T}w + C\sum_{i}\xi_{i}\quad \text{s.t.}\ y_{i}\left(w^{T}\phi(x_{i})+b\right)\ge 1-\xi_{i},\ \xi_{i}\ge 0$$
+
+这里同时有两个旋钮在拉扯：最小化 $\lVert w\rVert^{2}$ 是**最大化间隔**，而 $C\sum\xi_i$ 是**为越界样本付钱**。来源的措辞是“惩罚项 `C` 控制惩罚强度，因此充当**逆正则化参数**”（L323）。也就是说：**小 `C` = 强正则 = 决策面更平滑；大 `C` = 弱正则 = 力求全部训练样本正确**（L242）。
+
+| | 系数惩罚（Ridge/Lasso） | 协方差收缩 | 平滑 | **margin/松弛（SVM）** |
+| --- | --- | --- | --- | --- |
+| 作用对象 | $w$ | $\Sigma$ | 频率 / 方差下限 | **约束的松弛量 $\xi$（间接压 $\lVert w\rVert$）** |
+| 强度参数 | `alpha` | `shrinkage`、`reg_param` | `alpha`；`var_smoothing` | **`C`（`NuSVC` 的 ν 是它的重参数化）** |
+| 大强度意味着 | 系数变小 | 向对角/单位阵靠 | 更保守的频率 | **`C` 更小** |
+| 能否产生 0 | Lasso 能（特征维） | 不能 | 不能 | 能（**样本维**：$\alpha_i=0$） |
+| 跨模型可比性 | 不可比 | 不可比 | 不可比 | **仅对 Ridge 有闭式：$C=1/\alpha$** |
+
+三条具体口径：
+
+1. **跨模型换算只有一条**：来源明确给出 $C=\frac1{\alpha}$（仅当对方是 `Ridge` 回归时成立），并声称“精确等价取决于各自优化的目标函数”（L344）。对 Lasso、logistic 一律**重扫网格**。
+2. **`C` 与样本权重叠乘**：`class_weight` 与 `sample_weight` 都是“把该样本/类别的 `C` 乘一个系数”（L146、L150），所以加权会改变有效正则强度——这是与 logistic 完全同构的陷阱（[[scikit-learn]] 默认值第 2、28 条）。
+3. **这里的稀疏在样本维，不在特征维**：$\alpha_i=0$ 的样本被丢出决策函数（L339），但特征权重仍稠密；要特征维稀疏只能用 `LinearSVC(penalty='l1', dual=False)`（L216）。两者名字相同，工程用途完全不同。
+
+**本库综合**：四个面里只有 SVM 的调节旋钮**同时改变模型的容量与训练成本**——大 `C` 不只是更弱的正则，还可能是 10 倍的训练时间（L202）。因此 SVM 的网格搜索不应只记分数，还要记耗时（见 [[svm-selection-and-tuning]]）。
+
 ## 正则强度与自由度：为什么信息准则会失效
 
 来源对 `LassoLarsIC`（AIC/BIC）的失效条件写得很具体：这类准则「需要正确的自由度估计、来自大样本的渐近结果、假设真实模型在候选集内」，并且「在病态问题（如特征多于样本）上往往会失效」（L212）。同一段还说它们在**训练集内**计算（L210）。
@@ -135,8 +162,8 @@ $$w_j = \frac{S\left(x_j^{T}\left(y - X_{-j}w_{-j}\right), \alpha\right)}{\|x_j\
 
 ## 关联页面
 
-- 来源：[[sklearn-linear-models]]、[[sklearn-lda-qda]]、[[sklearn-naive-bayes]]
+- 来源：[[sklearn-linear-models]]、[[sklearn-lda-qda]]、[[sklearn-naive-bayes]]、[[sklearn-svm]]
 - 工具：[[scikit-learn]]
-- 实践：[[linear-models-as-baselines]]（尺度、共线、五个坑）、[[competition-ml-workflow]]（特征选择在竞赛流程里的位置）
-- 概念：[[gaussian-discriminant-analysis]]（协方差为何需要收缩：参数个数与样本量的仗）、[[naive-bayes]]（平滑与“坏估计量”）、[[leaderboard-vs-cv]]（代理指标的假设强度）
+- 实践：[[linear-models-as-baselines]]（尺度、共线、五个坑）、[[svm-selection-and-tuning]]（`C`/`gamma` 网格与加权后重扫）、[[competition-ml-workflow]]（特征选择在竞赛流程里的位置）
+- 概念：[[gaussian-discriminant-analysis]]（协方差为何需要收缩：参数个数与样本量的仗）、[[naive-bayes]]（平滑与“坏估计量”）、[[support-vector-machines]]（`C` 与 margin 的机制）、[[leaderboard-vs-cv]]（代理指标的假设强度）
 - 对照：[[kaggle-getting-started]] 里「特征越多越好」与「特征多反而变差」的张力（`raw/articles/Kaggle 入门指南.md:77`、`:290`）——正则化是"让模型挑特征"的一种实现，但不解决"新特征是否引入噪声"的问题
