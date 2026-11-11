@@ -1,5 +1,5 @@
 ---
-title: 自动化研究待验证问题（源自 Hyra 1.0 / 2.0）
+title: 自动化研究待验证问题（源自 AIDE 与 Hyra 1.0 / 2.0）
 type: research
 created: 2026-11-11
 updated: 2026-11-11
@@ -8,14 +8,15 @@ tags:
   - research-agent
   - open-questions
 sources:
+  - "[[aide]]"
   - "[[hyra-1-0]]"
   - "[[hyra-2-0]]"
 status: draft
 ---
 
-# 自动化研究待验证问题（源自 Hyra 1.0 / 2.0）
+# 自动化研究待验证问题（源自 AIDE 与 Hyra 1.0 / 2.0）
 
-本页集中记录在入库 [[hyra-1-0]] 与 [[hyra-2-0]] 时浮现、但当前证据不足以回答的问题。内容属于**假设与待验证项**，不得当作来源结论引用。
+本页集中记录在入库 [[aide]]、[[hyra-1-0]] 与 [[hyra-2-0]] 时浮现、但当前证据不足以回答的问题。内容属于**假设与待验证项**，不得当作来源结论引用。
 
 ## 一、结果可信度
 
@@ -34,6 +35,14 @@ status: draft
 10. **对比是否同尺度**：图 6 显示 Hyra Hand 指长 20.4–24.5 cm，Dextra Baseline 为 20.4–23.2 cm，前者整体更大；同一旋转任务里，尺寸/重量差异是否参与了速度优势？来源未讨论（`:153`，已目视核查）。
 11. **5.79% 与「2–3 个月」**：前者是几何均值，后者是按看板历史迭代速度的**估算**，不是同期对照；且 SPEC CPU2006 属较老基准族（`:163`、`:212`）。
 
+### AIDE 新增的数字疑点
+
+12. **Weco-Kaggle 是 63 个还是 80 个竞赛？** 正文称 63（p. 5），附录 C 逐行统计为 80 行（p. 15–17，每行带 Data Size）。可能是正文数字未随附录更新，需向作者/仓库核对（`raw/extracted/2502.13138v1.md:265`、`:878-1033`）。
+13. **「4 倍于 OpenHands」是跨模型比较**：16.9%（AIDE+o1-preview）vs 4.4%（OpenHands+**GPT-4o**）；同模型（GPT-4o）为 8.7% vs 4.4%，约 2 倍。同一篇论文的引言（p. 2）与结果节（p. 9）两种口径并存。
+14. **RE-Bench 的三个时间数字对不上**：正文称「六小时时限内」超过人类（p. 9），Fig 4 横轴到 8 小时，而 Kernel 任务又说人类专家有「64 小时」。agent 预算、作图范围、人类预算分别指什么未说明，需回到 METR 原文。
+15. **自建榜只有单次运行**：Weco-Kaggle Lite 的 51.38% / 50% 未报方差或多种子，且仅 16 个表格类竞赛（p. 5–6）；与 MLE-Bench 的多因子均值 ± 标准误不可直接并列。
+16. **MLE-Bench Lite 的数字来源单一**：63.6→92.4% 等四组数字按 Chan et al. 转述（p. 8）；本库另一份 MLE-Bench 剪藏（`raw/articles/MLE-Bench.md`，尚未入库）只列任意奖牌率与金牌率，未列有效提交率，无法交叉核对。
+
 ## 二、机制性假设
 
 1. 收益主要来自搜索广度与经验复用，而非单次 proposal 质量——缺少消融。
@@ -46,6 +55,13 @@ status: draft
 8. （2.0）「初始性能不预测训练后性能」（旋梯手）能否推广到其他具身/结构设计任务？单案例无法支撑该结论（`:151`）。
 9. （2.0）三层记忆（项目/agent/Books）比单一 EB 更有效，但前提是存在跨项目复用；单项目场景下可能只是额外开销（[[research-memory-tiers]]）。
 
+### AIDE 新增的机制假设
+
+10. **原子改动假设**：improve 每次只改一处，使每次改进可归因，长期期望收益高于「一次改多处」（[[code-space-search]]）。现有证据只有整体比分，无控制变量对照。
+11. **树优于上下文累积**：解树 + `Σ(T)` 摘要优于把历史全塞进 prompt（p. 2、p. 4）。但论文未做消融，且该优势可能随上下文窗口变大而缩小。
+12. **平台期源于策略而非模型**：Fig 4 显示 AIDE 约 5h 后走平到 ≈0.36（人类 8h 达 ≈0.65），作者归因为贪心策略陷入局部最优；若是策略问题，加入「重新 draft / 换路线」应能突破，但无对照实验。
+13. **数据预览足够假设**：只给行数、列名、划分而不做 EDA 就能支撑验证集划分与超参缩放（p. 4）；在分布漂移或泄漏风险高的任务上是否仍成立未知。
+
 ## 三、工程风险
 
 1. **reward hacking 的自动化检测**：来源仅记录了两个个案（未来 token 泄漏、缓存 + 空 kernel），未说明是否有系统性检测器（[[evaluator-design-and-reward-hacking]]）。
@@ -56,9 +72,17 @@ status: draft
 6. （2.0）**skill 的版本与失效**：skill 被视为工具并持续修改，但没有版本、回归测试与废弃机制描述（`:85`）。
 7. （2.0）**仿真到真机的鸿沟**：目前硬件类成果（灵巧手）只在仿真里验证，工程落地仍需真实成本。
 8. （2.0）**归因缺失**：2.0 未披露基座模型，无法区分 harness 与模型换代的贡献。
+9. （AIDE）**harness 超参未公开**：初始解数量、调试深度、总步数、每节点时限均无数值（p. 3–4），导致「以多少预算换来多少分」无法复算。
+10. （AIDE）**单文件假设**：解被限制为单文件 Python 脚本（p. 3），跨文件重构、多步交互类任务表达不出来；换到真实代码库需要重设计算子。
+11. （AIDE）**审计成本随步数上升**：代码复杂度从 ≈1.0 升到 ≈1.6（18 步，p. 15），diff 越来越难读懂，人工复核成为新的瓶颈。
+12. （AIDE）**无作弊检测机制**：仅靠「holdout 标签不可见 + 分位指标」做防护（p. 5），论文未讨论对 reward hacking 的检测与回滚。
 
 ## 四、需要补充的资料
 
+- **AIDE 的本地 PDF 与仓库快照**：`raw/papers/2502.13138v1.pdf` 已入库（SHA-256 `5fc52573…`）；需补 `WecoAI/aideml` 的具体 commit，才能核对超参与实现是否与论文一致。
+- **Weco AI technical report**（AIDE: Data Science Automation Technical Report，论文引用为 Weco AI 2024）：可能包含 harness 超参与更完整的 Weco-Kaggle 结果。
+- **METR RE-Bench 原文**（2024-11 博客与后续报告）：核对 6h/8h/64h 口径与人类专家设置。
+- **MLE-Bench 原文**（arXiv:2410.07095）：核对 Lite 子集的有效提交率、种子数与消融；本库现有仅有剪藏。
 - Recursive「First Steps Toward Automated AI Research」的原文（Hyra 复用的公开设置来源）。
 - SOL-ExecBench 与 modded-nanogpt 的评测协议原文。
 - SILSO 太阳黑子数据与 $R^2=0.77$ 的实验设置。
@@ -71,8 +95,8 @@ status: draft
 
 ## 关联页面
 
-- 来源：[[hyra-1-0]]、[[hyra-2-0]]
-- 工具：[[hyra]]
-- 概念：[[recursive-self-improvement]]、[[experience-bank]]、[[research-memory-tiers]]、[[tool-centric-research]]、[[evaluator-solution-co-evolution]]
+- 来源：[[aide]]、[[hyra-1-0]]、[[hyra-2-0]]
+- 工具：[[aide-scaffold]]、[[hyra]]
+- 概念：[[code-space-search]]、[[recursive-self-improvement]]、[[experience-bank]]、[[research-memory-tiers]]、[[tool-centric-research]]、[[evaluator-solution-co-evolution]]
 - 实践：[[research-agent-harness]]、[[evaluator-design-and-reward-hacking]]
 - 对照：[[hyra-1-0-vs-2-0]]
