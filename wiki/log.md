@@ -39,3 +39,12 @@
 - 图表核查：剪藏只有 1 张外链流程图（L29），以三种尺寸参数下载均返回 HTTP 400，本地无副本，**未目视核查**；图内信息仅据 alt 文本转述，不引用任何图内读数。
 - 未做：白皮书 PDF（正文 L19 链接）未下载、未入库，作为下一个单独 ingest 的候选；未创建 `wiki/tools/alphaevolve.md`（无公开实现、无版本、仅筹划早期访问）。
 - 复核：交互式 ingest，已与所有者确认页面范围与四项决策；变更保持未提交状态，等待复核 diff 后再提交 `ingest: AlphaEvolve: A Gemini-powered coding agent`。
+
+## [2026-11-11] ingest | autoresearch：让智能体夜间自主跑单 GPU 训练实验（karpathy 仓库 README）
+- 文件：`wiki/sources/autoresearch.md`、`wiki/tools/autoresearch-repo.md`、`wiki/practices/research-agent-harness.md`、`wiki/practices/evaluator-design-and-reward-hacking.md`、`wiki/concepts/code-space-search.md`、`wiki/concepts/recursive-self-improvement.md`、`wiki/research/automated-research-open-questions.md`、`wiki/index.md`、`wiki/overview.md`、`raw/assets/autoresearch/progress.png`
+- 摘要：第五个来源入库，也是首个「开源实现 + 无论文」的形态。新建来源页（元数据、七组关键主张、图内读数表、局限、待解问题、行号索引）与工具页（三文件契约、快速开始、小机器降规模参数表 7 条、使用边界、版本风险）；把 harness 实践页扩为五形态（新增「单文件贪心 + 人类迭代的指令文件」一节与对照表列、可迁移要点、适用边界），在评估器实践页新增「第五类：固定预算下的噪声选择」（与 AIDE 的第三类逐项对照），在代码空间搜索页新增第五种组织方式与 AIDE/autoresearch 单文件搜索对照表，在 RSI 页补「食谱级自改进」小节，在待验证问题页新增 4 项数字疑点、4 项机制假设、3 项工程风险与 5 项待补资料。
+- 来源：`raw/articles/AutoResearch.md`（92 行，sha256 `71ebcc979776c1edc2d38effd18062f33d32d43edc6dd2fa2934d8ff1e12a2b9`），原文 <https://github.com/karpathy/autoresearch>；发布日 2026-03-07 仅来自剪藏 frontmatter，来源页标注为未独立核实。无 commit、无 tag、agent 侧模型无版本。
+- 图表核查：README 唯一插图 `progress.png` 于 2026-11-11 从 master 抓取成功（HTTP 200，2382×1180），按所有者决定入库 `raw/assets/autoresearch/progress.png`（sha256 `a6be2ad8dece12be1907356b1254f3ba133035d264d73634dbed442887a69d8d`），**已目视核查**。据此记录图标题「83 Experiments, 15 Kept Improvements」、基线 ≈0.998 与末尾 ≈0.977 的目视读数、第 43–64 次之间约 20 次无改进的平台段，以及 15 个被保留改动的标签。
+- 关键判断：图中 `random seed 42→137` 被计为一次「保留」。这提示 5 分钟预算下 `val_bpb` 的种子噪声可能与改进幅度同量级，因此在评估器实践页把它作为「固定预算下的噪声选择」的可观测证据，并在两页均标注为**本库推断（综合）**、来源未讨论。另记录一处内部张力：`prepare.py` 标注「不要修改」，但小机器降规模建议第 2–4 条恰恰落在该文件，属人类重写基线而非 agent 动作。
+- 未做/未做决定：未下载父级 nanochat 仓库；未核对仓库当前默认超参与剪藏是否一致；`program.md` 的迭代实例无任何公开记录，故「研究组织代码」保留为假设。按所有者决定暂不新建「实验预算与可比性」概念页（内容先折入两篇实践页）与 AIDE/autoresearch 对照页。
+- 复核：交互式 ingest，已与所有者讨论页面范围并确认四项决策（不新建概念页与对照页、图片入库 `raw/assets/`、工具页 draft + verified 2026-11-11）；变更保持未提交状态，等待复核 diff 后再提交 `ingest: karpathy/autoresearch：夜间自主的单 GPU 训练实验`。

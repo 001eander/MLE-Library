@@ -1,5 +1,5 @@
 ---
-title: 自动化研究待验证问题（源自 AIDE、AlphaEvolve 与 Hyra 1.0 / 2.0）
+title: 自动化研究待验证问题（源自 AIDE、AlphaEvolve、autoresearch 与 Hyra 1.0 / 2.0）
 type: research
 created: 2026-11-11
 updated: 2026-11-11
@@ -12,12 +12,13 @@ sources:
   - "[[hyra-1-0]]"
   - "[[hyra-2-0]]"
   - "[[alphaevolve]]"
+  - "[[autoresearch]]"
 status: draft
 ---
 
-# 自动化研究待验证问题（源自 AIDE、AlphaEvolve 与 Hyra 1.0 / 2.0）
+# 自动化研究待验证问题（源自 AIDE、AlphaEvolve、autoresearch 与 Hyra 1.0 / 2.0）
 
-本页集中记录在入库 [[aide]]、[[hyra-1-0]]、[[hyra-2-0]] 与 [[alphaevolve]] 时浮现、但当前证据不足以回答的问题。内容属于**假设与待验证项**，不得当作来源结论引用。
+本页集中记录在入库 [[aide]]、[[hyra-1-0]]、[[hyra-2-0]]、[[alphaevolve]] 与 [[autoresearch]] 时浮现、但当前证据不足以回答的问题。内容属于**假设与待验证项**，不得当作来源结论引用。
 
 ## 一、结果可信度
 
@@ -54,6 +55,13 @@ status: draft
 22. **15 次变异是单例**：图注描述的矩阵乘法发现需 15 次变异（L57），但没有变异步数的分布或失败案例，无法判断「发现难度」。
 23. **50 多个问题的清单与判定标准缺位**：未给问题列表，也未说「复现 SOTA」与「改进」由谁判定（L61）。
 
+### autoresearch 新增的数字疑点
+
+24. **83 次实验、15 次保留的收益是否超出噪声？** 仓库进度图显示 running best 从 ≈0.998 降到 ≈0.977（约 −0.021，目视读数），保留率 15/83 ≈ 18%。但它是**单次运行**，无方差、无多种子基线；而图内 `random seed 42→137` 被计为一次被保留的改进——若换种子就算提升，噪声底可能与改进幅度同量级（`raw/assets/autoresearch/progress.png`，已目视核查）。
+25. **5 分钟墙钟的「等价算力」不成立**：来源自己说结果无法跨平台比较（`raw/articles/AutoResearch.md:75`），所以「一夜约 100 次实验」是平台特定吞吐，不是通用量级；H100 上 5 分钟能走的优化步数与消费级 GPU 差多少未给。
+26. **平台段与 AIDE 的平台期不能类比**：进度图第 43–64 次实验约 20 次无改进（≈0.9794）；AIDE 的 5 小时走平（[[aide]], p. 9）是不同预算语义、不同指标、不同任务，两者并列只能当作「单链搜索会平台」的弱证据。
+27. **图的口径全部缺失**：未说硬件、agent 模型与版本、83 次是否连续跑完、丢弃实验的分布、以及该图对应哪个 commit；README 正文只把它当「项目概览」（L15）。
+
 ## 二、机制性假设
 
 1. 收益主要来自搜索广度与经验复用，而非单次 proposal 质量——缺少消融。
@@ -80,6 +88,13 @@ status: draft
 16. **「整个代码库」的作用域是关键差异**：AlphaEvolve 相对 AIDE 的优势来自可跨组件、跨文件地变异（L25、L57），而不是底层 Gemini 模型更强；未验证。
 17. **生产收益可迁移**：0.7% 的算力回收与内核提速是否可迁移到其他数据中心、工作负载或组织？目前只有单组织内部案例（L35、L39）。
 
+### autoresearch 新增的机制假设
+
+18. **「人改指令」优于「人改代码」**：把人的工作面换成 `program.md`、让 agent 独占可改代码，能比人直接调试更快推进研究（[[autoresearch]], L19、L61）。来源没有任何迭代记录或对照，纯属主张。
+19. **单链贪心足够**：只保留 running best、不存树/种群，在改进可累加时与树搜索等价而更便宜（L19、L74）。缺同任务、同预算的对照；且它回避了归因，无法判断收益来自哪一处改动。
+20. **小模型的超参结论可外推**：README 给小机器的降规模配方（TinyStories、词表 1024、深度 4、序列 256，L84–L90）可得到「勉强像样」的结果，但这些结论对更大模型/更大数据是否仍有参考价值未测。
+21. **固定墙钟预算能找到「本平台最优」**：来源声称系统会在这段时间预算内为平台找到最优模型（L75）；但优化目标只是单次 5 分钟跑出的 `val_bpb`，与「训到收敛后更好」未必同向。
+
 ## 三、工程风险
 
 1. **reward hacking 的自动化检测**：来源仅记录了两个个案（未来 token 泄漏、缓存 + 空 kernel），未说明是否有系统性检测器（[[evaluator-design-and-reward-hacking]]）。
@@ -98,6 +113,9 @@ status: draft
 14. （AlphaEvolve）**评估器构造成本未知**：每个问题一个评估器（L31），但谁写、写多久、能否复用均未说；若评估器成本高于搜索成本，方法的「通用性」会被抽空。
 15. （AlphaEvolve）**全代码库变异的可运行性风险**：一次多处修改可能破坏可执行性，来源未描述修复、回滚或可行性过滤（综合推断）。
 16. （AlphaEvolve）**生产指标不可外部审计**：0.7%、23%、1% 由 Google 内部测量，与 AIDE 的第三方基准不是同一证据等级；若直接当作「已验证」知识，会抬高整个库的置信度。
+17. （autoresearch）**评估代码禁改，但评估调用仍可能被改**：评估逻辑在 `prepare.py`（`raw/articles/AutoResearch.md:25`），而 agent 可任意改 `train.py`——包括何时、是否调用评估，或在多次评估中只报最好一次。来源未讨论这层剩余攻击面（综合推断，未验证）。
+18. （autoresearch）**无沙箱、无成本上限、禁用权限**：来源直接建议「禁用所有权限」（`:55`）；整夜连续约 100 次的执行权限、以及在共享机器上的影响未讨论。
+19. （autoresearch）**无版本、无实验日志规范**：只承诺「一份实验日志」（`:19`），无 commit、无 tag、无日志格式，因此「83 次实验 / 15 次保留」不可复算。
 
 ## 四、需要补充的资料
 
@@ -119,11 +137,15 @@ status: draft
 - Borg 论文（`large-scale cluster management at Google with Borg`）：核对调度启发式的评测环境。
 - Strassen 1969 与 AlphaTensor 原文：核对 4×4 复矩阵 49 次与 4×4 二进制算术改进的表述。
 - AlphaEvolve 的早期访问条款或代码发布（若后续公开）：否则该系统的所有结果只能停留在博客级证据。
+- **autoresearch 的仓库快照（固定 commit）与实验日志样例**：现在只有 README 剪藏，无法核对默认超参与日志格式。
+- **`progress.png` 的生成脚本与原始数据**：用于确认 83 次实验的硬件、agent 模型、是否连续、以及种子重复次数。
+- **父级 nanochat 仓库**：核对 `prepare.py` / `train.py` 在完整版中的形态，以及 README 提到的多平台回退实现。
+- **karpathy/tinystories-gpt4-clean 数据集**：核对降规模建议使用的数据规模与许可证。
 
 ## 关联页面
 
-- 来源：[[aide]]、[[hyra-1-0]]、[[hyra-2-0]]、[[alphaevolve]]
-- 工具：[[aide-scaffold]]、[[hyra]]
+- 来源：[[aide]]、[[hyra-1-0]]、[[hyra-2-0]]、[[alphaevolve]]、[[autoresearch]]
+- 工具：[[aide-scaffold]]、[[hyra]]、[[autoresearch-repo]]
 - 概念：[[code-space-search]]、[[recursive-self-improvement]]、[[experience-bank]]、[[research-memory-tiers]]、[[tool-centric-research]]、[[evaluator-solution-co-evolution]]
 - 实践：[[research-agent-harness]]、[[evaluator-design-and-reward-hacking]]
 - 对照：[[hyra-1-0-vs-2-0]]
