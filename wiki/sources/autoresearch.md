@@ -115,7 +115,9 @@ status: draft
 | 最长平台段 | ≈0.9794，第 43–64 次之间约 20 次实验无改进 | 目视读数 |
 | 被丢弃的点 | 散布在 running best 之上，含个别明显劣于点（如 ≈0.999） | 丢弃即淘汰 |
 
-被保留改动在图上的标签（按出现顺序，原样引用）：`halve total batch 524K→262K (more steps)`、`warmdown 0.5→0.7 (more cooldown helps)`、`add 5% warmup`、`depth 9`、`aspect_ratio 57 (same dim 512 + ex…`、`x0 lambda init 0.1→0.05`、`unembedding LR 0.004→0.008`、`SSSSL window pattern (more sliding window)`、`short window 1/4 context instead of 1/2`、`short window 1/8 context (256 tokens)`、`embedding LR 0.6→0.8`、`RoPE base frequency 10000→50000`、`RoPE base frequency 50000→100000`、`RoPE base frequency 100000→200000`、`random seed 42→137`。
+被保留改动在图上的标签（按出现顺序，原样引用）：`halve total batch 524K→262K (more steps)`、`warmdown 0.5→0.7 (more cooldown helps)`、`add 5% warmup`、`depth 9 aspect_ratio 57 (same dim 512 + ex…)`、`x0 lambda init 0.1→0.05`、`unembedding LR 0.004→0.008`、`SSSSL window pattern (more sliding window)`、`short window 1/4 context instead of 1/2`、`short window 1/8 context (256 tokens)`、`embedding LR 0.6→0.8`、`RoPE base frequency 10000→50000`、`RoPE base frequency 50000→100000`、`RoPE base frequency 100000→200000`、`random seed 42→137`。
+
+图标题称「15 Kept Improvements」；图上可见 baseline 起点加 14 条改进标签，共 15 个绿色保留点。
 
 三点必须标注的限制：
 

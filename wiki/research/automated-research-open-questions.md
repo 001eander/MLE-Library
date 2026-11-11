@@ -43,7 +43,7 @@ status: draft
 13. **「4 倍于 OpenHands」是跨模型比较**：16.9%（AIDE+o1-preview）vs 4.4%（OpenHands+**GPT-4o**）；同模型（GPT-4o）为 8.7% vs 4.4%，约 2 倍。同一篇论文的引言（p. 2）与结果节（p. 9）两种口径并存。
 14. **RE-Bench 的三个时间数字对不上**：正文称「六小时时限内」超过人类（p. 9），Fig 4 横轴到 8 小时，而 Kernel 任务又说人类专家有「64 小时」。agent 预算、作图范围、人类预算分别指什么未说明，需回到 METR 原文。
 15. **自建榜只有单次运行**：Weco-Kaggle Lite 的 51.38% / 50% 未报方差或多种子，且仅 16 个表格类竞赛（p. 5–6）；与 MLE-Bench 的多因子均值 ± 标准误不可直接并列。
-16. **MLE-Bench Lite 的数字来源单一**：63.6→92.4% 等四组数字按 Chan et al. 转述（p. 8）；本库另一份 MLE-Bench 剪藏（`raw/articles/MLE-Bench.md`，尚未入库）只列任意奖牌率与金牌率，未列有效提交率，无法交叉核对。
+16. **MLE-Bench Lite 的数字来源单一**：63.6→92.4% 等四组数字按 Chan et al. 转述（p. 8）；本库尚未收录 MLE-Bench 原文或剪藏，无法交叉核对有效提交率，只能按 AIDE 的转述使用。
 
 ### AlphaEvolve 新增的数字疑点
 
@@ -128,6 +128,7 @@ status: draft
 - SILSO 太阳黑子数据与 $R^2=0.77$ 的实验设置。
 - AdderBoard、SABRE 原始论文（用于核对 15 vs 36 参数、+44.4% 路由效率的口径）。
 - HyInv 与 HyPLM 的技术报告（来源称将公开，`raw/articles/Hyra 2.0.md:111`）。
+- **Hyra 结果仓库** `Tencent-Hunyuan/hyra-results`（`raw/articles/Hyra.md:61`）：核对 1.0 的 55 个开放问题 / 29 个刷新结果，以及 2.0 是否公开了对应证明或工件。
 - HyProver 关于圆周作用猜想与五维 Petty 等距点猜想的**证明工件**（剪藏只有声明，无链接）。
 - qLDPC Challenge 榜单在对比时点的快照（用于核对 122.0 与「原榜首」）。
 - 香山 Dashboard 的历史迭代数据（用于核对「2–3 个月」的换算）。

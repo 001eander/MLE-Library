@@ -48,3 +48,9 @@
 - 关键判断：图中 `random seed 42→137` 被计为一次「保留」。这提示 5 分钟预算下 `val_bpb` 的种子噪声可能与改进幅度同量级，因此在评估器实践页把它作为「固定预算下的噪声选择」的可观测证据，并在两页均标注为**本库推断（综合）**、来源未讨论。另记录一处内部张力：`prepare.py` 标注「不要修改」，但小机器降规模建议第 2–4 条恰恰落在该文件，属人类重写基线而非 agent 动作。
 - 未做/未做决定：未下载父级 nanochat 仓库；未核对仓库当前默认超参与剪藏是否一致；`program.md` 的迭代实例无任何公开记录，故「研究组织代码」保留为假设。按所有者决定暂不新建「实验预算与可比性」概念页（内容先折入两篇实践页）与 AIDE/autoresearch 对照页。
 - 复核：交互式 ingest，已与所有者讨论页面范围并确认四项决策（不新建概念页与对照页、图片入库 `raw/assets/`、工具页 draft + verified 2026-11-11）；变更保持未提交状态，等待复核 diff 后再提交 `ingest: karpathy/autoresearch：夜间自主的单 GPU 训练实验`。
+
+## [2026-11-11] lint | 悬空来源引用、Hy3 归属、frontmatter 与可复核性
+- 文件：`wiki/sources/aide.md`、`wiki/sources/hyra-1-0.md`、`wiki/sources/hyra-2-0.md`、`wiki/sources/autoresearch.md`、`wiki/comparisons/hyra-1-0-vs-2-0.md`、`wiki/tools/hyra.md`、`wiki/tools/aide-scaffold.md`、`wiki/concepts/code-space-search.md`、`wiki/practices/research-agent-harness.md`、`wiki/research/automated-research-open-questions.md`、`wiki/overview.md`、`README.md`、`raw/assets/hyra-2-0/`（7 图 + 1 视频）
+- 摘要：① 删除对从未存在的 MLE-Bench / R&D-Agent / MLE-STAR 剪藏的引用与“交叉核对”说法，改为“本库尚未收录，无法交叉核对”；② 把“1.0 博客明确由 Hy3 驱动”改引 `raw/articles/Hyra 2.0.md:18`，并在 1.0 来源页补注；③ 删除 Hyra 2.0 发布日期的推测；④ 两个 Hyra 来源页补 `status: draft`；⑤ `code-space-search` 的 `sources` 补 `[[hyra-1-0]]`；⑥ 修正 harness 与 aide-scaffold 中残留的“三者/另外两种”，以及 overview 中 AIDE 与 autoresearch 的“唯一公开实现”矛盾；⑦ 将 Hyra 2.0 的 7 张图与 1 段视频入库 `raw/assets/hyra-2-0/` 并记录尺寸与 SHA-256，同时把图 4 的 DPA4-Pro 读数由 ≈1,100 ms/step 更正为 ≈1,000 ms/step；⑧ autoresearch 合并 `depth 9` 与 `aspect_ratio 57` 标签，并说明图标题的 15 次保留含 baseline 起点；⑨ 修正 overview 与 README 的 `skills/` 路径为 `.agents/skills/`；⑩ 待补资料补入 `Tencent-Hunyuan/hyra-results`。
+- 来源：`raw/articles/Hyra 2.0.md:18`、`:73`、`:101`、`:119`、`:153`、`:155`、`:167`，抓取图与视频见 `raw/assets/hyra-2-0/`；AIDE 与 MLE-Bench 相关修复依据 `raw/extracted/2502.13138v1.md`，以及这些剪藏路径在 Git 历史中均无记录。
+- 复核：dry-run lint 报告经所有者确认“全部”接受后应用；未新增或重命名 wiki 页面，`wiki/index.md` 无需改动。变更等待最终 diff 确认后再提交 `lint: 悬空来源引用、Hy3 归属、frontmatter 与可复核性`。

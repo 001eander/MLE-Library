@@ -6,7 +6,7 @@
 
 - `raw/` 是不可变原始资料层：PDF、Web Clipper Markdown 和原始图片。
 - `wiki/` 是 Pi 在人的监督下维护的知识层，重要结论必须引用原始来源。
-- `AGENTS.md` 与 `skills/` 是 Schema，规定 ingest、query、lint、Obsidian、Dataview、Marp 和 Git 工作流。
+- `AGENTS.md` 与 `.agents/skills/` 是 Schema，规定 ingest、query、lint、Obsidian、Dataview、Marp 和 Git 工作流。
 - AutoResearch 只能通过只读 MCP 查询，不能直接更新 Wiki。
 - 每次正式 ingest、lint 或研究沉淀都形成独立 Git commit；只读查询不改变文件或历史。
 

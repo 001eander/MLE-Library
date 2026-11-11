@@ -10,6 +10,7 @@ tags:
   - evaluator-design
 source_path: raw/articles/Hyra.md
 source_kind: article
+status: draft
 ---
 
 # Hyra-1.0：腾讯混元的递归自我改进科研智能体（官方博客）
@@ -90,6 +91,7 @@ source_kind: article
 - **基线空间有限**：作者自己承认 NanoGPT Speedrun 等问题经社区长期优化、「剩余提升空间极小」，因此 0.9109→0.9015、77.5s→76.4s 这类改进的**幅度**不宜直接外推为方法优势。
 - **口径差异**：SOL-ExecBench 的 0.771 带 † 标记，评测设定为 Evaluation Stack v1.0 且为本地运行，与 Recursive 报道数值的可比性需读者自行核验。
 - **未披露项**：未给出算力/预算规模、单任务耗时、Proposal Agent 数量、EB 规模与检索策略、reward hacking 检测的具体机制；文中也没有消融实验区分「框架设计」与「底层模型能力」的贡献。
+- **基座模型**：本剪藏未提；同系列 [[hyra-2-0]] 称 1.0 由开源模型 Hy3 驱动（`raw/articles/Hyra 2.0.md:18`）。
 - **证据成熟度不均**：PARP1 分子设计是初步模拟筛选；3D 建模、配器、黑白棋 bot 依赖主观或平台内部评分，缺少可复核的量化协议。
 - **同族资料**：同系列另有 [[hyra-2-0|Hyra 2.0 官方博客]]（`raw/articles/Hyra 2.0.md`），主张从解题转向工具研发；两版差异见 [[hyra-1-0-vs-2-0]]。
 

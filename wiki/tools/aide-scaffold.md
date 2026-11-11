@@ -70,7 +70,7 @@ Weco AI 的 AIDE（AI-Driven Exploration）是一个面向机器学习工程的�
 
 ## 与其它 harness 的关系
 
-AIDE 是「树搜索 harness」的公开参照，另外两种形态见 [[research-agent-harness]]：Hyra-1.0 用经验库 + 灵感队列 + 异步生产者/消费者（[[hyra-1-0]]），Hyra 2.0 用多项目长周期组织（[[hyra-2-0]]）。三者的共同点是「生成—评估—保留」，差别在记忆载体（解树摘要 / 经验库 / 分层知识与 skill）与验证制度。
+AIDE 是「树搜索 harness」的公开参照，其余四种形态见 [[research-agent-harness]]：Hyra-1.0 用经验库 + 灵感队列 + 异步生产者/消费者（[[hyra-1-0]]），Hyra 2.0 用多项目长周期组织（[[hyra-2-0]]），AlphaEvolve 用进化式程序数据库（[[alphaevolve]]），autoresearch 用单文件贪心 + 人类维护的指令文件（[[autoresearch]]）。五种形态的共同点是「生成—评估—保留」，差别在记忆载体与验证制度。
 
 ## 待解问题
 

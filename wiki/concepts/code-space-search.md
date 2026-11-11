@@ -10,6 +10,7 @@ tags:
   - evaluator-design
 sources:
   - "[[aide]]"
+  - "[[hyra-1-0]]"
   - "[[alphaevolve]]"
   - "[[autoresearch]]"
 status: draft
@@ -17,7 +18,7 @@ status: draft
 
 # 代码空间搜索与解树（Code-Space Search / Solution-Tree Search）
 
-把「机器学习工程」从「调参/选模型」改写为「在一个程序空间里搜索」：解就是代码，目标是让它在一个标量指标上更好，搜索过程被组织成一棵记录改进关系的树。本页以 AIDE 为参照实现（[[aide]]），以 AlphaEvolve 的进化式程序数据库（[[alphaevolve]]）与 autoresearch 的单链贪心（[[autoresearch]]）作为对照，先给来源论述，再给跨来源的综合与待验证假设。
+把「机器学习工程」从「调参/选模型」改写为「在一个程序空间里搜索」：解就是代码，目标是让它在一个标量指标上更好，搜索过程被组织成一棵记录改进关系的树。本页以 AIDE 为参照实现（[[aide]]），以 Hyra-1.0 的经验库（[[hyra-1-0]]）、AlphaEvolve 的进化式程序数据库（[[alphaevolve]]）与 autoresearch 的单链贪心（[[autoresearch]]）作为对照，先给来源论述，再给跨来源的综合与待验证假设。
 
 ## 来源论述（AIDE）
 

@@ -121,7 +121,7 @@ status: stable
 | --- | --- | --- | --- |
 | Fig 1 解树示例 | p. 4 | `s0`（空解）→ 三个 `f: draft` 分支；`s1`、`s3` 标为 bug（深色），`s2` 有效；`s1` 下两次 `f: fix`（`s4` 仍为 bug、`s5` 有效）；`s2` 经 `f: improve` 得 `s6`（红色 = optimal）；`s3` 经 `f: fix` 得 `s7` | 与算法 1、三算子一致；图例为 Empty/Bug/Valid/Optimal 四态，正文未逐一定义这些状态 |
 | Fig 2 分布 | p. 7 | 柱状图按 `Exceeds % of Humans` 降序排列（未逐根计数），最高≈100%、最低≈0%，长尾平滑下降 | 支撑「平均 48.23% 但方差大」的表述 |
-| Table 3 | p. 7 | 6 行数值与提取文本完全一致；图注写明 AIDE+o1-preview 用 16 种子、AIDE+GPT-4o 用 36 种子 | 与 `raw/articles/MLE-Bench.md` 剪藏记载的 16.9%/9.4% 一致（交叉核对，该剪藏尚未入库） |
+| Table 3 | p. 7 | 6 行数值与提取文本完全一致；图注写明 AIDE+o1-preview 用 16 种子、AIDE+GPT-4o 用 36 种子 | MLE-Bench 原文（Chan et al.）未入库，16.9%/9.4% 只能按 AIDE 的转述使用 |
 | Fig 3 Lite 柱状图 | p. 8 | 黑=o1-preview、粉=o1-preview+AIDE；四组数值 63.6±4.5→92.4±2.6、13.6±0→59.1±4.5、6.1±2.6→21.2±6.9、7.6±2.6→36.4±7.9 | 与正文逐字一致 |
 | Fig 4 RE-Bench 曲线 | p. 9 | 横轴 0–8 小时、纵轴 average normalized score（95% CI）；`AIDE` 为红线、`Human` 为黑线（已放大图例核对）。红线约 4h 到 ≈0.30、5h 到 ≈0.36 后基本走平到 8h（置信带变宽）；黑线 6h 后加速，8h 处 ≈0.65 | **新增读数**：正文只说「6 小时内超过人类、人类随后追平」，图上 AIDE 从 ≈5h 起近乎平台，人类在 ≈6h 后反超并继续上升到 ≈0.65 |
 | Fig 6 代码复杂度 | p. 15 | 聚合复杂度从 ≈1.0（第 0 步）升到 ≈1.6（第 18 步），第 1 步有小幅下降，第 6–12 步出现平台 | 支撑「迭代使代码变复杂」；x 轴到 18 步，可作迭代预算的间接线索 |
@@ -144,7 +144,7 @@ status: stable
 1. **「4 倍」是跨模型比较**。p. 9（`raw/extracted/2502.13138v1.md:435-451`）写「AIDE with o1-preview earned medals in 16.9%… nearly four times that of the follow-up agent OpenHands」，而 Table 3 中 OpenHands 的数字是 **GPT-4o** 的 4.4%（16.9 / 4.4 ≈ 3.8）。同页 Table 3 给出的同模型比较是 AIDE+GPT-4o 8.7% vs OpenHands+GPT-4o 4.4%，约 2 倍；引言（p. 2）也正是这么写的：「twice the number of medals … when both use GPT-4o」。**同一篇论文里两种说法并存**，引用时应写清是否同模型。
 2. **Weco-Kaggle 规模：63 还是 80？** p. 5 正文称 63 个竞赛（`raw/extracted/2502.13138v1.md:265`），但附录 C（p. 15–17）逐行统计为 80 行，且每行均带 Data Size 字段。可能是正文数字未随附录更新，也可能附录含额外任务；论文未解释。
 3. **RE-Bench 的时间口径**：正文说 AIDE 在「六小时时限内」超过人类（p. 9），图 4 横轴到 8 小时，Kernel 任务又说人类专家有「64 小时」。三个时间数字各自指的是什么（agent 预算 / 作图范围 / 人类预算）论文未逐一说明，需回到 METR 原文。
-4. **与 MLE-Bench 原文的口径差**：本库另有 MLE-Bench 剪藏（`raw/articles/MLE-Bench.md`，尚未按 PDF 流程入库），其中 16.9 ± 1.1% / 9.4% 与本页 Table 3 一致；但剪藏未列有效提交率，无法交叉核对 82.8% 一栏。
+4. **与 MLE-Bench 原文的口径差**：本库尚未收录 MLE-Bench 原文或剪藏，因此 16.9 ± 1.1% / 9.4% 与 82.8% 的有效提交率都无法交叉核对，只能按 AIDE 的转述使用。
 
 ## 来源位置索引
 
@@ -183,5 +183,5 @@ status: stable
 - 实践：[[research-agent-harness]]、[[evaluator-design-and-reward-hacking]]
 - 待验证问题：[[automated-research-open-questions]]
 - 对照阅读：[[hyra-1-0]]、[[hyra-2-0]]（同为「提出—评估—迭代」范式，但组织方式与验证制度不同）
-- 相关但**尚未入库**的原始来源（仅存在于 `raw/articles/`）：`raw/articles/MLE-Bench.md`、`raw/articles/R&D-Agent.md`、`raw/articles/MLE-STAR.md`
+- 相关但**尚未收录**的原始来源：MLE-Bench（arXiv:2410.07095）、R&D-Agent、MLE-STAR（本库 `raw/` 中均无这些文件）
 - 已入库的相关来源：[[alphaevolve]]（同在代码空间搜索，但用程序数据库与进化选择，而非解树）
