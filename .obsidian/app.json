@@ -2,7 +2,7 @@
   "alwaysUpdateLinks": true,
   "attachmentFolderPath": "raw/assets",
   "newLinkFormat": "shortest",
-  "showUnsupportedFiles": true,
+  "showUnsupportedFiles": false,
   "useMarkdownLinks": false,
   "defaultViewMode": "preview"
 }
