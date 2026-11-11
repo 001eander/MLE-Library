@@ -43,7 +43,12 @@ require_command() {
 # ~/.pi/agent/skills. Only the project's own skills are passed back in.
 skill_args() {
   PI_SKILL_ARGS=(
-    --skill "$ROOT/.agents/skills/obsidian"
+    --skill "$ROOT/.agents/skills/obsidian-markdown"
+    --skill "$ROOT/.agents/skills/obsidian-bases"
+    --skill "$ROOT/.agents/skills/json-canvas"
+    --skill "$ROOT/.agents/skills/obsidian-cli"
+    --skill "$ROOT/.agents/skills/defuddle"
+    --skill "$ROOT/.agents/skills/knap"
     --skill "$ROOT/.agents/skills/marp"
     --skill "$ROOT/.agents/skills/dataview"
   )
@@ -167,7 +172,7 @@ run_doctor() {
     fi
   done
   local path
-  for path in AGENTS.md wiki/index.md wiki/log.md .agents/skills/obsidian/SKILL.md .agents/skills/marp/SKILL.md .agents/skills/dataview/SKILL.md mcp/server.mjs; do
+  for path in AGENTS.md wiki/index.md wiki/log.md .agents/skills/obsidian-markdown/SKILL.md .agents/skills/obsidian-bases/SKILL.md .agents/skills/json-canvas/SKILL.md .agents/skills/obsidian-cli/SKILL.md .agents/skills/defuddle/SKILL.md .agents/skills/knap/SKILL.md .agents/skills/marp/SKILL.md .agents/skills/dataview/SKILL.md mcp/server.mjs; do
     if [[ -f "$ROOT/$path" ]]; then
       printf 'ok           %s\n' "$path"
     else
