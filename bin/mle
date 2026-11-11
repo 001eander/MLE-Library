@@ -61,11 +61,24 @@ run_librarian() {
     "$@"
 }
 
-run_read_only_pi() {
-  require_command pi
+run_librarian_print() {
+  require_command node
+  skill_args
   cd "$ROOT"
-  pi \
-    --print \
+  node lib/pi-print.mjs \
+    --no-context-files \
+    --append-system-prompt "$ROOT/AGENTS.md" \
+    --no-skills \
+    --no-extensions \
+    --no-mcp \
+    "${PI_SKILL_ARGS[@]}" \
+    "$@"
+}
+
+run_read_only_pi() {
+  require_command node
+  cd "$ROOT"
+  node lib/pi-print.mjs \
     --no-session \
     --no-context-files \
     --append-system-prompt "$ROOT/AGENTS.md" \
@@ -118,7 +131,12 @@ run_ingest() {
   fi
   if [[ "$print_mode" -eq 1 ]]; then
     prompt="$prompt Run the complete ingest without asking questions. Actually create and edit the required source, wiki, index, and log files rather than only proposing changes. Leave all changes uncommitted for human review, then summarize the changed paths and citations."
-    run_librarian --exclude-tools ask_question --print --no-session -- "$prompt"
+    local before_wiki_status
+    before_wiki_status="$(git status --porcelain -- wiki)"
+    run_librarian_print --exclude-tools ask_question --no-session -- "$prompt"
+    if [[ "$before_wiki_status" == "$(git status --porcelain -- wiki)" ]]; then
+      fail "ingest produced no wiki changes"
+    fi
   else
     prompt="$prompt Work interactively, discuss the proposed updates, and do not commit until I confirm the reviewed diff."
     run_librarian -- "$prompt"

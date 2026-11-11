@@ -225,7 +225,6 @@ function askLibrarian(args) {
   const timeoutSeconds = integer(args.timeout_seconds, 120, "timeout_seconds", 1, 300);
   const prompt = `Answer the following question using MLE-Library. Read wiki/index.md, search and read full relevant pages, consult raw sources when needed, and cite actual paths with line, section, or page locators. State uncertainty and conflicting evidence. You are strictly read-only: do not modify files, render pages, invoke other MCP servers, or change Git state.\n\nQuestion: ${args.question}`;
   const piArgs = [
-    "--print",
     "--no-session",
     "--no-context-files",
     "--append-system-prompt", path.join(ROOT, "AGENTS.md"),
@@ -237,7 +236,7 @@ function askLibrarian(args) {
     prompt,
   ];
   return new Promise((resolve, reject) => {
-    const child = spawn("pi", piArgs, { cwd: ROOT, stdio: ["ignore", "pipe", "pipe"] });
+    const child = spawn(process.execPath, [path.join(ROOT, "lib", "pi-print.mjs"), ...piArgs], { cwd: ROOT, stdio: ["ignore", "pipe", "pipe"] });
     let stdout = "";
     let stderr = "";
     let outputExceeded = false;
