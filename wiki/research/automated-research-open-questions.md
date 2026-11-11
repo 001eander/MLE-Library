@@ -1,5 +1,5 @@
 ---
-title: 自动化研究待验证问题（源自 AIDE、AlphaEvolve、autoresearch 与 Hyra 1.0 / 2.0）
+title: 自动化研究待验证问题（源自 AIDE、AlphaEvolve、autoresearch、Hyra 1.0 / 2.0 与 Kaggle 入门指南）
 type: research
 created: 2026-11-11
 updated: 2026-11-11
@@ -13,12 +13,13 @@ sources:
   - "[[hyra-2-0]]"
   - "[[alphaevolve]]"
   - "[[autoresearch]]"
+  - "[[kaggle-getting-started]]"
 status: draft
 ---
 
-# 自动化研究待验证问题（源自 AIDE、AlphaEvolve、autoresearch 与 Hyra 1.0 / 2.0）
+# 自动化研究待验证问题（源自 AIDE、AlphaEvolve、autoresearch、Hyra 1.0 / 2.0 与 Kaggle 入门指南）
 
-本页集中记录在入库 [[aide]]、[[hyra-1-0]]、[[hyra-2-0]]、[[alphaevolve]] 与 [[autoresearch]] 时浮现、但当前证据不足以回答的问题。内容属于**假设与待验证项**，不得当作来源结论引用。
+本页集中记录在入库 [[aide]]、[[hyra-1-0]]、[[hyra-2-0]]、[[alphaevolve]]、[[autoresearch]] 与 [[kaggle-getting-started]] 时浮现、但当前证据不足以回答的问题。内容属于**假设与待验证项**，不得当作来源结论引用。
 
 ## 一、结果可信度
 
@@ -62,6 +63,16 @@ status: draft
 26. **平台段与 AIDE 的平台期不能类比**：进度图第 43–64 次实验约 20 次无改进（≈0.9794）；AIDE 的 5 小时走平（[[aide]], p. 9）是不同预算语义、不同指标、不同任务，两者并列只能当作「单链搜索会平台」的弱证据。
 27. **图的口径全部缺失**：未说硬件、agent 模型与版本、83 次是否连续跑完、丢弃实验的分布、以及该图对应哪个 commit；README 正文只把它当「项目概览」（L15）。
 
+### Kaggle 入门指南新增的数字疑点
+
+> 本节问题来自**人类竞赛**（非智能体），列入本页是因为它们直接决定「人类基线」是否可用作评估尺度（[[aide]], p. 5–7）。
+
+28. **「前 10% → 前 5%」的分母未给**：来源只给两个名次——单模型 0.46378（174 名）与 Stacking 0.45849（98 名）——却换算成百分比（`:317`）。若两者同榜同时点，反推参赛队约 1,740–1,960 支（**本库推算**），但来源未给总数、也未说是否为同一提交时点。
+29. **+0.0004 无法判定真假**：20 个随机种子的加权平均带来约 0.0004 的改进，作者自述「也很难受说是真的有效还是随机性了」（`:315`）。无方差、无重复，因此既不能当作「种子平均有效」，也不能当作「无效」。
+30. **Base Model 相关性 0.9 与 Ensemble 收益共存**：来源用多样性解释 Ensemble 的收益（`:185-186`），但实测四个 Base Model 两两相关「最低的一对也有 0.9」（`:311`）；而「Ensemble 同时降低 Bias 和 Variance」的依惟是一篇未读的 Springer 章节（`:174`）。
+31. **新增特征使分数变差，且调参救不回来**：单次观测、无特征组消融（`:290`）；作者自己把它列为开放问题（`:344-350`）。
+32. **合并 train/test 做预处理对分数的影响未测**：来源给的理由是「不合并就要重复写两次」（`:265`），未做 A/B，也未说明变换是否涉及标签信息。
+
 ## 二、机制性假设
 
 1. 收益主要来自搜索广度与经验复用，而非单次 proposal 质量——缺少消融。
@@ -95,6 +106,13 @@ status: draft
 20. **小模型的超参结论可外推**：README 给小机器的降规模配方（TinyStories、词表 1024、深度 4、序列 256，L84–L90）可得到「勉强像样」的结果，但这些结论对更大模型/更大数据是否仍有参考价值未测。
 21. **固定墙钟预算能找到「本平台最优」**：来源声称系统会在这段时间预算内为平台找到最优模型（L75）；但优化目标只是单次 5 分钟跑出的 `val_bpb`，与「训到收敛后更好」未必同向。
 
+### Kaggle 入门指南新增的机制假设
+
+22. **「特征更多更好」是有条件的**：当新增特征与已有特征强交互或本身噪声大时，树的贪心分裂会先抓噪声，因此「逐组加入 + 固定切分 + 记录边际收益」应优于「全加再调参」。来源只有反面单例（`raw/articles/Kaggle 入门指南.md:77`、`:290`），无对照实验。
+23. **「信 CV」的前提是切分复刻真实结构**：来源在赛后才给出做法（`:331`），但没有验证「照此重建 CV 后，CV 与 LB 的背离是否变小」（[[leaderboard-vs-cv]]）。
+24. **代理指标与目标「同步上升」意味着对齐**：来源观察到开始 Stacking 后 CV 与 LB 同步提高（`:313`）；替代解释是后期改动幅度变小、噪声占比下降。单次比赛无法区分。
+25. **人类与 agent 的评估瓶颈是同一个，只是速度不同**：人类受提交次数限流，agent 不受（[[autoresearch]], `:75`）。若成立，则「验证设计」在 agent 场景的相对收益应显著高于人类场景——可直接设计实验检验。
+
 ## 三、工程风险
 
 1. **reward hacking 的自动化检测**：来源仅记录了两个个案（未来 token 泄漏、缓存 + 空 kernel），未说明是否有系统性检测器（[[evaluator-design-and-reward-hacking]]）。
@@ -116,6 +134,9 @@ status: draft
 17. （autoresearch）**评估代码禁改，但评估调用仍可能被改**：评估逻辑在 `prepare.py`（`raw/articles/AutoResearch.md:25`），而 agent 可任意改 `train.py`——包括何时、是否调用评估，或在多次评估中只报最好一次。来源未讨论这层剩余攻击面（综合推断，未验证）。
 18. （autoresearch）**无沙箱、无成本上限、禁用权限**：来源直接建议「禁用所有权限」（`:55`）；整夜连续约 100 次的执行权限、以及在共享机器上的影响未讨论。
 19. （autoresearch）**无版本、无实验日志规范**：只承诺「一份实验日志」（`:19`），无 commit、无 tag、无日志格式，因此「83 次实验 / 15 次保留」不可复算。
+20. （Kaggle）**合并 train/test 做无监督变换**：CV 分数与 LB 的语义同时变化，而这类做法在公开 notebook 中极易被复制传播（`raw/articles/Kaggle 入门指南.md:265`）。
+21. （Kaggle）**旧 API 片段被直接复制**：`sklearn.grid_search` / `sklearn.cross_validation` 模块已移除，`reg:linear` 已废弃（`raw/articles/Kaggle 入门指南.md:120`、`:143`、`:149`）；照抄会失败或告警，现代等价写法见 [[kaggle-getting-started]]（**综合**）。
+22. （Kaggle）**无对照的赛后归因**：全部结论来自单次比赛，作者自己也把三条核心问题列为未解决（`raw/articles/Kaggle 入门指南.md:344-350`）；这类经验很容易被后续引用当成「已验证」。
 
 ## 四、需要补充的资料
 
@@ -142,11 +163,16 @@ status: draft
 - **`progress.png` 的生成脚本与原始数据**：用于确认 83 次实验的硬件、agent 模型、是否连续、以及种子重复次数。
 - **父级 nanochat 仓库**：核对 `prepare.py` / `train.py` 在完整版中的形态，以及 README 提到的多平台回退实现。
 - **karpathy/tinystories-gpt4-clean 数据集**：核对降规模建议使用的数据规模与许可证。
+- **Home Depot Search Relevance 的榜单快照**（2016 赛季 Private LB 的队伍总数与分数分布）：核对 174→98 名与「前 10% / 前 5%」的换算（`raw/articles/Kaggle 入门指南.md:317`）。
+- **`dnc1994/Kaggle-Playground` 仓库快照**（`features.ipynb`、`Preprocess.ipynb`）：核对来源列出的特征清单、以及「打星号的最后一批特征」的具体实现（`:244`、`:261`）。
+- **Beating Kaggle the Easy Way（Dong Ying）**（`:368` 参考文献第 1 条）：来源的 Stacking 与流程表述很可能源自此文，本库未读。
+- **Ensemble 同时降低 Bias 与 Variance 的证明文献**（Springer 章节，`:174`）：核对成立条件与适用范围。
+- **Chenglong Chen 的 Crowdflower Pipeline 仓库**（`:240`）：核对「自动记录最佳参数」的实际实现形态。
 
 ## 关联页面
 
-- 来源：[[aide]]、[[hyra-1-0]]、[[hyra-2-0]]、[[alphaevolve]]、[[autoresearch]]
+- 来源：[[aide]]、[[hyra-1-0]]、[[hyra-2-0]]、[[alphaevolve]]、[[autoresearch]]、[[kaggle-getting-started]]
 - 工具：[[aide-scaffold]]、[[hyra]]、[[autoresearch-repo]]
-- 概念：[[code-space-search]]、[[recursive-self-improvement]]、[[experience-bank]]、[[research-memory-tiers]]、[[tool-centric-research]]、[[evaluator-solution-co-evolution]]
-- 实践：[[research-agent-harness]]、[[evaluator-design-and-reward-hacking]]
+- 概念：[[code-space-search]]、[[recursive-self-improvement]]、[[experience-bank]]、[[research-memory-tiers]]、[[tool-centric-research]]、[[evaluator-solution-co-evolution]]、[[leaderboard-vs-cv]]
+- 实践：[[research-agent-harness]]、[[evaluator-design-and-reward-hacking]]、[[competition-ml-workflow]]
 - 对照：[[hyra-1-0-vs-2-0]]

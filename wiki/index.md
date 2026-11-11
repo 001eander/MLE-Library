@@ -24,6 +24,7 @@ tags:
 - [[autoresearch|autoresearch：让智能体夜间自主跑单 GPU 训练实验（karpathy 仓库 README 剪藏）]] — 三文件契约（人改 `program.md`、agent 改 `train.py`、`prepare.py` 禁改）、固定 5 分钟墙钟与 `val_bpb`；进度图 83 次实验 / 15 次保留已目视核查，含 `random seed` 入选一类噪声信号。
 - [[hyra-1-0|Hyra-1.0：腾讯混元的递归自我改进科研智能体（官方博客）]] — 轻量 harness + 经验库 + 双层评估循环，覆盖 AI for AI / Science / Fun 十余场景的自评结果。
 - [[hyra-2-0|Hyra 2.0：从解题到造工具（腾讯混元官方博客）]] — 多项目长周期 harness（Overall/Mission/Worker）、分层记忆与知识分级，以及 HyInv、HyPLM、HyFF、HyProver、HyQEC、旋梯手、香山七组成果。
+- [[kaggle-getting-started|Kaggle 入门指南：竞赛型 MLE 的通用流程与一次完整赛题复盘（知乎专栏剪藏）]] — 人类选手的七段流程（EDA→…→Pipeline）、XGB 调参五步、5-Fold Stacking 实现、20 种子平均 +0.0004 的自认可疑结果；代码绑定 2016–2017 年 API，已附现代等价物对照。
 
 ## 概念
 
@@ -33,11 +34,13 @@ tags:
 - [[research-memory-tiers|研究记忆分层与知识成熟度分级]] — 项目状态／agent 记忆／跨任务 Books 三层，观察/已验证/约定三级，以及 skill 沉淀。
 - [[experience-bank|经验库（Experience Bank）]] — 结构化记录 solution/日志/评分，并合成为多样化「灵感」的机制；含与 2.0 Books 的对照。
 - [[evaluator-solution-co-evolution|评估器与解的共进化]] — 无现成评估器时的双层循环，以及 2.0 把外层折成独立复核与人工审批后的新瓶颈。
+- [[leaderboard-vs-cv|排行榜与本地验证（Leaderboard vs CV）]] — 本地 CV / Public LB / Private LB 三套分数的分工；「信 CV」的前提是切分复刻真实划分结构；人类竞赛经验与 AIDE / autoresearch 的同一张力对照。
 
 ## 实践
 
 - [[research-agent-harness|科研智能体 Harness 设计]] — 五种形态：树搜索脚手架（AIDE）、单任务搜索循环（Hyra 1.0）、多项目长周期组织（2.0，含队列、唤醒、看板、审批门与证据要求）、进化式程序数据库（AlphaEvolve）与单文件贪心 + 人类维护指令（autoresearch）。
-- [[evaluator-design-and-reward-hacking|评估器设计与 reward hacking 防护]] — 1.0 的两个作弊案例、2.0 的证据提交与独立复核、AIDE 暴露的「在固定验证划分上搜索」、AlphaEvolve 的生产指标证据，以及 autoresearch 的「固定预算下的噪声选择」（含种子入选的可观测信号）。
+- [[evaluator-design-and-reward-hacking|评估器设计与 reward hacking 防护]] — 1.0 的两个作弊案例、2.0 的证据提交与独立复核、AIDE 暴露的「在固定验证划分上搜索」、AlphaEvolve 的生产指标证据、autoresearch 的「固定预算下的噪声选择」（含种子入选的可观测信号），以及 Kaggle 竞赛的「验证切分与真实划分结构不一致」。
+- [[competition-ml-workflow|竞赛型 MLE 工作流（Kaggle 类任务）]] — 七段流程的分阶段判据与时效性对照（哪些仍成立、哪些已过时）、三个张力与一个坑（特征多反变差、合并 train/test 做变换）、以及各阶段对智能体的可自动化程度。
 
 ## 工具
 
