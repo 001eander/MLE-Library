@@ -1,13 +1,13 @@
-# Knowledge Log
+# 知识日志
 
-Append-only chronological record of knowledge operations. Entries use this form:
+按时间顺序仅追加记录知识操作。条目使用以下格式：
 
 ```text
-## [YYYY-MM-DD] operation | Subject
-- Files: affected paths
-- Summary: what changed and why
-- Sources: source paths or page links
-- Review: human confirmation or dry-run status
+## [YYYY-MM-DD] operation | 主题
+- 文件：受影响的路径
+- 摘要：变更内容及原因
+- 来源：来源路径或页面链接
+- 复核：人工确认或 dry-run 状态
 ```
 
-Implementation commits are recorded by Git, not duplicated here. Read-only queries are logged only when their answers are deliberately saved into the wiki.
+实现提交由 Git 记录，不在此重复。只有刻意将只读查询的答案保存到 wiki 时，才记录该查询。

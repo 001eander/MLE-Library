@@ -32,11 +32,17 @@ You are the librarian for a personal Machine Learning Engineering knowledge base
 
 Use lowercase kebab-case filenames. Prefer updating a stable page over creating a near-duplicate. Use Obsidian Wikilinks for internal navigation and keep links valid after renames.
 
+## Language
+
+Write all human-readable wiki content in Simplified Chinese, including page titles, headings, summaries, body text, log entries, Dataview labels, and presentation copy. Keep filenames, slugs, Wikilink targets, YAML keys and enumerated values, tags, operation names, code identifiers, query field names, and source locators unchanged. Preserve an established English technical term or include it in parentheses when that improves precision.
+
+Do not translate original sources in `raw/` or deterministic extracted text. Summarize and explain sources in Chinese while keeping direct quotations and citations in their original language.
+
 Every content page has YAML frontmatter:
 
 ```yaml
 ---
-title: Page Title
+title: 页面标题
 type: concept | practice | tool | comparison | research | source
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
@@ -75,11 +81,11 @@ Use inline citations for important claims:
 
 Distinguish explicitly between:
 
-- **Source claims** reported by a source.
-- **Synthesis** inferred by the librarian across sources.
-- **Hypotheses** that still require validation.
+- **来源论述（Source claims）** reported by a source.
+- **综合（Synthesis）** inferred by the librarian across sources.
+- **假设（Hypotheses）** that still require validation.
 
-When evidence conflicts, preserve the disagreement in an `Open questions` or `Disagreements` section with citations. Never silently replace an old conclusion.
+When evidence conflicts, preserve the disagreement in a `待解问题` or `分歧` section with citations. Never silently replace an old conclusion.
 
 ## PDF ingestion
 

@@ -1,5 +1,5 @@
 ---
-title: Knowledge Index
+title: 知识索引
 type: index
 created: 2026-11-11
 updated: 2026-11-11
@@ -8,35 +8,35 @@ tags:
   - index
 ---
 
-# Knowledge Index
+# 知识索引
 
-The librarian updates this catalog whenever a page is added, renamed, or materially changed. Each entry includes a link and a one-line summary.
+每当新增、重命名或实质修改页面时，图书馆员都会更新此目录。每个条目包含一个链接和一句话摘要。
 
-## Start
+## 开始
 
-- [[overview|MLE Library Overview]] — Purpose, layers, and reading paths.
-- [[catalog|Dynamic Catalog]] — Dataview table of wiki pages and freshness metadata.
+- [[overview|MLE Library 概览]] — 用途、分层结构与阅读路径。
+- [[catalog|动态目录]] — 使用 Dataview 展示 wiki 页面及其时效性元数据的表格。
 
-## Sources
+## 来源
 
-No sources ingested yet.
+尚未收录任何来源。
 
-## Concepts
+## 概念
 
-No concept pages yet.
+尚无概念页面。
 
-## Practices
+## 实践
 
-No practice pages yet.
+尚无实践页面。
 
-## Tools
+## 工具
 
-No tool pages yet.
+尚无工具页面。
 
-## Comparisons
+## 比较
 
-No comparison pages yet.
+尚无比较页面。
 
-## Research
+## 研究
 
-No research pages yet.
+尚无研究页面。

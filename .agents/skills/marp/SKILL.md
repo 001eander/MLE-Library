@@ -17,22 +17,22 @@ marp: true
 theme: default
 size: 16:9
 paginate: true
-title: Presentation Title
+title: 演示标题
 ---
 
 <!-- _class: lead -->
 <!-- _paginate: false -->
 
-# Presentation Title
+# 演示标题
 
-Subtitle or owner
+副标题或所有者
 
 ---
 
-## First content slide
+## 第一张内容幻灯片
 
-- One main idea per slide
-- Concise supporting evidence
+- 每张幻灯片聚焦一个主旨
+- 提供简洁的论据
 ```
 
 Marp Core provides the built-in `default`, `gaia`, and `uncover` themes. Size presets are theme-dependent; `16:9` is the default choice for this project. The `marp` directive enables Marp in VS Code, while the other global and local directives also affect CLI output.
@@ -55,6 +55,7 @@ Use `<!-- class: lead -->` without the underscore only when all following slides
 
 ## Authoring rules
 
+- Write slide titles, body copy, and explanatory citations in Simplified Chinese. Preserve source quotations, source locators, and established technical terms where needed for precision.
 - Keep one main idea per slide and prefer concise bullets, diagrams, and tables over paragraphs.
 - Put source citations on the slides where claims appear and include a final sources slide with links or paths.
 - Clearly label synthesis, uncertainty, version-sensitive guidance, and hypotheses.

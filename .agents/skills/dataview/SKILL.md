@@ -5,7 +5,7 @@ description: Create and maintain Dataview DQL views and consistent YAML frontmat
 
 # Dataview
 
-Dataview is a presentation layer, not the source of truth. Keep canonical page metadata in YAML and the curated catalog in `wiki/index.md`. Prefer DQL over JavaScript for reusable views in this vault.
+Dataview is a presentation layer, not the source of truth. Keep canonical page metadata in YAML and the curated catalog in `wiki/index.md`. Prefer DQL over JavaScript for reusable views in this vault. Follow the root `AGENTS.md` language rules: use Simplified Chinese for human-readable view text and query labels while preserving metadata keys, enumerated values, field names, and source locators.
 
 ## Indexed metadata
 
@@ -85,7 +85,7 @@ Prefer DQL. Use `dataviewjs` only when DQL cannot express the view; Dataview Jav
 Catalog pages while labeling missing verification data as unknown:
 
 ```dataview
-TABLE type, updated, status, default(verified, "unknown") AS Verified
+TABLE WITHOUT ID file.link AS "页面", type AS "类型", updated AS "更新日期", status AS "状态", default(verified, "未知") AS "核验日期"
 FROM "wiki"
 WHERE type AND !contains(list("index", "overview", "view"), type)
 SORT updated DESC
@@ -95,10 +95,10 @@ Review fast-changing pages using an explicit 90-day policy. Adjust and explain t
 
 ```dataview
 TABLE WITHOUT ID
-  file.link AS "Page",
-  default(verified, "unknown") AS "Verified",
-  choice(!verified, "unknown",
-    choice(verified < date(today) - dur(90 days), "review", "current")) AS "Freshness"
+  file.link AS "页面",
+  default(verified, "未知") AS "核验日期",
+  choice(!verified, "未知",
+    choice(verified < date(today) - dur(90 days), "待复核", "近期已核验")) AS "时效状态"
 FROM "wiki/practices" OR "wiki/tools"
 WHERE status != "archived"
 SORT verified ASC
@@ -109,7 +109,7 @@ A missing `verified` field means unknown freshness, not automatically stale or c
 Summarize pages by category:
 
 ```dataview
-TABLE length(rows) AS "Pages", rows.file.link AS "Files"
+TABLE length(rows) AS "页面数", rows.file.link AS "文件"
 FROM "wiki"
 WHERE type
 GROUP BY type
