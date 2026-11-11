@@ -13,17 +13,19 @@ sources:
   - "[[kaggle-getting-started]]"
   - "[[aide]]"
   - "[[autoresearch]]"
+  - "[[sklearn-linear-models]]"
 status: draft
 verified: 2026-11-11
 applies_to:
   - 竞赛型 MLE（Kaggle 类公开榜，2016–2019 的经验）
   - AIDE（arXiv:2502.13138v1）
   - karpathy/autoresearch（README 剪藏 2026-03-07）
+  - scikit-learn 的 `*CV` 估计器与 `LassoLarsIC`（1.8.x–1.9.x，推断）
 ---
 
 # 排行榜与本地验证（Leaderboard vs CV）
 
-本页讨论一个在所有数据科学竞赛里都会出现的张力：**你优化的分数（本地交叉验证）和你被评分的分数（排行榜）不是同一个东西**。[[kaggle-getting-started]] 给出了人类选手的经验规则和一条被写在末尾、却比规则本身更重要的前提；[[aide]] 与 [[autoresearch]] 展示了同一张力在智能体场景下被放大的形态。
+本页讨论一个在所有数据科学竞赛里都会出现的张力：**你优化的分数（本地交叉验证）和你被评分的分数（排行榜）不是同一个东西**。[[kaggle-getting-started]] 给出了人类选手的经验规则和一条被写在末尾、却比规则本身更重要的前提；[[aide]] 与 [[autoresearch]] 展示了同一张力在智能体场景下被放大的形态；[[sklearn-linear-models]] 则提供了第三种代理指标来源——**内置 CV 与信息准则**，它们把验证过程藏进 `fit`，也让「换了切分」变成不可见的默认值。
 
 ## 三套分数不是一回事
 
@@ -68,6 +70,22 @@ applies_to:
 
 解释（**综合**）：在 Stacking 之前，模型家族单一，CV 的提升很可能来自对该切分特异的拟合；引入折外预测后，模型选择更多依赖「跨折稳定」的信号，代理指标与目标才重新对齐。**这只是一种解释**——来源只给了一次比赛、无对照，也可能只是因为后期改动幅度变小、噪声占比下降。
 
+## 代理指标的第三种来源：内置 CV 与信息准则
+
+上两节的代理指标都是**手写的验证流程**。sklearn 的线性模型给了第三条路：把验证做进估计器，由 `fit` 直接给出正则强度。形态有三种，性质并不相同（见 [[sklearn-linear-models]]，下表行号均指该页）：
+
+| 形态 | 例子 | 验证集 | 假设与失效条件 |
+| --- | --- | --- | --- |
+| 内置 K 折 | `LassoCV`、`ElasticNetCV`、`LogisticRegressionCV` | 训练集内的 K 折 | 与手写 K 折同源，切分是否正确仍由使用者负责（L200、L517） |
+| 内置 LOO | `RidgeCV`、`RidgeClassifierCV` | 每次留 1 个样本 | 解析可算、代价低，但 `alpha` 不能为 0（L122） |
+| 信息准则 | `LassoLarsIC`（AIC/BIC） | **无留出**，在训练集内计算 | 需正确的自由度估计、大样本渐近、真实模型在候选集内；病态问题（特征多于样本）上往往失效（L210–L212） |
+
+对本页主题的意义（**本库综合**）：
+
+1. **「CV 分数」不是一种东西**。LOO 与 K 折给出的是不同的估计量，前者的单次验证集只有 1 个样本；`RidgeCV` 默认用 LOO，`LassoCV` 默认用 K 折，两个分数直接放一起比是无意义的。这与本页「三套分数不是一回事」是同一结构，只是发生在更内层。
+2. **信息准则是更强的假设，而不是更省的 CV**。AIC/BIC 用训练集内指标 + 自由度惩罚替代留出验证，代价是它假定候选集里含真模型。在没有留出集可用的场景（数据极少）它可以救急，但它的失败模式是**静默的**——`LassoLarsIC` 不会告诉你「真实模型不在候选集内」。
+3. **内置 CV 把「切分」这个决策藏起来了**。手写 CV 时切分是显式的、可审计的；内置 CV 时它变成一个默认值。对智能体尤其危险：默认值不会被写进实验日志，改动 `cv=` 参数的成本又被压得很低，于是「换了切分」和「换了模型」在日志上长得一样。
+
 ## 同一张力在智能体场景下的放大
 
 | 形态 | 谁在优化 | 代理指标 | 外置防护 | 位置 |
@@ -93,9 +111,11 @@ applies_to:
 3. **CV 与 LB 背离到什么程度才该放弃 CV？** 来源只有「一般应该相信 CV」这一条定性规则（L166）。AIDE 的做法是干脆不让解看到最终 holdout（[[aide]], p. 5），属于换解法而不是给阈值。
 4. **「统计检验建阈值」具体怎么做？** 来源提到但未展开（L35）；L315 的 +0.0004 正是这类阈值的用例，却停在「说不清」。
 5. **智能体场景下 CV 的折数选择是否还有意义？** 5-Fold 提到 10-Fold 是为了降低单次划分的方差（L168、L298），但当搜索预算足够跑上百次时，增加折数是否比增加种子更划算，来源未讨论。
+6. **内置 CV 的 LOO 与 K 折在真实数据上差多少？** [[sklearn-linear-models]] 只说 LOO「efficient」（L122），没给方差比较；`RidgeCV` 默认 LOO 而 `LassoCV` 默认 K 折，这两个默认值是否合理来源未论证。
 
 ## 关联页面
 
-- 来源：[[kaggle-getting-started]]（核心）、[[aide]]（分位指标与外置 holdout）、[[autoresearch]]（单指标 + 高频迭代）
-- 实践：[[evaluator-design-and-reward-hacking]]（含「第六类：验证切分与真实划分结构不一致」）、[[competition-ml-workflow]]
+- 来源：[[kaggle-getting-started]]（核心）、[[aide]]（分位指标与外置 holdout）、[[autoresearch]]（单指标 + 高频迭代）、[[sklearn-linear-models]]（内置 CV 与信息准则）
+- 实践：[[evaluator-design-and-reward-hacking]]（含「第六类：验证切分与真实划分结构不一致」）、[[competition-ml-workflow]]、[[linear-models-as-baselines]]（正则强度选择的三条路）
+- 概念：[[regularization-and-sparsity]]（信息准则的假设强度）
 - 研究：[[automated-research-open-questions]]

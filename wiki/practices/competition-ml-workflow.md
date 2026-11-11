@@ -45,6 +45,8 @@ applies_to:
 
 **模型**：用 XGB 的主要理由是**速度**——「同样的数据它只需要不到一半的时间就能跑完」（L294）。对以提交次数换分数的竞赛，这是实质收益；对离线一次性建模则未必。
 
+线性/逻辑回归在这份来源里被列为「性能稍逊但适合作 Base Model」（L103–L106）。它们的当代用法与这份 2016 年清单不同：正则强度由估计器自带（`RidgeCV` / `LassoCV` / `LogisticRegressionCV`），预处理要求与默认值陷阱见 [[linear-models-as-baselines]]（依据 [[sklearn-linear-models]]）。**本库判断**：把线性模型当「特征集评估器」比当「最终模型」更匹配它在现代流程里的位置。
+
 **调参**：来源的五步（L135–L141）本质是「先粗后细 + 用早停代替固定轮数」。两条经验值值得记：RF 的 `max_features` 大约取特征数的平方根（L124）；有随机性的模型必须记录种子以便复现（L162）。
 
 **Stacking**：折外预测组装第二层特征、测试侧对各折模型取平均（L190–L194）。这是全文最经得起时间检验的一段工程细节，机制与当代实现一致。
@@ -103,4 +105,4 @@ applies_to:
 
 - 来源：[[kaggle-getting-started]]、[[aide]]
 - 概念：[[leaderboard-vs-cv]]
-- 实践：[[evaluator-design-and-reward-hacking]]、[[research-agent-harness]]
+- 实践：[[evaluator-design-and-reward-hacking]]、[[research-agent-harness]]、[[linear-models-as-baselines]]
