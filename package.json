@@ -1,0 +1,17 @@
+{
+  "name": "mle-library",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A human-supervised Machine Learning Engineering wiki with a read-only MCP interface",
+  "scripts": {
+    "mcp": "node mcp/server.mjs",
+    "search": "node lib/search.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2"
+  }
+}
