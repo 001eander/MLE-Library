@@ -27,6 +27,7 @@ tags:
 - [[kaggle-getting-started|Kaggle 入门指南：竞赛型 MLE 的通用流程与一次完整赛题复盘（知乎专栏剪藏）]] — 人类选手的七段流程（EDA→…→Pipeline）、XGB 调参五步、5-Fold Stacking 实现、20 种子平均 +0.0004 的自认可疑结果；代码绑定 2016–2017 年 API，已附现代等价物对照。
 - [[sklearn-linear-models|scikit-learn 用户指南 1.1「Linear Models」（stable 文档剪藏）]] — OLS/Ridge/Lasso/ElasticNet/LARS/OMP/贝叶斯/GLM/稳健/分位数/多项式共 13 节的估计器与求解器约定；剪藏残缺严重（折叠块全缺 29.3%、内部引用文字丢失、1.1.14 由所有者手工补入且仍有 3 处公式空缺），已附逐项外部核查表与 18 张图的目视核查。
 - [[sklearn-lda-qda|scikit-learn 用户指南 1.2「Linear and Quadratic Discriminant Analysis」（stable 文档剪藏）]] — 生成式一侧：类条件高斯 + 贝叶斯、Mahalanobis 几何与 K−1 维降维、shrinkage（Ledoit-Wolf）/OAS 与三个求解器；正文完整但**三条参考文献全丢**（被 4 段重复正文冒充）、4 处引用标记被吞；版本判定到 1.9.x（QDA 公式 1/n），已附两张图的目视读数。
+- [[sklearn-naive-bayes|scikit-learn 用户指南 1.9「Naive Bayes」（stable 文档剪藏，含所有者授权的 raw 回填）]] — 条件独立 + MAP 框架、五个变体各自的 $P(x_i\mid y)$、平滑 α（Laplace/Lidstone）与外存 `partial_fit`；抓取时**丢了 5 个 `<details>` 折叠块（318 词 ≈ 21.4%）**——CNB 权重公式与 Categorical 概率公式两个数学节、三个 References 块——已按所有者授权回填（原始 sha256 `5e0e5299…` → 现 `85c4050b…`，行号全库重写）；外部核查补 7 个文档未提的默认值与一处「`partial_fit` 实际五个类都有」的分歧。
 
 ## 概念
 
@@ -39,6 +40,7 @@ tags:
 - [[leaderboard-vs-cv|排行榜与本地验证（Leaderboard vs CV）]] — 本地 CV / Public LB / Private LB 三套分数的分工；「信 CV」的前提是切分复刻真实划分结构；人类竞赛经验与 AIDE / autoresearch 的同一张力对照，并新增内置 CV（LOO 与 K 折）与 AIC/BIC 作为第三种代理指标来源。
 - [[regularization-and-sparsity|正则化与稀疏性（Regularization and Sparsity）]] — 五种惩罚项的目标对照、软阈值与 ARD 两条稀疏来源、$ℓ_2$ 的贝叶斯读法、**协方差收缩（shrinkage/reg_param）作为第二个正则化面**、AIC/BIC 的假设强度，以及「稀疏 ≠ 不重要」的三条边界。
 - [[gaussian-discriminant-analysis|高斯判别分析（Gaussian Discriminant Analysis）]] — 生成式分类器：`GaussianNB` ⊂ LDA ⊂ QDA 的嵌套、Mahalanobis 下的线性决策面、白化 + 对类均值做 PCA 的降维、参数个数随 $d$ 的二次增长与协方差收缩的动机。
+- [[naive-bayes|朴素贝叶斯（Naive Bayes）]] — 条件独立买到的两个好处（$O(d)$ 参数、可增量）与代价（相关性不可见）；五个变体各自的分布假设与 4 个易读漏的点；「分类器好、估计量坏」派生出的五条用法受影响度；平滑 α 与 `var_smoothing` 作为第三个正则化面（与 shrinkage/reg_param 的区别）。
 
 ## 实践
 
@@ -52,7 +54,7 @@ tags:
 - [[aide-scaffold|AIDE 脚手架（aideml）]] — 开源脚手架：解树、三算子、摘要算子的实现形态，作为基线的用法与版本风险。
 - [[autoresearch-repo|autoresearch 仓库]] — 单卡 nanochat 简化实现：三文件契约、快速开始、小机器降规模参数表 7 条与使用边界；未固定 commit，仅对 2026-03 剪藏负责。
 - [[hyra|Hyra（Hunyuan Research Agent）]] — 腾讯混元科研智能体的双版本页：1.0 单循环架构、2.0 多项目架构、两代结果表与使用边界。
-- [[scikit-learn|scikit-learn（工具页）]] — 18 篇同批剪藏的模块覆盖表；`linear_model` 与 `discriminant_analysis` 两个模块的估计器/求解器矩阵、16 条会沉默改变结果的默认值（class_weight×C、`RidgeCV` 的 LOO、`svd` 不能配 shrinkage、`priors` 默认类比例等）与版本边界（linear_model ≥1.8、discriminant_analysis 1.9.x）。
+- [[scikit-learn|scikit-learn（工具页）]] — 18 篇同批剪藏的模块覆盖表；`linear_model` / `discriminant_analysis` / `naive_bayes` 三个模块的估计器矩阵、22 条会沉默改变结果的默认值（class_weight×C、`RidgeCV` 的 LOO、`svd` 不能配 shrinkage、`priors` 默认类比例、`var_smoothing` 默认方差下限、`binarize=0.0` 静默二值化、`norm=False` 不归一化等）与版本边界（linear_model ≥1.8、discriminant_analysis 与 naive_bayes 1.9.x）。
 
 ## 比较
 

@@ -11,10 +11,11 @@ tags:
   - classifier
 sources:
   - "[[sklearn-lda-qda]]"
+  - "[[sklearn-naive-bayes]]"
 status: draft
 verified: 2026-11-11
 applies_to:
-  - scikit-learn 1.9.x 的 discriminant_analysis 模块（据 1.2 节剪藏判定）
+  - scikit-learn 1.9.x 的 discriminant_analysis 与 naive_bayes 模块（推断）
 ---
 
 # 高斯判别分析
@@ -39,9 +40,11 @@ applies_to:
 
 | 成员 | 类协方差假设 | 决策面 | 来源 |
 | --- | --- | --- | --- |
-| `GaussianNB` | $\Sigma_k$ 为**对角**阵（各类、各特征独立） | 二次（但轴向受限） | L60–L63 |
+| `GaussianNB` | $\Sigma_k$ 为**对角**阵（各类、各特征独立） | 二次（但轴向受限） | L60–L63；[[sklearn-naive-bayes]], L51–L57 |
 | `LinearDiscriminantAnalysis` | **所有类共享**同一个 $\Sigma$ | 线性 | L67、L83 |
 | `QuadraticDiscriminantAnalysis` | 每类自己的 $\Sigma_k$，无约束 | 二次 | L52–L58 |
+
+`GaussianNB` 的完整生成假设在 [[sklearn-naive-bayes]]：逐特征高斯，$\mu_y,\sigma_y$ **用 MLE**（L57），且外部核查发现它额外有一个方差下限 `var_smoothing=1e-9`（见下文「协方差怎么估」）。完整的朴素贝叶斯族（多项/伯努利/类别/补集）见 [[naive-bayes]]。
 
 约束越少、自由度越多，但**每一层多出的自由度都要用样本去买**。下图是官方示例的读数（**本库目视核查** `raw/assets/sklearn-lda-qda/sphx_glr_plot_lda_qda_001.png`）：第 1 行（球状等协方差）与第 2 行（等协方差、非球状）里 QDA 的边界与 LDA 几乎重合；只有第 3 行协方差不同时，QDA 才出现真正不同的双曲线边界。
 
@@ -99,6 +102,9 @@ LDA 同时是一个降维器，其几何链条（[[sklearn-lda-qda]], L87–L93�
 | `shrinkage` | 每个 $\Sigma$（LDA 是共享的那个） | 向"对角方差"收缩；`'auto'` = Ledoit-Wolf 解析解 | L97–L99 |
 | `covariance_estimator` | 同上 | 换任意具备 `fit` + `covariance_` 的估计器（如 OAS） | L103 |
 | QDA `reg_param` | 每个类协方差 | $S^2\leftarrow(1-\rho)S^2+\rho I$（**外部核查**，API 页） | 见 [[sklearn-lda-qda]] 转换损失第 4 条 |
+| `GaussianNB` 的 `var_smoothing` | 每个方差 | 加方差下限 $\epsilon=$ `var_smoothing`×$\max_j\mathrm{var}(X_j)$（**外部核查**，源码 1.9.1） | [[sklearn-naive-bayes]] 待解问题 4 |
+
+**本库判断**：`var_smoothing` 不是 `shrinkage` 的同义词。收缩把协方差拉向对角/单位阵（会改非对角项的位置）；`GaussianNB` 本来就只有对角项，`var_smoothing` 只是给方差加一个**正的下界**，防止零方差导致除零与过度自信。两者形式相似、语义不同，不可当同一个超参对待。
 
 **关键口径（本库综合）**：`shrinkage='auto'` 的「optimal」指的是**协方差估计误差**，不是分类准确率——来源自己用"MSE 更小"来论证 OAS 更好（L101）。因此收缩强度本身应被当作一个待验证的建模选择，而不是已知最优。
 
@@ -115,11 +121,11 @@ LDA 同时是一个降维器，其几何链条（[[sklearn-lda-qda]], L87–L93�
 
 - LDA 与 **logistic 回归**在什么条件下等价/更优？ESL §4.3 是标准答案，但本库没有该文献（剪藏的参考文献丢失）。需要另找来源。
 - 收缩强度与分类准确率的一致性在什么数据规模下成立？（见 [[sklearn-lda-qda]] 待解问题 1）
-- `GaussianNB` 的完整行为（`var_smoothing`、部分拟合）在同批未入库的 1.9 节里，本页对它的描述只到"对角协方差"为止。
+- `GaussianNB` 的完整行为（`var_smoothing`、`partial_fit`）已随 [[sklearn-naive-bayes]] 入库，本页只保留它作为“对角特例”的角色；模型族层面的细节见 [[naive-bayes]]。
 
 ## 关联页面
 
-- 来源：[[sklearn-lda-qda]]
+- 来源：[[sklearn-lda-qda]]、[[sklearn-naive-bayes]]
 - 工具：[[scikit-learn]]
-- 概念：[[regularization-and-sparsity]]（系数惩罚 vs 协方差收缩）、[[leaderboard-vs-cv]]（收缩强度该怎么选，最终仍是验证问题）
+- 概念：[[naive-bayes]]（朴素贝叶斯族与平滑）、[[regularization-and-sparsity]]（系数惩罚 vs 协方差收缩）、[[leaderboard-vs-cv]]（收缩强度该怎么选，最终仍是验证问题）
 - 实践：[[linear-models-as-baselines]]（线性/生成式基线的定位）

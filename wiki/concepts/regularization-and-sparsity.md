@@ -12,12 +12,13 @@ tags:
 sources:
   - "[[sklearn-linear-models]]"
   - "[[sklearn-lda-qda]]"
+  - "[[sklearn-naive-bayes]]"
   - "[[kaggle-getting-started]]"
 status: draft
 verified: 2026-11-11
 applies_to:
   - scikit-learn 1.8.x – 1.9.x 的 linear_model 模块（推断）
-  - scikit-learn 1.9.x 的 discriminant_analysis 模块（协方差收缩部分）
+  - scikit-learn 1.9.x 的 discriminant_analysis 与 naive_bayes 模块（平滑部分）
 ---
 
 # 正则化与稀疏性
@@ -100,6 +101,24 @@ $$w_j = \frac{S\left(x_j^{T}\left(y - X_{-j}w_{-j}\right), \alpha\right)}{\|x_j\
 
 **实践含义（本库综合）**：协方差收缩不能拿来“选特征”。它改变的是模型对类内散布形状的信任度，不是“用不用某个特征”。
 
+## 第三个正则化面：平滑（smoothing）
+
+第三个对象的正则化出现在朴素贝叶斯里（[[sklearn-naive-bayes]]）：它不惩罚系数、也不收缩协方差，而是**给频率或方差加一个正的下界**，目的是防零。
+
+| | 系数惩罚 | 协方差收缩 | 平滑 |
+| --- | --- | --- | --- |
+| 作用对象 | $w$ | 协方差阵 | 频率 $\hat\theta$ / 方差 $\sigma_y^2$ |
+| 解决的问题 | 过拟合/共线/筛选 | 协方差估计不可靠 | **零概率**与零方差 |
+| 强度参数 | `alpha`、`C` | `shrinkage`、`reg_param` | 离散族的 `alpha`；`GaussianNB.var_smoothing` |
+| 能否产生 0 | Lasso 能 | 不能 | 不能（恰恰相反：它防止 0） |
+
+两个具体口径：
+
+1. **`alpha` 是按特征数缩放的**。公式分母是 $N_y+\alpha n$（[[sklearn-naive-bayes]], L78–L82），所以同一个 `alpha` 在 1k 与 50k 词表上的有效强度不同——**本库综合**，与“跨估计器 alpha 不可比”同构。
+2. **`var_smoothing` 加的是方差下限**，不是向对角收缩（源码 1.9.1：`epsilon_ = var_smoothing × max(var(X, axis=0))`）。把它当“`GaussianNB` 的 shrinkage”是错的。
+
+**未收录**：平滑到底对应什么先验（离散族通常读作 Dirichlet、`var_smoothing` 读作方差的弱先验）本来源**未讨论**，因此本库不作断言，与 Lasso 的 Laplace 先验同列为“未收录”。
+
 ## 正则强度与自由度：为什么信息准则会失效
 
 来源对 `LassoLarsIC`（AIC/BIC）的失效条件写得很具体：这类准则「需要正确的自由度估计、来自大样本的渐近结果、假设真实模型在候选集内」，并且「在病态问题（如特征多于样本）上往往会失效」（L212）。同一段还说它们在**训练集内**计算（L210）。
@@ -116,8 +135,8 @@ $$w_j = \frac{S\left(x_j^{T}\left(y - X_{-j}w_{-j}\right), \alpha\right)}{\|x_j\
 
 ## 关联页面
 
-- 来源：[[sklearn-linear-models]]、[[sklearn-lda-qda]]
+- 来源：[[sklearn-linear-models]]、[[sklearn-lda-qda]]、[[sklearn-naive-bayes]]
 - 工具：[[scikit-learn]]
 - 实践：[[linear-models-as-baselines]]（尺度、共线、五个坑）、[[competition-ml-workflow]]（特征选择在竞赛流程里的位置）
-- 概念：[[gaussian-discriminant-analysis]]（协方差为何需要收缩：参数个数与样本量的仗）、[[leaderboard-vs-cv]]（代理指标的假设强度）
+- 概念：[[gaussian-discriminant-analysis]]（协方差为何需要收缩：参数个数与样本量的仗）、[[naive-bayes]]（平滑与“坏估计量”）、[[leaderboard-vs-cv]]（代理指标的假设强度）
 - 对照：[[kaggle-getting-started]] 里「特征越多越好」与「特征多反而变差」的张力（`raw/articles/Kaggle 入门指南.md:77`、`:290`）——正则化是"让模型挑特征"的一种实现，但不解决"新特征是否引入噪声"的问题

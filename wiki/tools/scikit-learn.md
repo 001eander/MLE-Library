@@ -1,5 +1,5 @@
 ---
-title: "scikit-learn（工具页）：linear_model 与 discriminant_analysis 的估计器矩阵、默认值与版本边界"
+title: "scikit-learn（工具页）：linear_model / discriminant_analysis / naive_bayes 的估计器矩阵、默认值与版本边界"
 type: tool
 created: 2026-11-11
 updated: 2026-11-11
@@ -8,21 +8,24 @@ tags:
   - scikit-learn
   - linear-model
   - discriminant-analysis
+  - naive-bayes
   - tooling
 sources:
   - "[[sklearn-linear-models]]"
   - "[[sklearn-lda-qda]]"
+  - "[[sklearn-naive-bayes]]"
 status: draft
 verified: 2026-11-11
 applies_to:
   - scikit-learn 1.8.x – 1.9.x（linear_model：据官方 1.8.0 / 1.9.1 页比对推断，剪藏未记录版本）
   - scikit-learn 1.9.x（discriminant_analysis：QDA 协方差公式写 1/n，1.8 及更早写 1/(n-1)，见 [[sklearn-lda-qda]]）
-  - 本文只覆盖 `sklearn.linear_model` 与 `sklearn.discriminant_analysis` 两个模块
+  - scikit-learn 1.9.x（naive_bayes：仅两个措辞级证据，推断，见 [[sklearn-naive-bayes]] 的版本判定）
+  - 本文只覆盖 `sklearn.linear_model`、`sklearn.discriminant_analysis` 与 `sklearn.naive_bayes` 三个模块
 ---
 
 # scikit-learn（工具页）
 
-本页记录 scikit-learn 的**当前行为**：模块里有哪些估计器、默认值是什么、哪些默认值会沉默地改变结果。事实来自 [[sklearn-linear-models]]（官方用户指南 1.1 节）与 [[sklearn-lda-qda]]（官方用户指南 1.2 节），引用写作 `[[sklearn-linear-models]], L146`。
+本页记录 scikit-learn 的**当前行为**：模块里有哪些估计器、默认值是什么、哪些默认值会沉默地改变结果。事实来自 [[sklearn-linear-models]]（官方用户指南 1.1 节）、[[sklearn-lda-qda]]（1.2 节）与 [[sklearn-naive-bayes]]（1.9 节），引用写作 `[[sklearn-linear-models]], L146`。
 
 ## 收录范围与覆盖状态
 
@@ -34,7 +37,7 @@ applies_to:
 | 1.2 LDA / QDA | `sklearn.discriminant_analysis` | **已入库**（本页 + [[gaussian-discriminant-analysis]]，来源页 [[sklearn-lda-qda]]） |
 | 1.4 Support Vector Machines | `sklearn.svm` | 未入库 |
 | 1.6 Nearest Neighbors | `sklearn.neighbors` | 未入库 |
-| 1.9 Naive Bayes | `sklearn.naive_bayes` | 未入库 |
+| 1.9 Naive Bayes | `sklearn.naive_bayes` | **已入库**（本页 + [[naive-bayes]]，来源页 [[sklearn-naive-bayes]]） |
 | 1.10 Decision Trees | `sklearn.tree` | 未入库 |
 | 1.11 Ensembles | `sklearn.ensemble` | 未入库 |
 | 1.13 Feature selection | `sklearn.feature_selection` | 未入库 |
@@ -96,6 +99,23 @@ applies_to:
 | `'lsqr'` | 仅 LDA | 是 | 否 | 是 | 是（解 $\Sigma\omega=\mu$，不求逆） |
 | `'eigen'` | LDA、QDA | 是 | LDA | 是（QDA 唯一可用） | 是（高维不适用） |
 
+## 估计器矩阵（naive_bayes）
+
+五个估计器共享同一套“条件独立 + MAP”框架，差别只在 $p(x_i\mid y)$ 的分布（[[sklearn-naive-bayes]], L36）。构造参数出自官方 API 页与 1.9.1 源码（**外部核查**，不在剪藏内），文档位置指回剪藏。
+
+| 估计器 | $p(x_i\mid y)$ | 输入要求 | 构造参数（默认值） | `partial_fit` | 文档位置 |
+| --- | --- | --- | --- | --- | --- |
+| `GaussianNB` | 高斯，$\mu_y,\sigma_y$ 用 MLE | 连续特征 | `priors=None`、`var_smoothing=1e-9` | 支持（自有实现） | L51–L57 |
+| `MultinomialNB` | 多项（计数） | 非负计数 / tf-idf | `alpha=1.0`、`fit_prior=True`、`class_prior=None`、`force_alpha=True` | 支持（继承） | L74–L84 |
+| `ComplementNB` | 多项，统计量取**类补集** | 同上 | 同上 + `norm=False` | 支持（继承） | L88–L112 |
+| `BernoulliNB` | 伯努利（二值） | 0/1，或由 `binarize` 转换 | 同上 + `binarize=0.0` | 支持（继承） | L122–L132 |
+| `CategoricalNB` | 逐特征类别分布 | **已编码**为 $0..n_i-1$ | 同上 + `min_categories=None` | 支持（覆写） | L147–L161 |
+
+两点结构性事实：
+
+- **`GaussianNB` 是 QDA 的对角特例**（[[sklearn-lda-qda]], L60–L63），参数 $2Kd+K-1$（[[gaussian-discriminant-analysis]] 的推导）——三者嵌套关系不变。
+- **五个都有 `partial_fit`**（外部核查：`_BaseDiscreteNB.partial_fit` 被三个离散类继承，`CategoricalNB` 自行覆写），而文档 L165 仍只列了三类——已知分歧，记录在 [[sklearn-naive-bayes]]。首次调用必须传 `classes`（L167）。
+
 ## 会沉默改变结果的默认值
 
 按"踩到才会发现"的顺序排：
@@ -120,23 +140,34 @@ LDA / QDA 一侧的默认值陷阱（引用 `[[sklearn-lda-qda]], L…`；标「
 15. **QDA 的 `reg_param` 与 `shrinkage` 是两个旋钮**（外部核查）：收缩终点分别是单位阵与对角方差，默认都是“不收缩”（`None` / `0.0`）。
 16. **`store_covariance` 默认 `False`**（外部核查）：LDA 在 `svd` 下 `covariance_` 不存在，QDA 任何情况下都要显式开启——想检查协方差形状时容易 AttributeError。
 
+朴素贝叶斯一侧（引用 `[[sklearn-naive-bayes]], L…`；标「外部核查」的取自 API 页与 `sklearn/naive_bayes.py` @ 1.9.1）：
+
+17. **`alpha` 默认 `1.0`，即 Laplace 平滑**。文档定义了 Laplace/Lidstone 两种名字（L84）但没说默认就是前者；`alpha=0` 是合法的（`force_alpha=True`），会真的产生零概率。
+18. **`fit_prior=True` 默认从数据学类先验**（外部核查），与文档 L34 的“类比例”一致——所以重采样后再 `fit`，决策阈值会跟着漂。这与 LDA/QDA 的 `priors` 是同一个陷阱。
+19. **`GaussianNB.var_smoothing=1e-9` 给方差加下限**（外部核查）：`epsilon_ = var_smoothing × max(var(X, axis=0))` 被加到每个方差上。文档完全不提这个参数，却默认开着——小样本 / 低方差特征上会改变结果。
+20. **`BernoulliNB(binarize=0.0)` 默认把 >0 的值二值化**（外部核查）。`binarize=None` 才表示“输入已二值”；把 tf-idf 或计数直接喂进去会被静默压成 0/1，从而变成与 `MultinomialNB` 完全不同的模型。
+21. **`ComplementNB(norm=False)` 默认不做权重归一化**（外部核查），而文档 L103 的三步公式里包含按 $\sum_j\lvert w_{cj}\rvert$ 归一化——按文档实现和用默认参数跑不是同一件事。
+22. **`CategoricalNB` 要求每个特征已编码为 $0..n_i-1$**（L161），且 `min_categories=None`（外部核查）时类别数从训练集推断；未见类别与编码不一致的行为文档未说明。
+
 ## 版本边界
 
 - `linear_model` 部分对应**官方 1.8–1.9.1 的 stable 文档**。1.9 重写了 1.1.3.1 gap safe screening 的正文，1.7.2 及更早没有这一小节 → 引用该小节时应注明版本。
 - `discriminant_analysis` 部分对应 **1.9.x**：1.9 把 QDA 的 SVD 推导从 $\frac{1}{n-1}X_k^{T}X_k$ 改为 $\frac{1}{n}X_k^{T}X_k$（与实现的最大似然估计一致），1.8 及更早仍是 $\frac{1}{n-1}$。两份剪藏因此可互证版本：1.1 判到 ≥1.8、1.2 判到 1.9.x（见 [[sklearn-lda-qda]] 的版本判定表）。
+- `naive_bayes` 部分判为 **1.9.x，但证据弱**：1.8→1.9.1 在本节只改了 `one dimensional` → `one-dimensional`、`through \(x_n\), :` → `through \(x_n\):` 两处措辞。功能层面两版无差别，因此上面 17–22 条的默认值结论不依赖这条判定。
 - 剪藏里 logistic 的惩罚只通过 `C` 与 `l1_ratio` 表达（L473），没有出现 `penalty=` 参数的说明；这与旧版本 docstring 的写法不同。**本文不对 `penalty=` 的弃用状态下结论**，需要时查目标版本的 API 文档。
 - `np.float64(...)` 形式的 doctest 输出（L84）要求 NumPy ≥ 2 的 repr 习惯，与代码行为无关。
 
 ## 使用边界
 
-- 本页只覆盖线性模型与判别分析。缺失值、编码、缩放、Pipeline、CV 切分、指标都在未入库的章节里（见上面覆盖表）。`sklearn.naive_bayes` 只在 1.2 节里以「QDA + 对角协方差」的等价关系出现，其自身参数与增量学习接口本页不覆盖（未入库、未核查）。
+- 本页只覆盖线性模型、判别分析与朴素贝叶斯。缺失值、编码、缩放、Pipeline、CV 切分、指标都在未入库的章节里（见上面覆盖表）。特征工程与向量化（8.2/8.3）未读，所以本页**不提供** CountVectorizer / TfidfVectorizer 的用法。
+- 1.9 节的用户指南**不覆盖** `alpha`、`fit_prior`、`class_prior`、`var_smoothing`、`binarize`、`norm`、`min_categories` 七个参数；本页第 17–22 条全部来自 API 页或源码（外部核查），不是剪藏论述。
 - 1.2 节的用户指南**不覆盖** `priors`、`reg_param`、`store_covariance`、`tol` 四个参数；本页第 13、15、16 条与估计器矩阵中这些项全部来自官方 API 页（外部核查），不是剪藏的论述（第 14 条的两个估计器来自 L101–L103）。
 - 官方页有 29.3% 的正文在折叠块里，剪藏全缺（详见 [[sklearn-linear-models]] 的「转换损失与外部核查」）。本页因此**不声称穷尽了文档的所有约束**：`Solvers’ details`、`Practical considerations` 里的细则（如 `l1_min_c`、GLM 的 exposure 用法）本页没有。
 - 稳健回归的取舍（RANSAC / Theil-Sen / Huber）不宜按一句话规则选，见 [[linear-models-as-baselines]] 里由官方示例图读数得到的反例。
 
 ## 关联页面
 
-- 来源：[[sklearn-linear-models]]、[[sklearn-lda-qda]]
+- 来源：[[sklearn-linear-models]]、[[sklearn-lda-qda]]、[[sklearn-naive-bayes]]
 - 实践：[[linear-models-as-baselines]]
-- 概念：[[regularization-and-sparsity]]、[[gaussian-discriminant-analysis]]、[[leaderboard-vs-cv]]
+- 概念：[[regularization-and-sparsity]]、[[gaussian-discriminant-analysis]]、[[naive-bayes]]、[[leaderboard-vs-cv]]
 - 对照来源：[[kaggle-getting-started]]（2016 年的 sklearn 用法，多数 API 已移除）
