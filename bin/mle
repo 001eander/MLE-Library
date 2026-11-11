@@ -39,11 +39,13 @@ require_command() {
   command -v "$1" >/dev/null 2>&1 || fail "required command not found: $1"
 }
 
+# --no-skills drops every discovered skill, including ~/.agents/skills and
+# ~/.pi/agent/skills. Only the project's own skills are passed back in.
 skill_args() {
   PI_SKILL_ARGS=(
-    --skill "$ROOT/skills/obsidian"
-    --skill "$ROOT/skills/marp"
-    --skill "$ROOT/skills/dataview"
+    --skill "$ROOT/.agents/skills/obsidian"
+    --skill "$ROOT/.agents/skills/marp"
+    --skill "$ROOT/.agents/skills/dataview"
   )
 }
 
@@ -165,7 +167,7 @@ run_doctor() {
     fi
   done
   local path
-  for path in AGENTS.md wiki/index.md wiki/log.md skills/obsidian/SKILL.md skills/marp/SKILL.md skills/dataview/SKILL.md mcp/server.mjs; do
+  for path in AGENTS.md wiki/index.md wiki/log.md .agents/skills/obsidian/SKILL.md .agents/skills/marp/SKILL.md .agents/skills/dataview/SKILL.md mcp/server.mjs; do
     if [[ -f "$ROOT/$path" ]]; then
       printf 'ok           %s\n' "$path"
     else
