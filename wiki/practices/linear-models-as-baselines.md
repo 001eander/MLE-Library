@@ -1,5 +1,5 @@
 ---
-title: "把线性模型当基线：预处理约束、正则强度选择与常见坑"
+title: "把线性模型当基线：预处理约束、正则强度选择与常见坑（含 LDA/QDA 生成式对照）"
 type: practice
 created: 2026-11-11
 updated: 2026-11-11
@@ -12,11 +12,13 @@ tags:
   - workflow
 sources:
   - "[[sklearn-linear-models]]"
+  - "[[sklearn-lda-qda]]"
 status: draft
 verified: 2026-11-11
 applies_to:
-  - scikit-learn 1.8.x – 1.9.x（推断，见 [[sklearn-linear-models]] 的版本判定）
-  - 表格型中小规模数据上的线性/广义线性基线
+  - scikit-learn 1.8.x – 1.9.x（linear_model；推断，见 [[sklearn-linear-models]] 的版本判定）
+  - scikit-learn 1.9.x（discriminant_analysis，见 [[sklearn-lda-qda]] 的版本判定）
+  - 表格型中小规模数据上的线性/生成式基线
 ---
 
 # 把线性模型当基线
@@ -31,6 +33,62 @@ applies_to:
 - **它们是唯一有"内置验证"的估计器族**。这一点决定了它们在流水线里的用途：不是"最后可能赢的模型"，而是**给特征集和切分方式定标尺的模型**。
 
 来源对线性模型的定位也一致：[[kaggle-getting-started]] 把 Linear/Logistic Regression 列为「性能稍逊但适合作 Base Model」（`raw/articles/Kaggle 入门指南.md:103`），本来源则给出这些 Base Model 的当代用法。
+
+## 生成式基线：LDA / QDA
+
+除了判别式的 `Ridge` / `LogisticRegression`，还有一族同样是闭式、同样零调参的基线：LDA / QDA（[[sklearn-lda-qda]]，机制见 [[gaussian-discriminant-analysis]]）。它们属于“第二个零成本对照”，且与判别式基线的失败方式不同。
+
+### 什么时候先试它
+
+| 情形 | 为何 LDA/QDA 合适 | 依据 |
+| --- | --- | --- |
+| 闭式、无迭代、可复现 | 只需均值、协方差、类比例 | [[sklearn-lda-qda]], L12、L113 |
+| 多类且类数多 | 「inherently multiclass」，不需要 OvR | L12、L113 |
+| 特征数 ≫ 样本数 | `svd` 求解器**不构造协方差矩阵** | L115 |
+| 类内协方差形状确实不同 | QDA 的二次面才有内容（否则等于 LDA） | L52–L58；图 1 读数 |
+| 需要“可分方向投影”而不是黑箱特征 | LDA 的 `transform` 直接给判别子空间 | L24–L26、L87–L93 |
+
+### 唯一的真正开关：协方差怎么估
+
+基础模型没有正则强度可调，但**协方差估计方式**是一个结构选择（它比 `alpha` 更难被发现，因为默认值就是“不收缩”）：
+
+| 选项 | 写法 | 约束 |
+| --- | --- | --- |
+| 经验协方差（默认） | `shrinkage=None` | LDA 用 `svd` 即可；小样本下直接崩（见图 2） |
+| Ledoit-Wolf 自动收缩 | `shrinkage='auto'` + `solver='lsqr'`/`'eigen'` | `svd` **不支持** shrinkage（L97） |
+| 固定收缩 | `shrinkage=λ∈(0,1)` | 同上；λ=1 等价于“只保留对角方差” |
+| 自定义估计器（如 OAS） | `covariance_estimator=OAS()` | 与 `shrinkage` 互斥（L103） |
+| QDA 专用 | `reg_param=ρ` | 收缩到单位阵（外部核查，API 页） |
+
+图 2（`raw/assets/sklearn-lda-qda/sphx_glr_plot_lda_001.png`，**本库目视读数**）说明了这件事有多要紧：
+
+| `n_features / n_samples` | 无收缩 LDA | LDA + Ledoit-Wolf | LDA + OAS |
+| --- | --- | --- | --- |
+| ≈0.0 | ≈0.97 | ≈0.97 | ≈0.97 |
+| ≈1.0 | ≈0.77 | ≈0.955 | ≈0.96 |
+| ≈2.0 | **低于 0.65（已出图）** | ≈0.93 | ≈0.94 |
+| ≈3.5 | 不可用 | ≈0.89 | ≈0.92 |
+
+读法：**维度越接近（或超过）样本量，“不收缩”就不再是一个保守选项，而是一个错误选项**。所以跑 LDA/QDA 基线时应该直接跑三条：默认、`'auto'`、`OAS()`，而不是只跑默认。
+
+### 三个容易踩的默认值
+
+1. **`shrinkage='auto'` 必须换 solver**：文档只说“shrinkage 只在 `lsqr`/`eigen` 下有效”（L97），实现层会直接抛 `NotImplementedError("shrinkage not supported with 'svd' solver.")`（**外部核查**：`sklearn/discriminant_analysis.py` 1.9.X 分支）。换 solver 是必需的，不是优化。
+2. **`n_components` 不影响预测**（L26）。想用它提分是无效操作；它只决定 `transform` 后的维度（上限 `n_classes-1`）。
+3. **`priors` 默认取训练集类比例**（外部核查）。做过采样/欠采样后，决策阈值会跟着漂——不平衡数据上要么显式设 `priors`，要么用 `predict_proba` + 自定义阈值。
+
+### 尺度：与惩罚模型相反的直觉
+
+判别式线性模型吃尺度（$ℓ_1$/$ℓ_2$ 与 `sag` 都依赖缩放，见下节）。LDA/QDA 在**不收缩**时理论上对特征仿射变换等变（Mahalanobis 距离本身尺度不变，L73）——所以“标准化后才有意义”在它们身上不成立。**但**（**假设，待验证**）：`shrinkage` / `reg_param` 的收缩终点是“对角阵 / 单位阵”，这两者**不是**仿射等变的，因此**一旦启用收缩，结果又会变回尺度依赖**。文档完全未讨论这一点，使用收缩时保守做法仍是先标准化。
+
+### 成本
+
+文档未给复杂度（L113 只说“需要算 log 后验，依赖先验、均值、协方差”）。可确定的两点：
+
+- `svd` 求解器不显式构造 $\Sigma$，因此高维下更省（L115）；
+- `lsqr`/`eigen` 必须算出协方差，高维下不适用（L117、L119）。
+
+**本库综合**：`svd` 路径的主要成本是一次 SVD，没有迭代与 CV 循环的重复拟合，因此在同一特征集上，LDA 单次 `fit` 通常比带内置 CV 的 `LogisticRegression` 便宜；但这是定性推理，本库无可引的计时数据。
 
 ## 三条硬约束
 
@@ -120,6 +178,7 @@ applies_to:
 | 环节 | 可自动化程度 | 依据与风险 |
 | --- | --- | --- |
 | 跑线性基线 | **高** | 一次 `fit`，无随机性（除 SGD/RANSAC） |
+| 跑 LDA/QDA 基线 | **高**，但需跑三条 | 闭式无随机性；但“默认 / `'auto'` / `OAS()`”三种协方差估计的差别可达 0.2 准确率（图 2） |
 | 预处理 | 中 | 标准化必须**在 CV 内 fit**，否则泄漏；这是 agent 最常犯的错（本库判断，非来源论述） |
 | alpha / C 选择 | **高** | 内置 CV 一步到位；但网格量级依赖预处理，换特征就得重扫 |
 | 稳健回归选型 | 低—中 | 官方一句话规则与自家示例有冲突（见上），需要看离群点幅度 |
@@ -133,11 +192,13 @@ applies_to:
 - **标准化前后最优 `alpha` 的换算关系**有闭式吗？若有，agent 可以省掉重扫；文档未提。
 - **`RidgeCV` 的 LOO vs K 折在真实数据上的差异有多大**？文档只说 LOO "efficient"，没给方差比较。
 - **Theil-Sen 在小样本上的成本**是否可以接受？官方示例 0.15s 是单一数据规模下的读数。
+- **LDA/QDA 与 logistic 回归在什么数据上互有胜负**？ESL §4.3 是标准答案，但本库没有该文献（[[sklearn-lda-qda]] 的参考文献在剪藏时丢失），需另找来源。
+- **启用收缩后 LDA 是否真的变成尺度依赖？** 这是本页唯一的“假设”级论断，需要实验确认（见 [[sklearn-lda-qda]] 待解问题 3）。
 - 线性模型与 GBDT 的 CV 差值在什么数据规模上才值得转向非线性模型？本库无来源，需要外部证据。
 
 ## 关联页面
 
-- 来源：[[sklearn-linear-models]]、[[kaggle-getting-started]]
+- 来源：[[sklearn-linear-models]]、[[sklearn-lda-qda]]、[[kaggle-getting-started]]
 - 工具：[[scikit-learn]]
-- 概念：[[regularization-and-sparsity]]、[[leaderboard-vs-cv]]
+- 概念：[[regularization-and-sparsity]]、[[gaussian-discriminant-analysis]]、[[leaderboard-vs-cv]]
 - 实践：[[competition-ml-workflow]]（七段流程与阶段自动化程度）、[[evaluator-design-and-reward-hacking]]（验证切分与代理指标）

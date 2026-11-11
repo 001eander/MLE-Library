@@ -11,16 +11,18 @@ tags:
   - feature-selection
 sources:
   - "[[sklearn-linear-models]]"
+  - "[[sklearn-lda-qda]]"
   - "[[kaggle-getting-started]]"
 status: draft
 verified: 2026-11-11
 applies_to:
   - scikit-learn 1.8.x – 1.9.x 的 linear_model 模块（推断）
+  - scikit-learn 1.9.x 的 discriminant_analysis 模块（协方差收缩部分）
 ---
 
 # 正则化与稀疏性
 
-本页整理线性模型里"惩罚项"这一族概念：$ℓ_2$ 与 $ℓ_1$ 各自改变什么、稀疏性从哪里来、以及为什么"系数为 0"不能直接读成"该特征不重要"。事实来自 [[sklearn-linear-models]]，引用写作 `[[sklearn-linear-models]], L146`。
+本页整理线性模型里"惩罚项"这一族概念：$ℓ_2$ 与 $ℓ_1$ 各自改变什么、稀疏性从哪里来、以及为什么"系数为 0"不能直接读成"该特征不重要"。事实来自 [[sklearn-linear-models]]，引用写作 `[[sklearn-linear-models]], L146`；协方差收缩一节来自 [[sklearn-lda-qda]]（引用写作 `[[sklearn-lda-qda]], L97`）。
 
 ## 五种惩罚，一张表
 
@@ -67,6 +69,37 @@ $$w_j = \frac{S\left(x_j^{T}\left(y - X_{-j}w_{-j}\right), \alpha\right)}{\|x_j\
 
 由此得出一条**实践判据（本库综合）**：如果目的是"解释哪几个特征在起作用"，Lasso 的单次解不足以支撑结论；如果目的是"减少特征数以便训练更快/更稳"，Lasso 足够，因为不稳定只影响"选了哪一个"，不影响"这组特征里有信号"。
 
+## 第二个正则化面：协方差收缩（covariance shrinkage）
+
+前面所有惩罚都作用在**系数** $w$ 上。LDA / QDA 提供了另一个面：惩罚作用在**协方差矩阵** $\Sigma$ 上（[[sklearn-lda-qda]], L97–L103）。两个面的动机完全不同：
+
+| | 系数惩罚（Ridge/Lasso…） | 协方差收缩（LDA/QDA） |
+| --- | --- | --- |
+| 作用对象 | $w$（判别方向） | $\Sigma$ 或 $\Sigma_k$（类内散布） |
+| 想解决的问题 | 过拟合、共线性、特征筛选 | **小样本下协方差估计不可靠**（$n$ 与 $d$ 同量级） |
+| 强度参数 | `alpha`、`C` | `shrinkage`（`'auto'` 或 0–1）、QDA 的 `reg_param` |
+| 能否产生 0 | Lasso 能（软阈值） | **不能**——收缩从不把参数置零 |
+
+来源对小样本问题的描述很直接：「the empirical sample covariance is a poor estimator, and shrinkage helps improving the generalization performance」（L97）。
+
+### 收缩的三个端点与两个目标
+
+来源给的端点语义（L99）：`shrinkage=0` = 用经验协方差；`shrinkage=1` = 完全收缩，用**对角方差矩阵**当协方差估计；中间值 = 两者的收缩版。`'auto'` = 按 Ledoit-Wolf 的 lemma **解析地**定出收缩系数（L97）。
+
+**本库综合（重要口径）**：「optimal」在这里指的是**协方差估计误差**，不是分类准确率。证据在同一段：来源用「OAS yields a smaller Mean Squared Error」（L101）来论证 OAS 更好——如果优化目标是准确率，MSE 就不构成理由。所以 `shrinkage='auto'` 是「一个定义明确的默认值」，不是「分类任务上的最优值」。
+
+外部核查（官方 API 页，不在剪藏内）：QDA 还有一个 `reg_param`，做 $S^2\leftarrow(1-\rho)S^2+\rho I$。它与 `shrinkage` **不是同一个旋钮**：`shrinkage=1` 的终点是「只保留方差」，`reg_param=1` 的终点是「完全球化」。
+
+### 稀疏与收缩的对比
+
+| 手段 | 几何效果 | 参数是否变 0 | 什么时候用 |
+| --- | --- | --- | --- |
+| $ℓ_1$（Lasso） | 坐标轴向的软阈值 | 是 | 要减少特征数 |
+| $ℓ_2$（Ridge） | 球形收缩，全体变小 | 否 | 共线性、降方差 |
+| 协方差收缩 | 把 $\Sigma$ 拉向对角/单位阵 | 否（协方差不会变 0） | 样本少、维度高、矩阵病态 |
+
+**实践含义（本库综合）**：协方差收缩不能拿来“选特征”。它改变的是模型对类内散布形状的信任度，不是“用不用某个特征”。
+
 ## 正则强度与自由度：为什么信息准则会失效
 
 来源对 `LassoLarsIC`（AIC/BIC）的失效条件写得很具体：这类准则「需要正确的自由度估计、来自大样本的渐近结果、假设真实模型在候选集内」，并且「在病态问题（如特征多于样本）上往往会失效」（L212）。同一段还说它们在**训练集内**计算（L210）。
@@ -83,8 +116,8 @@ $$w_j = \frac{S\left(x_j^{T}\left(y - X_{-j}w_{-j}\right), \alpha\right)}{\|x_j\
 
 ## 关联页面
 
-- 来源：[[sklearn-linear-models]]
+- 来源：[[sklearn-linear-models]]、[[sklearn-lda-qda]]
 - 工具：[[scikit-learn]]
 - 实践：[[linear-models-as-baselines]]（尺度、共线、五个坑）、[[competition-ml-workflow]]（特征选择在竞赛流程里的位置）
-- 概念：[[leaderboard-vs-cv]]（代理指标的假设强度）
+- 概念：[[gaussian-discriminant-analysis]]（协方差为何需要收缩：参数个数与样本量的仗）、[[leaderboard-vs-cv]]（代理指标的假设强度）
 - 对照：[[kaggle-getting-started]] 里「特征越多越好」与「特征多反而变差」的张力（`raw/articles/Kaggle 入门指南.md:77`、`:290`）——正则化是"让模型挑特征"的一种实现，但不解决"新特征是否引入噪声"的问题
