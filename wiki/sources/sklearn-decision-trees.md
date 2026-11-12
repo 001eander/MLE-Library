@@ -2,7 +2,7 @@
 title: "scikit-learn 用户指南 1.10「Decision Trees」：递归划分、贪心最优性、缺失值与代价复杂度剪枝（stable 文档剪藏）"
 type: source
 created: 2026-11-11
-updated: 2026-11-11
+updated: 2026-11-12
 tags:
   - mle
   - scikit-learn
@@ -331,7 +331,7 @@ $\alpha_{\text{eff}}$ 最小的非终端节点是"最弱环节"，被剪掉；�
 
 ## 局限
 
-- **本节不覆盖特征重要性**。`feature_importances_`、`permutation_importance`、impurity-based 重要性的偏置问题，在剪藏里**一次都没出现**（grep 为 0）。所以本页只能说"树可可视化"，**不能**说"本节支持重要性解释"。相关讨论在未入库的 1.11 Ensembles 与 5.2 Permutation importance。
+- **本节不覆盖特征重要性**。`feature_importances_`、`permutation_importance`、impurity-based 重要性的偏置问题，在剪藏里**一次都没出现**（grep 为 0）。所以本页只能说"树可可视化"，**不能**说"本节支持重要性解释"。相关讨论见已入库的 [[sklearn-ensembles]]；5.2 Permutation importance 仍未入库。
 - **本节不覆盖 `tree_` 结构与遍历 API**：`apply`、`decision_path`、`get_depth`、`get_n_leaves`、`cost_complexity_pruning_path`、`export_text`/`export_graphviz` 的参数细节，剪藏都没讲（`export_text` 只剩一段代码）。
 - **本节不覆盖 `monotonic_cst`（单调约束）**，尽管 1.4 页的签名里已含该参数（外部核查）。剪藏 grep 为 0。
 - **本节不覆盖 `max_features`**（grep 为 0），而它正是 `ExtraTree*` 与 `DecisionTree*` 默认行为的关键差异（外部核查：`'sqrt'` vs `None`，`1.0` vs `None`）。
@@ -395,4 +395,4 @@ $\alpha_{\text{eff}}$ 最小的非终端节点是"最弱环节"，被剪掉；�
 - 实践：[[decision-trees-selection-and-tuning]]（前/后剪枝、缺失值、float32 的工程写法）、[[linear-models-as-baselines]]、[[nearest-neighbors-selection-and-tuning]]
 - 工具：[[scikit-learn]]（`tree` 模块的估计器矩阵、默认值第 45–55 条、版本边界）
 - 同批剪藏：[[sklearn-linear-models]]、[[sklearn-lda-qda]]、[[sklearn-naive-bayes]]、[[sklearn-svm]]、[[sklearn-nearest-neighbors]]
-- 未入库的相邻章节：1.11 Ensembles（树集成）、1.13 Feature selection、8.3 Preprocessing（缺失值插补的替代路线）、5.2 Permutation importance
+- 已入库的相邻章节：[[sklearn-ensembles]]（树集成）、[[sklearn-feature-selection]]（特征选择）、[[sklearn-preprocessing]]（预处理；`sklearn.impute` 仍未入库）；未入库：5.2 Permutation importance

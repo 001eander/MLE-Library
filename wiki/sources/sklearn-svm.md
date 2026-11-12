@@ -2,7 +2,7 @@
 title: "scikit-learn 用户指南 1.4「Support Vector Machines」：最大间隔、核函数与 libsvm/liblinear 双实现（stable 文档剪藏，含所有者授权的 raw 回填）"
 type: source
 created: 2026-11-11
-updated: 2026-11-11
+updated: 2026-11-12
 tags:
   - mle
   - scikit-learn
@@ -349,7 +349,7 @@ L255–L258：分类器行为"与任何其他分类器相同"，除了两点—�
 - 本页**未读** [9]–[16] 任何一篇文献。因此"Platt 校准有理论问题"（L138）、"ν 是 margin error 比例上界"（L358）在本库中都是**来源转述**，不是已核实结论。
 - 本节不覆盖 `sklearn.calibration`（`CalibratedClassifierCV` 的 `ensemble` 语义、校准曲线）、`sklearn.kernel_approximation`（Nyström / RBFSampler）、`sklearn.multiclass`（`OneVsRestClassifier` 的通用做法）、`sklearn.svm.l1_min_c` 的细节。这四块都在未入库章节里。
 - `gamma` 的默认值（`'scale'`）与 `dual='auto'` 的选取规则**文档完全没有**，本页只能标为外部核查；不要据此认为"文档没写就可以忽略"。
-- 本节对 `OneClassSVM` 只有两句话（L186–L188），任何关于 novelty detection 的结论都应转向 2.7 节（未入库）。
+- 本节对 `OneClassSVM` 只有两句话（L186–L188），任何关于 novelty detection 的结论都应转向已入库的 [[sklearn-outlier-detection]] 与 [[outlier-detection-selection-and-tuning]]。
 
 ## 待解问题
 

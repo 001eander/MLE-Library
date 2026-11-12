@@ -2,7 +2,7 @@
 title: 自动化研究待验证问题（源自 AIDE、AlphaEvolve、autoresearch、Hyra 1.0 / 2.0 与 Kaggle 入门指南）
 type: research
 created: 2026-11-11
-updated: 2026-11-11
+updated: 2026-11-12
 tags:
   - mle
   - research-agent
@@ -143,7 +143,7 @@ status: draft
 - **AIDE 的本地 PDF 与仓库快照**：`raw/papers/2502.13138v1.pdf` 已入库（SHA-256 `5fc52573…`）；需补 `WecoAI/aideml` 的具体 commit，才能核对超参与实现是否与论文一致。
 - **Weco AI technical report**（AIDE: Data Science Automation Technical Report，论文引用为 Weco AI 2024）：可能包含 harness 超参与更完整的 Weco-Kaggle 结果。
 - **METR RE-Bench 原文**（2024-11 博客与后续报告）：核对 6h/8h/64h 口径与人类专家设置。
-- **MLE-Bench 原文**（arXiv:2410.07095）：核对 Lite 子集的有效提交率、种子数与消融；本库现有仅有剪藏。
+- **MLE-Bench 原文**（arXiv:2410.07095）：核对 Lite 子集的有效提交率、种子数与消融；本库未收录原文或剪藏。
 - Recursive「First Steps Toward Automated AI Research」的原文（Hyra 复用的公开设置来源）。
 - SOL-ExecBench 与 modded-nanogpt 的评测协议原文。
 - SILSO 太阳黑子数据与 $R^2=0.77$ 的实验设置。

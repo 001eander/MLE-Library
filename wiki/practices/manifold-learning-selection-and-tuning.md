@@ -2,7 +2,7 @@
 title: "流形学习的选型与调参：先缩放、再定 $k$、最后挑被保量；15 条坑与可自动化程度"
 type: practice
 created: 2026-11-11
-updated: 2026-11-11
+updated: 2026-11-12
 tags:
   - mle
   - dimensionality-reduction
@@ -11,7 +11,6 @@ tags:
   - workflow
 sources:
   - "[[sklearn-manifold-learning]]"
-  - "[[nearest-neighbors]]"
 status: draft
 verified: 2026-11-11
 applies_to:

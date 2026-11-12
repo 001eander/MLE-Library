@@ -20,6 +20,10 @@ sources:
   - "[[sklearn-ensembles]]"
   - "[[sklearn-svm]]"
 status: draft
+verified: 2026-11-12
+applies_to:
+  - scikit-learn 1.9.1（文档论述与接口，见 [[sklearn-outlier-detection]]）
+  - scikit-learn 1.6.1（本页标「实测」的运行时行为）
 ---
 
 # 异常检测（Anomaly / Novelty / Outlier Detection）

@@ -2,7 +2,7 @@
 title: "scikit-learn 用户指南 1.11「Ensembles」：GBDT、HGBT、随机森林、Bagging、Voting、Stacking、AdaBoost（stable 文档剪藏，未回填）"
 type: source
 created: 2026-11-11
-updated: 2026-11-11
+updated: 2026-11-12
 tags:
   - mle
   - scikit-learn
@@ -442,7 +442,7 @@ L870–L892 的 7 条「脚注」不是参考文献，而是正文段落的复�
 - **数学部分整体缺失**（A6–A9，共 826 词）。本页对 GBDT 目标函数、负梯度、叶子值更新的描述只能引官方页，**不能引剪藏**。
 - **19 条参考文献丢失**，本页无法核对任何原始论文（Friedman 2001/2002、Breiman 1996/1998/1999/2001、Fisher 1958、Wolpert 1992、Freund & Schapire、Louppe 2014、XGBoost、LightGBM 等）。
 - **剪藏不含任何分类/回归 GBDT 的损失表**，因此本页不能给出「哪个损失对应哪个初始值」的完整对照（只有 `feature_importances_` 与 HGBT 的五种回归损失名）。
-- **未读未入库章节**：1.13 Feature selection、5.2 Permutation importance、3.1/3.2 CV 与调参、8.4 缺失值插补、`sklearn.calibration`。因此 stacking 的 `cv` 语义、OOB 与 CV 的取舍、概率校准只能按本节字面记录。
+- **相邻章节的覆盖边界**：[[sklearn-feature-selection]]、[[sklearn-cross-validation]] 与 [[sklearn-hyperparameter-tuning]] 已入库，可补充特征选择、Stacking 的 `cv` 语义与调参方法；5.2 Permutation importance、8.4 缺失值插补和 `sklearn.calibration` 仍未入库。
 - **运行复核只做到 1.6.1**。1.9 新增/变更的行为（`criterion` 弃用、`absolute_error` 的 NaN 支持、`categorical_features` 默认值）未实测。
 - **未验证**：HGBT 与 RF 在同一数据上的实际速度比与精度比；分箱对精度的影响随样本量的拐点；`interaction_cst` 与 `monotonic_cst` 的组合限制；`max_features` 对 HGBT 的实际作用（正文只说「减小可显著缩短运行时间」，L376）。
 - 本节**没有任何关于特征缩放/编码/管道**的说明（属 8.3）；树集成通常不需要缩放，但**本条不是来源论述**，是外部常识，本页不据此下结论。
@@ -469,4 +469,4 @@ L870–L892 的 7 条「脚注」不是参考文献，而是正文段落的复�
 - 正则化：[[regularization-and-sparsity]]（第七个面：收缩、随机化预算与叶子级 $ℓ_2$）
 - 工具：[[scikit-learn]]（`ensemble` 模块矩阵与默认值第 56–76 条）
 - 对照：[[nearest-neighbors]]（另一种「实现选择 ≠ 模型选择」）、[[support-vector-machines]]（另一种「同一族、两种实现」）
-- 未入库：1.13 Feature selection、5.2 Permutation importance、`sklearn.calibration`
+- 已入库：[[sklearn-feature-selection]]；未入库：5.2 Permutation importance、`sklearn.calibration`

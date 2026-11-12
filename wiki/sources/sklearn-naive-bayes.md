@@ -2,7 +2,7 @@
 title: "scikit-learn 用户指南 1.9「Naive Bayes」：条件独立、五种类条件假设与平滑（stable 文档剪藏，含所有者授权的 raw 回填）"
 type: source
 created: 2026-11-11
-updated: 2026-11-11
+updated: 2026-11-12
 tags:
   - mle
   - scikit-learn
@@ -189,7 +189,7 @@ $$\hat{y}=\arg\max_y P(y)\prod_{i=1}^{n}P(x_i\mid y)$$
 1. **只有定性比较，没有数字**。整节没有一张图、一个基准表；CNB 与 MNB 的比较、Bernoulli 与 Multinomial 的比较全部是转述他文的断言（L88、L132）。
 2. **"为什么错假设还能 work"被外包给参考文献**（L38 → Zhang 2004）。回填后文献条目可达，但论文本身不在本库，本页不重建该论证。
 3. **完全不涉及概率校准**。「bad estimator」（L42）没有给诊断方法、没有给补救手段（Platt/isotonic 等一律未提）。
-4. **不涉及特征工程与向量化**。词表、n-gram、tf-idf 的实际用法在未入库的 8.2/8.3 节。
+4. **不涉及特征工程与向量化**。词表、n-gram、tf-idf 的实际用法不在本节；8.3 预处理已入库（见 [[sklearn-preprocessing]]），8.2 文本向量化仍未入库。
 5. **不给复杂度**。只说"extremely fast"（L40），没有 $O(\cdot)$ 表达式。
 6. **`CategoricalNB` 的类别契约只写了要求，没写违约行为**（未见类别、`min_categories` 的作用）。
 7. **缺失值、连续/离散混合特征、多标签**一律未覆盖。

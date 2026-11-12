@@ -23,7 +23,7 @@ applies_to:
   - AIDE（arXiv:2502.13138v1）
   - karpathy/autoresearch（README 剪藏 2026-03-07）
   - scikit-learn 的 `*CV` 估计器与 `LassoLarsIC`（1.8.x–1.9.x，推断）
-  - `sklearn.model_selection` 的 splitter 与 `cross_*` 函数（1.7.x–1.9.1，行为在 1.6.1 实测）
+  - "`sklearn.model_selection` 的 splitter 与 `cross_*` 函数（1.7.x–1.9.1，行为在 1.6.1 实测）"
 ---
 
 # 排行榜与本地验证（Leaderboard vs CV）

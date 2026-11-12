@@ -160,7 +160,7 @@ applies_to:
 | --- | --- | --- | --- | --- | --- |
 | `LinearDiscriminantAnalysis` | 类条件高斯，**各类共享** $\Sigma$ | 线性 | 能（$\le \min(n_{\text{classes}}-1,\, n_{\text{features}})$ 维） | `solver`（默认 `'svd'`）、`shrinkage`、`n_components`、`priors`、`covariance_estimator` | [[sklearn-lda-qda]], L22–L26、L67–L93 |
 | `QuadraticDiscriminantAnalysis` | 类条件高斯，**逐类** $\Sigma_k$ | 二次 | 不能 | `solver`（默认 `'svd'`，或 `'eigen'`）、`shrinkage`、`reg_param`、`priors`、`covariance_estimator` | [[sklearn-lda-qda]], L50–L58、L97–L103 |
-| `GaussianNB`（`sklearn.naive_bayes`，**未入库**） | 类条件高斯且**对角** $\Sigma_k$ | 二次（轴向受限） | 不能 | — | 官方 1.2 页只给等价关系：[[sklearn-lda-qda]], L60–L63 |
+| `GaussianNB`（`sklearn.naive_bayes`，**已入库**） | 类条件高斯且**对角** $\Sigma_k$ | 二次（轴向受限） | 不能 | `var_smoothing`、`priors` | 等价关系：[[sklearn-lda-qda]], L60–L63；参数见 [[sklearn-naive-bayes]] |
 
 三者是嵌套关系（`GaussianNB` ⊂ LDA ⊂ QDA），机制与参数代价见 [[gaussian-discriminant-analysis]]。
 
@@ -408,7 +408,7 @@ applies_to:
 
 ## 估计器矩阵（covariance）
 
-`sklearn.covariance` 里有 **6 个可拟合估计器 + 4 个函数**：`EmpiricalCovariance`、`ShrunkCovariance`、`LedoitWolf`、`OAS`、`GraphicalLasso`、`GraphicalLassoCV`、`MinCovDet`（另有 `EllipticEnvelope` 属 2.7 节，未入库），函数 `empirical_covariance`、`shrunk_covariance`、`ledoit_wolf`、`oas`。行号指向 [[sklearn-covariance]]，默认值取自 1.9.1 API 页签名（**外部核查**，1.6.1 实测签名一致）。
+`sklearn.covariance` 里有 **6 个可拟合估计器 + 4 个函数**：`EmpiricalCovariance`、`ShrunkCovariance`、`LedoitWolf`、`OAS`、`GraphicalLasso`、`GraphicalLassoCV`、`MinCovDet`（另有 `EllipticEnvelope` 属已入库的 2.7 节，见 [[sklearn-outlier-detection]]），函数 `empirical_covariance`、`shrunk_covariance`、`ledoit_wolf`、`oas`。行号指向 [[sklearn-covariance]]，默认值取自 1.9.1 API 页签名（**外部核查**，1.6.1 实测签名一致）。
 
 | 估计器 | 估计对象 | 结构假设 | 强度旋钮（默认值） | 输出属性 | 文档位置 |
 | --- | --- | --- | --- | --- | --- |
@@ -924,7 +924,7 @@ covariance 一侧（引用 `[[sklearn-covariance]], L…`；默认值取自 1.9.
 - svm 的 `gamma`、`dual`、`probability` 三个关键默认值都不在用户指南里；本页把它们标为外部核查而不是文档论述，引用时应保留该区分。
 - neighbors 部分的**选型内容约 20% 在剪藏丢失的折叠块里**（共缺 959 词正文 + 34 词 References）。因此「何时用 KD / ball / brute」「`leaf_size` 怎么设」在本页均为外部核查。
 - neighbors 的**用户指南完全不提特征缩放**，而官方示例自己套了 `StandardScaler`（外部核查：`plot_classification.py`、`plot_nca_classification.py`）。本页不因此断言「文档认为不需要缩放」——只能说文档缺了这句话。具体做法见 [[nearest-neighbors-selection-and-tuning]]。
-- neighbors 的**度量与距离函数细节**在未入库的 `sklearn.metrics.pairwise`；下游消费者（`DBSCAN`、`SpectralClustering`、`TSNE`、`Isomap`）在未入库的 2.2/2.3 节。本页只负责它们**吃哪种图**（`connectivity` vs `distance`，L198）。
+- neighbors 的**度量与距离函数细节**在未入库的 `sklearn.metrics.pairwise`；下游消费者（`DBSCAN`、`SpectralClustering`、`TSNE`、`Isomap`）已在 2.2/2.3 节入库，见 [[sklearn-manifold-learning]] 与 [[sklearn-clustering]]。本页只负责它们**吃哪种图**（`connectivity` vs `distance`，L198）。
 - `NearestCentroid.priors` 的 docstring 矛盾（`default="uniform"` vs 「默认从训练集推断比例」）**未做运行时验证**：本页只断言两句话不能同时成立，不断言实现采用了哪一个。
 - tree 部分的**特征重要性、`tree_` 遍历 API、`cost_complexity_pruning_path` 与 `export_graphviz` 参数细节全部不在剪藏内**，所以本页**不提供**重要性解释或剪枝路径的用法；第 45–55 条只覆盖树结构与缺失值。
 - tree 一节丢掉了**全部 3 个内容折叠块**（530 词散文：导出树、ID3/C4.5/C5.0 谱系、熵 = log loss 的推导）。因此本页对「Gini vs entropy」只说「叶子输出相同、只影响切分排序」，**不引用**那篇丢失的推导。
@@ -937,7 +937,7 @@ covariance 一侧（引用 `[[sklearn-covariance]], L…`；默认值取自 1.9.
 - ensemble 的**运行复核只做到 1.6.1**；`criterion` 弃用与 `categorical_features` 默认值变更属于 1.6/1.9 的版本边界，本次未在 1.9.1 上复跑。
 - feature_selection 一节丢了 **1 个 `aside` + 2 个 `<details>` + 整段 References（386 词 ≈ 19%）**，丢的正好是「稀疏输入不被稠密化」、「Lasso 精确恢复支撑集的条件与 `alpha` 的三种取法」、「前向/后向的成本算术与 SFS 不要求重要性属性」。因此本页第 77–86 条中涉及「哪个方法能吃稀疏矩阵」「为什么 SFS 比 RFE 贵」的部分均为外部核查，**不能引剪藏**。
 - `feature_selection` 的**选型内容不在本页**：见 [[feature-selection-workflow]]。本页只负责「有哪些变换器、默认值是什么」。
-- `feature_selection` 覆盖表里的 `sklearn.decomposition`（PCA/NMF 等真正的降维）已在 2.5 节入库（见 [[matrix-factorization]] 与 [[decomposition-selection-and-tuning]]），因此「删列 vs 投影」的对照见这两页；`sklearn.inspection.permutation_importance` 与 `sklearn.model_selection` 的 CV 切分仍未入库，本页不提供 MDI 的替代写法。
+- `feature_selection` 覆盖表里的 `sklearn.decomposition`（PCA/NMF 等真正的降维）已在 2.5 节入库（见 [[matrix-factorization]] 与 [[decomposition-selection-and-tuning]]），因此「删列 vs 投影」的对照见这两页；`sklearn.inspection.permutation_importance` 仍未入库，`sklearn.model_selection` 的 CV 切分已入库（见 [[sklearn-cross-validation]] 与 [[cross-validation-design-and-tuning]]），本页不提供 MDI 的替代写法。
 - `feature_selection` 的**运行复核只做到 1.6.1**；第 78–83、86 条的行为在 1.9.1 上未复跑（签名已核，行为未核）。
 - `neural_network` 一节丢了 **3 个内容 `<details>` 折叠块（622 词 ≈ 36%）**：优缺点（非凸/局部极小/随机初始化）、数学表述（单隐藏层公式、tanh/logistic/softmax、交叉熵/MSE、反向传播）、5 条 References。因此非凸性、损失公式与文献**不能引剪藏**，只能引官方 1.9.1 页（见 [[sklearn-neural-networks]] 转换损失）。
 - `neural_network` 的**默认值几乎全不在用户指南里**：正文只给 `alpha` 的网格、三个求解器的经验、缩放建议与 `warm_start` 写法；`hidden_layer_sizes=(100,)`、`solver='adam'`、`max_iter=200`、`early_stopping=False`、`batch_size='auto'` 等均为外部核查。

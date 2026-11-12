@@ -2,7 +2,7 @@
 title: "SVM 的选型与调参：规模判据、缩放前提、C/γ 网格与六个坑"
 type: practice
 created: 2026-11-11
-updated: 2026-11-11
+updated: 2026-11-12
 tags:
   - mle
   - svm
@@ -12,6 +12,7 @@ tags:
 sources:
   - "[[sklearn-svm]]"
   - "[[sklearn-linear-models]]"
+  - "[[sklearn-outlier-detection]]"
 status: draft
 verified: 2026-11-11
 applies_to:
@@ -35,7 +36,7 @@ SVM 在 sklearn 里是两个不相干的实现（libsvm 与 liblinear，[[sklear
 | 要特征维稀疏解 | `LinearSVC(penalty='l1', dual=False)` | 唯一提供特征选择的 SVM | L216 |
 | 要"我只能容忍 x% 的 margin error"这种语义 | `NuSVC` / `NuSVR` | ν 直接是这个比例 | L212、L358 |
 | 只要线性核、但想保留核接口 | `SVC(kernel='linear')` | 注意：与 `LinearSVC` **不是**同一模型 | L32 |
-| 单类异常检测 | `OneClassSVM` | 正文只有两句话，细节在 2.7 节（未入库） | L186–L188 |
+| 单类异常检测 | `OneClassSVM` | 正文只有两句话，细节见已入库的 [[sklearn-outlier-detection]] 与 [[anomaly-detection]] | L186–L188 |
 
 **本库综合**：第 6 行是最常见的误判。`SVC(kernel='linear')` 用 hinge（或 ν 版本）、截距**不进正则**；`LinearSVC` 用 `squared_hinge`、截距**进正则**且可用 `intercept_scaling` 削弱（L32、L350–L352）。两条差异叠加，使**同一 `C` 下两个模型的结果不同**——官方自己也警告"The classification results and score can therefore differ"（L32）。所以：换实现必须重扫 `C`，不能只换类名。
 

@@ -124,7 +124,7 @@ $$w_k=-\frac{\sum_i g_i}{\sum_i h_i+\lambda}$$
 - **`stack_method='auto'` 的优先级**：`predict_proba` → `decision_function` → `predict`（L771）。混用不同输出类型时，第二层看到的特征尺度可能完全不同。
 - **多层 stacking** 只是把 `final_estimator` 再设成一个 `Stacking*`（L798–L823）。
 
-**本库综合**：stacking 与 [[leaderboard-vs-cv]] 是同一个主题的两面——「用训练集内部的切分模拟未见数据」。区别在于 CV 用它**评估**，stacking 用它**构造特征**。这也解释了为什么 stacking 的收益高度依赖「折外预测是否真的近似测试分布」：如果训练集有时间序或分组结构，随机 K 折会让折外预测泄漏（该问题在 3.1 节，未入库）。
+**本库综合**：stacking 与 [[leaderboard-vs-cv]] 是同一个主题的两面——「用训练集内部的切分模拟未见数据」。区别在于 CV 用它**评估**，stacking 用它**构造特征**。这也解释了为什么 stacking 的收益高度依赖「折外预测是否真的近似测试分布」：如果训练集有时间序或分组结构，随机 K 折会让折外预测泄漏（该问题已在 3.1 节入库，见 [[cross-validation]]）。
 
 ## AdaBoost：重加权版 boosting
 

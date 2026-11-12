@@ -11,8 +11,6 @@ tags:
   - workflow
 sources:
   - "[[sklearn-cross-validation]]"
-  - "[[feature-selection-workflow]]"
-  - "[[leaderboard-vs-cv]]"
   - "[[kaggle-getting-started]]"
   - "[[sklearn-ensembles]]"
   - "[[sklearn-svm]]"

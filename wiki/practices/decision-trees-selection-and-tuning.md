@@ -2,7 +2,7 @@
 title: "决策树的选型与调参：前剪枝、代价复杂度剪枝、缺失值与 float32"
 type: practice
 created: 2026-11-11
-updated: 2026-11-11
+updated: 2026-11-12
 tags:
   - mle
   - decision-tree
@@ -181,4 +181,4 @@ $$R_\alpha(T)=R(T)+\alpha\,|\tilde T|,\qquad \alpha_{\text{eff}}(t)=\frac{R(t)-R
 - 概念：[[decision-trees]]（机制与失效模式）、[[regularization-and-sparsity]]（第六个正则化面）、[[nearest-neighbors]]（另一种"非参数"的容量旋钮）、[[leaderboard-vs-cv]]（验证分数作为代理指标的假设）
 - 其他实践：[[linear-models-as-baselines]]（树之前该跑的线性基线）、[[nearest-neighbors-selection-and-tuning]]（缩放与缺失值的相反结论）、[[svm-selection-and-tuning]]
 - 工具：[[scikit-learn]]（`tree` 模块默认值与版本边界）
-- 未入库：1.11 Ensembles（把树放进 RF/GBDT）、8.3 Preprocessing（插补路线）、5.2 Permutation importance
+- 已入库的相邻章节：[[sklearn-ensembles]]（把树放进 RF/GBDT）、[[sklearn-preprocessing]]（预处理管线；缺失值插补仍只有指针）；未入库：5.2 Permutation importance

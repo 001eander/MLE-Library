@@ -15,6 +15,10 @@ sources:
   - "[[sklearn-covariance]]"
   - "[[sklearn-outlier-detection]]"
 status: draft
+verified: 2026-11-12
+applies_to:
+  - scikit-learn 1.7.0 – 1.9.1（文档论述与接口，见 [[sklearn-covariance]]）
+  - scikit-learn 1.6.1（本页标「实测」的运行时行为）
 ---
 
 # 协方差估计（Covariance Estimation）

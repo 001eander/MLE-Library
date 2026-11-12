@@ -1,8 +1,8 @@
 ---
-title: "scikit-learn 用户指南 2.2「Manifold learning」：Isomap、LLE 五个变体、三种 MDS 与 t-SNE（stable 文档剪藏，未回填）"
+title: "scikit-learn 用户指南 2.2「Manifold learning」：Isomap、LLE 四个变体、三种 MDS 与 t-SNE（stable 文档剪藏，未回填）"
 type: source
 created: 2026-11-11
-updated: 2026-11-11
+updated: 2026-11-12
 tags:
   - mle
   - scikit-learn
@@ -43,7 +43,7 @@ verified: 2026-11-11
 
 1. **第一次出现「没有 $y$」的几何目标**。全节没有损失与标签，只有「保住什么量」：Isomap 保测地距离（L56），LLE 保局部重构权重（L66），Spectral Embedding 保图上的邻近（L100），MDS 三型分别保距离/序/内积（L122、L128），t-SNE 保邻域概率（L149）。**方法的差别就是被保量的差别**（本库综合，来源从不这样组织）。
 2. **第一类「输出形状固定、但没有任何预测语义」的估计器**。上一节 [[multi-layer-perceptron]] 至少还能 `predict`；这里只有坐标：`Isomap` 与 `LocallyLinearEmbedding` 有 `transform`，`SpectralEmbedding` **只有 `fit_transform`**（无 `transform`），`TSNE`、`MDS`、`ClassicalMDS` 也没有 `transform`（实测 1.6.1 的 `hasattr`）。**无法给新样本定位不是缺陷，是定义**：`TSNE` 学到的是这一批点的布局，不是一个可外推的映射。**把这类降维器当特征提取器塞进 `Pipeline` 时，测试集只能用 `fit_transform` 重跑**——这直接决定了它们不能出现在需要「训练/推理分离」的线上路径里（本库判断）。
-3. **第一次把「同一个算法名字后面挂着五个变体」写实**：`LocallyLinearEmbedding(method=...)` 的 `standard`/`modified`/`hessian`/`ltsa` 用的是**同一个类、同一批参数名**，但约束与代价完全不同（`n_neighbors` 的下界从 $\varnothing$ 变成 $> n_\text{components}$ 再变成 $> n_c(n_c+3)/2$，L80、L90；成本见「图表核查」的时间读数）。这是本库第二个「同一入口、不同模型」的案例（第一个是 `SVC(kernel=...)`）。
+3. **第一次把「同一个算法名字后面挂着四个变体」写实**：`LocallyLinearEmbedding(method=...)` 的 `standard`/`modified`/`hessian`/`ltsa` 用的是**同一个类、同一批参数名**，但约束与代价完全不同（`n_neighbors` 的下界从 $\varnothing$ 变成 $> n_\text{components}$ 再变成 $> n_c(n_c+3)/2$，L80、L90；成本见「图表核查」的时间读数）。这是本库第二个「同一入口、不同模型」的案例（第一个是 `SVC(kernel=...)`）。
 4. **又一次「官方资产与官方正文互相矛盾」，而这次矛盾在同一页内部**：L90 说 sklearn 对 HLLE 的算法改进让它「cost comparable to that of other LLE variants」，而同一页图 8 的标题写着 `Hessian LLE embedding (time 1.811s)`，标准 LLE 那张（图 6）是 `0.187s`——**同一份示例、同一个输出维数、差 9.7 倍**。（本库前一次同类发现是 [[sklearn-decision-trees]] 里 2014 年的陈旧 `iris.svg`，那次是**跨版本不变**的资产，这次是**同版同页**的正文与图。）
 5. **它是本库目前唯一「正文完整、只有数学被折叠掉」的剪藏**：14 条文献全在，散文逐句对齐，丢的 1,669 词全是复杂度三阶段、MDS 的 metric/non-metric 细节、t-SNE 五个优化参数与 Barnes-Hut 的四条限制。因此本页可以**逐条比对正文与实现**，而不像前几份那样只能讨论「丢了什么」。
 

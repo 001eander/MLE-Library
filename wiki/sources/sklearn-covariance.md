@@ -173,7 +173,7 @@ applies_to:
 - **`MinCovDet` 的 docstring 把默认 h 写错**：写作「`(n_samples + n_features + 1) / 2 * n_samples`」，而源码是 `int(np.ceil(0.5 * (n_samples + n_features + 1)))`。前者按字面算是 $h\approx n^2$，显然不成立——**引用默认值时以源码为准**。
 - **校正与重加权的公式**（源码）：校正因子 $=\mathrm{median}(\text{dist}_i)/\chi^2_p(0.5)$；重加权掩码 $=\text{dist}_i<\chi^2_p(0.975)$。
 - **`GraphicalLasso` 的 `covariance=` 参数**用于「已知协方差、只想求稀疏逆」的场景，剪藏完全没提。
-- **`covariance` 模块还有 `EllipticEnvelope`、`log_likelihood`、`fast_mcd`、`ledoit_wolf_shrinkage`**；前者的用法在未入库的 2.7 节（novelty/outlier detection），本页不展开。
+- **`covariance` 模块还有 `EllipticEnvelope`、`log_likelihood`、`fast_mcd`、`ledoit_wolf_shrinkage`**；前者的用法已在 2.7 节入库，见 [[sklearn-outlier-detection]] 与 [[anomaly-detection]]；本节本身不展开。
 
 ## 图表核查
 

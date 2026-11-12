@@ -2,7 +2,7 @@
 title: "scikit-learn 用户指南 1.13「Feature selection」：方差/单变量筛选、RFE 与 SFS、嵌入式选择（stable 文档剪藏，未回填）"
 type: source
 created: 2026-11-11
-updated: 2026-11-11
+updated: 2026-11-12
 tags:
   - mle
   - scikit-learn
@@ -42,7 +42,7 @@ verified: 2026-11-11
 
 这一节补上本库第一个**「选择」类目**（此前十三个来源都是「模型族」或「组合策略」）：它不引入新的假设形式，而是**在拟合前删掉列**。对本库的意义有五层。
 
-1. **第一次把「降维」拆成两条互不等价的路**。本节标题叫 feature selection，但引言写的是 "feature selection/dimensionality reduction"（L10）——而页内全部方法都是**保留原始列的子集**，没有一个做线性/非线性组合（那是 2.5 节 `sklearn.decomposition`，未入库）。因此「少了几列」与「换了一套坐标」在可解释性与下游稀疏性上是两件事（[[feature-selection]]）。
+1. **第一次把「降维」拆成两条互不等价的路**。本节标题叫 feature selection，但引言写的是 "feature selection/dimensionality reduction"（L10）——而页内全部方法都是**保留原始列的子集**，没有一个做线性/非线性组合（那是已入库的 2.5 节，见 [[sklearn-decomposition]] 与 [[matrix-factorization]]）。因此「少了几列」与「换了一套坐标」在可解释性与下游稀疏性上是两件事（[[feature-selection]]）。
 2. **三个家族在一页里全齐，但文档从不点出它们的名字**。1.13.1–1.13.2 是**过滤式**（只看每个特征与 $y$ 的单变量统计量，不看模型）；1.13.3 与 1.13.5 是**包裹式**（用模型的 CV 分数当目标函数）；1.13.4 是**嵌入式**（用模型自己的 `coef_`/`feature_importances_` 当重要性）。三者的成本差一个数量级以上（后文「成本」）。
 3. **「选了哪些」不是数据的性质，而是 (数据, 模型, 超参) 三元组的性质**。同一份 iris 数据：`f_classif` 选 `[2,3]`，`LinearSVC(C=0.01, penalty="l1")` 选 `[0,1,2]`，`RFE(LogisticRegression)` 选 `[2,3]`（本机实测）。文档给了机制但没给这条判据，本页把它写成显式结论。
 4. **本节把「正则化」与「特征选择」接上了**。L119 说明 $C$ 与 `alpha` 是同一根稀疏性旋钮的两个方向（$C$ 越小、$\alpha$ 越大 → 特征越少），这让 [[regularization-and-sparsity]] 里的「稀疏 ≠ 不重要」直接变成选型约束。
@@ -257,7 +257,7 @@ L165 说「The recommended way to do this in scikit-learn is to use a `Pipeline`
 5. 选择结果的**方差**：本节没有稳定性选择（stability selection）的入口。用 `BaggingClassifier` 包 `SelectFromModel` 或重复 CV 取交集，是否能得到可用的「选择频率」？（未做）
 6. `LassoCV`/`LassoLarsIC` 与「恢复支撑集」的取舍在丢失的折叠块里只有定性描述；本库未读 Baraniuk (2007) 与 Ferri et al.，也未验证「`LassoCV` 欠惩罚」在合成数据上的表现。
 7. 本节示例链接指向 5 个官方示例（`plot_feature_selection.py`、`plot_f_test_vs_mi.py`、`plot_rfe_digits.py`、`plot_rfe_with_cross_validation.py`、`plot_select_from_model_diabetes.py`、`plot_permutation_importance.py`），**均未入库**；其中 F-test vs MI 的对比图是目前唯一能给出「何时 MI 有优势」的定量证据。
-8. 与 8.3 Preprocessing（未入库）的交互：`VarianceThreshold` 与 `StandardScaler` 的先后、`PolynomialFeatures` 之后的选择，本节完全没有讨论。
+8. 与已入库的 8.3 Preprocessing 的交互：`VarianceThreshold` 与 `StandardScaler` 的先后、`PolynomialFeatures` 之后的选择，本节完全没有讨论；预处理侧见 [[sklearn-preprocessing]] 与 [[preprocessing-pipeline-design]]。
 
 ## 局限
 

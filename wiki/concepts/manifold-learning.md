@@ -2,7 +2,7 @@
 title: 流形学习（Manifold Learning）：被保量决定方法、kNN 图是共同底座
 type: concept
 created: 2026-11-11
-updated: 2026-11-11
+updated: 2026-11-12
 tags:
   - mle
   - dimensionality-reduction
@@ -11,6 +11,10 @@ tags:
 sources:
   - "[[sklearn-manifold-learning]]"
 status: draft
+verified: 2026-11-11
+applies_to:
+  - scikit-learn 1.8.0 – 1.9.1（文档论述与接口，见 [[sklearn-manifold-learning]]）
+  - scikit-learn 1.6.1（本页标「实测」的运行时行为；`MDS` 默认值须另带版本）
 ---
 
 # 流形学习

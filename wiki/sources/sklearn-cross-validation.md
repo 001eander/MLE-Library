@@ -306,7 +306,7 @@ L625–L639 的定义很克制：零假设是「估计器未能利用特征与�
 
 ### 局限
 
-- 本节**不给指标**（指标在未入库的 3.4 节），**不给超参搜索**（3.2 节），**不给数据泄漏的完整清单**（散在 8.3 与各估计器页）。因此「怎么算分」与「怎么选参」都不在本页范围内。
+- 本节**不给指标**（指标见已入库的 [[sklearn-metrics]]；该剪藏只保留方法论四小节），**不给超参搜索**（搜索见 [[sklearn-hyperparameter-tuning]]），**不给数据泄漏的完整清单**（散在 [[sklearn-preprocessing]] 与各估计器页）。因此「怎么算分」与「怎么选参」都不在本节范围内。
 - 本节**不提 `cross_validate` 与 `GridSearchCV` 的 `refit`**、不提 `cross_validate` 与元数据路由的组合细节。
 - 本节对 `StratifiedGroupKFold` 的机制说明**全在丢失的折叠块里**，正文只剩一句动机，因此第 22 条实测是本页对该 splitter 唯一的机制证据。
 - 本节**没有任何复杂度分析**（除了置换检验那一条成本公式），也没有「$k$ 该取 5 还是 10」的证明（只有 L304 一句「most authors and empirical evidence suggest」）。
@@ -351,4 +351,4 @@ L625–L639 的定义很克制：零假设是「估计器未能利用特征与�
 - 概念：[[cross-validation]]（本页的机制抽象）、[[leaderboard-vs-cv]]（CV / Public LB / Private LB 三套分数）、[[regularization-and-sparsity]]（信息准则是另一种代理指标）、[[ensembles]]（Stacking 依赖折外预测）
 - 实践：[[cross-validation-design-and-tuning]]（选 splitter、嵌套、泄漏、坑清单）、[[competition-ml-workflow]]、[[feature-selection-workflow]]（泄漏实测 0.508→0.900）、[[evaluator-design-and-reward-hacking]]
 - 工具：[[scikit-learn]]（`model_selection` 矩阵与默认值）
-- 后续来源：3.2 节（超参搜索）与 3.4 节（指标）**尚未入库**，本页不覆盖它们的内容。
+- 后续来源：[[sklearn-hyperparameter-tuning]]（超参搜索）与 [[sklearn-metrics]]（指标）均已入库，本页不重复其内容。

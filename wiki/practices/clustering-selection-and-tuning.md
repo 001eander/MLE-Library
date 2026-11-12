@@ -11,8 +11,6 @@ tags:
   - workflow
 sources:
   - "[[sklearn-clustering]]"
-  - "[[nearest-neighbors]]"
-  - "[[manifold-learning]]"
 status: draft
 verified: 2026-11-12
 applies_to:

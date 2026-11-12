@@ -33,7 +33,7 @@ applies_to:
 三个推论决定了它和其他章节的关系：
 
 1. **它不创造信息，只改变「模型看到什么」**。所有变换都是**逐列/逐样本的确定性函数**（分位数变换也是：它只是把秩重排到目标分布），因此对 $y$ 的条件分布没有新信息；能改变的只有**模型假设与实际尺度/形状之间的匹配程度**。所以「加了预处理分数就涨」等价于「模型原来的假设被违背了」——实测最干净的一个例子：把第一个特征乘 1000（数据可分性不变），`SVC()` 的 5 折准确率从 **0.9833 掉到 0.7767**，加一层 `StandardScaler` 再回到 0.9833（[[sklearn-preprocessing]] 实测 36）。
-2. **它是「有状态的」，所以必须放进管线**。12 个变换器在 `fit` 时学一个量（`scale_`/`quantiles_`/`lambdas_`/`categories_`/`bin_edges_`/`knots`/`encodings_`），`transform` 只把这个量套到新数据。因此「预处理」不是数据清洗，而是**模型的一部分**（[[sklearn-preprocessing]], L57）。唯一的三个例外是 `Normalizer`/`Binarizer`/`FunctionTransformer`——它们 `fit` 什么也不学。
+2. **它是「有状态的」，所以必须放进管线**。16 个变换器中有 12 个在 `fit` 时学习数据相关的量（`scale_`/`quantiles_`/`lambdas_`/`categories_`/`bin_edges_`/`knots`/`encodings_`），`transform` 只把这个量套到新数据。因此「预处理」不是数据清洗，而是**模型的一部分**（[[sklearn-preprocessing]], L57）。不学习数据相关状态的另外 4 个是 `Normalizer`/`Binarizer`/`FunctionTransformer` 与 `PolynomialFeatures`：前三者的 `fit` 不学任何量，后者只记录由 `degree` 决定、与数据无关的 `powers_`。
 3. **它的代价可以被量化，而且三种代价互斥**。同一份数据、同一列：
    - **保秩**（分位数变换）：Pearson 0.891 → **0.754**，Spearman 0.754 → 0.754（保序、毁线性相关）；
    - **保相关**（仿射缩放）：两者都不变，但对离群点不稳健（`StandardScaler` 的 `scale_` 从 1.0 被抬到 8.53/11.03，`RobustScaler` 保持在 1.29/1.35）；

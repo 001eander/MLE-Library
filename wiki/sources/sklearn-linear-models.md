@@ -2,7 +2,7 @@
 title: "scikit-learn 用户指南 1.1「Linear Models」：估计器全家谱与求解器约定（stable 文档剪藏）"
 type: source
 created: 2026-11-11
-updated: 2026-11-11
+updated: 2026-11-12
 tags:
   - mle
   - scikit-learn
@@ -279,7 +279,7 @@ L491 的 `[16]` 指向官方页脚注 16（Logistic 优化器比较的文献）�
 - **无对照、无基准**：这是 API 文档，不是实验报告。"`RidgeClassifier` 可能显著更快""LassoLarsCV 常常更快"都是定性判断，除剪藏自带示例图的耗时（0.17s vs 0.06s）外无量化证据。
 - **示例图的耗时不可当基准**：图标题里的 `train time` 来自示例脚本的一次运行，未给硬件、数据规模与重复次数。
 - **引用的外部文献未读**：Weisberg 对 LARS 的批评（L294–L296）、Theil-Sen 的 Dang et al.（L730）、Huber 的 Robust Statistics p. 172（L772）均为来源转述。
-- **不覆盖工程管线**：缺失值、类别编码、Pipeline、特征缩放与 CV 切分分别在 8.3、1.13、3.1 等其它章节（本库同批剪藏中尚有 17 篇未入库），本页不能替代。
+- **不覆盖工程管线**：缺失值、类别编码、Pipeline、特征缩放与 CV 切分属于其它章节。同批 18 篇剪藏现已全部入库，相关讨论见 [[sklearn-preprocessing]]、[[sklearn-feature-selection]] 与 [[sklearn-cross-validation]]；但 `sklearn.impute` 的缺失值插补正文仍未入库，本页不能替代上述章节。
 
 ## 待解问题
 
