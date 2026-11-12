@@ -14,6 +14,8 @@ sources:
   - "[[aide]]"
   - "[[sklearn-cross-validation]]"
   - "[[ft-transformer]]"
+  - "[[kaggle-q-ft]]"
+  - "[[kaggle-q-ft-v2]]"
 status: draft
 verified: 2026-11-12
 applies_to:
@@ -54,7 +56,7 @@ applies_to:
 
 **Stacking**：折外预测组装第二层特征、测试侧对各折模型取平均（L190–L194）。这是全文最经得起时间检验的一段工程细节，机制与当代实现一致。
 
-## 三个张力与一个坑
+## 四个张力与一个坑
 
 **张力一：特征越多越好，还是越少越好？**
 
@@ -73,6 +75,14 @@ applies_to:
 **张力三：5-Fold 提到 10-Fold 提高了什么？**
 
 作者因 LB 与 CV 反复背离，「将 5-Fold 提到 10-Fold，然后以 CV 为标准继续前进」（L298）。注意这提高的是**CV 分数的估计精度**，不是模型性能；折数增加让单次划分的方差变小，代价是训练时间线性增加（L168）。
+
+**张力四：`raw features only` 的强模型 vs 「Feature 为王」**
+
+2016 年的入门指南把「Feature 为主，调参和 Ensemble 为辅」当作主线（[[kaggle-getting-started]], L69），并把大部分时间投在造特征上。十年后的同一系列帖子里，一名第一名选手用**不造任何新列**的 21 个原始列，让一个 token 化的 transformer 与调参 XGBoost 打到同一水平（[[kaggle-q-ft]], L22、L142–L143）。但同一系列的第二篇又给出反向读数：**同类人工特征对 transformer 只值 +4e-4，对 GBDT 值 +1.6e-3**（[[kaggle-q-ft-v2]], L100）。
+
+**本库综合**：这不是“特征工程过时了”，而是**人工特征与模型内建表征互相替代**——当模型能逐列学查找表与交互时，counts、路由画像这类统计量的边际收益会下降；但“知道这列是什么”（编码方式、词表粒度、缺失/延迟的桶边界）仍然是收益的主要来源，只不过它从“造新列”变成了“设计 tokenizer”。可操作判据：模型已有逐列嵌入（GBDT 的类别处理、FT-T、Q-FT）时，先把预算投到编码与验证设计；模型只能看到扁平数值向量（线性模型、小 MLP）时，人工特征仍是主要杠杆。
+
+**补充纪律：单折试点 ≠ 全折 OOF**。同一系列两篇各给了一个读数：fold-0 比 5 折 OOF 高 **+6.5e-4**（[[kaggle-q-ft]], L129 vs L142）与 **+1.8e-4**（[[kaggle-q-ft-v2]], L145 vs L30）。而两篇里被当作结论的改进量恰好也在 3e-4–1e-3 量级——也就是说，**在一折上看到的“提升”很容易是整个消融链里最大的一次抽样噪声**。
 
 **一个坑：合并训练集与测试集做预处理**
 
@@ -110,6 +120,6 @@ applies_to:
 
 ## 关联页面
 
-- 来源：[[kaggle-getting-started]]、[[aide]]
+- 来源：[[kaggle-getting-started]]、[[aide]]、[[kaggle-q-ft]]、[[kaggle-q-ft-v2]]
 - 概念：[[leaderboard-vs-cv]]、[[cross-validation]]
 - 实践：[[evaluator-design-and-reward-hacking]]、[[research-agent-harness]]、[[linear-models-as-baselines]]、[[feature-selection-workflow]]（特征工程阶段的现代写法：三类选择器 + 泄漏判据）、[[cross-validation-design-and-tuning]]（splitter 选型、嵌套 CV 与 18 条坑）

@@ -13,11 +13,15 @@ tags:
   - hyperparameter-tuning
 sources:
   - "[[ft-transformer]]"
+  - "[[kaggle-q-ft]]"
+  - "[[kaggle-q-ft-v2]]"
 status: draft
 verified: 2026-11-12
 applies_to:
   - rtdl_revisiting_models 0.0.2（本地 checkout e3ed46c，2024-11-13）
   - PyTorch >=1.8,<3
+  - Qwen/Qwen3-0.6B-Base（config.json 于 2026-11-12 核对）
+  - answerdotai/ModernBERT-base（safetensors.total = 149,655,232，2026-11-12 核对）
 ---
 
 # 表格任务选型：先立 GBDT 与 ResNet 两个基线
@@ -49,6 +53,48 @@ applies_to:
 | 4 | **FT-Transformer** | 特征 token 化 + 注意力；平均排名 1.8 | 如果 FT-T 相对 ResNet 的增益足以抵消训练成本 |
 
 **不要跳过 MLP/ResNet 直接上 FT-T**：来源明确说调参让 MLP/ResNet 变得有竞争力，且 FT-T 的优势主要集中在 GBDT 胜过 ResNet 的数据集上（[[ft-transformer]], p. 7–8）。跳过基线会让你把“调参不足”误判为“架构更好”。
+
+## 第五个候选：LLM / 嵌入空间的表格 transformer
+
+[[kaggle-q-ft]] 与 [[kaggle-q-ft-v2]] 代表另一条路线：不训小 Transformer，而是把每列变成一个与语言模型词向量**同宽**的向量，直接送进预训练好的骨干（Qwen3-0.6B，LoRA；或 ModernBERT-base，全量）。这条路线在同一个赛题上给出的数字是：
+
+| 模型 | OOF AUC | 备注 |
+| --- | --- | --- |
+| TabPFN-3.5 | 0.961248 | 表格基础模型，raw features 微调 |
+| Q-FT v2（ModernBERT + RTD） | 0.960798 | 24 token、149M 全量；**用了外部数据集** |
+| Kumo-Tabular Large | 0.960378 | 表格基础模型 |
+| 调参 XGBoost（8 seeds） | 0.959852 | |
+| Q-FT（Qwen + LoRA） | 0.959795 | 21 token、10.1M 可训练；raw features only |
+| 调参 RealMLP（8 seeds） | 0.959311 | |
+
+（数字来自 [[kaggle-q-ft]], L138–L146 与 [[kaggle-q-ft-v2]], L30；**单次 5 折、单种子、无代码**。）
+
+**先看结论再看成本**：这条路线在同一道题上**没有赢过调参 XGBoost**（v1 低 5.7e-5，v2 靠外部数据 + 自监督预训练才高出 0.00094），也低于两个表格基础模型。所以它不是“更强的基线”，而是一个**在特定数据形态下值得一试的候选**。
+
+**四个准入问题**（四个都答“是”才继续）：
+
+1. **样本量够大吗？** 两个来源都是 ~70 万行、2 万量级的特征基数。样本少时，149M 骨干 + 逐列词表会直接过拟合。
+2. **列是“码”还是“数”？** 这套编码最占便宜的是**评分类有序离散列**（0–5 共 6 个码）、低基数类别列、以及“看起来像 ID”的连续列（Flight Distance 被当成 route ID）。全是高精度连续数值、列数很多的表不会因此受益。
+3. **有 GPU 且能接受一次预训练开销吗？** v2：单 A100 每折 ~6.5 分钟 + 共享预训练 18 分钟（5 折共 ~50 GPU-分钟）；v1：每折 ~52 分钟（[[kaggle-q-ft-v2]], L22、L133）。**v2 的成本已经低于很多 FT-T 实验**。
+4. **允许用外部数据/测试集特征吗？** v2 的 side features 用了原始数据集的**标签**，RTD 预训练用了**测试集特征**，且 5 折共享同一初始化（[[kaggle-q-ft-v2]], L111–L112）。这在竞赛里可能合规，在真实项目里需要单独判断。
+
+**必须先写下来的四个决定**（不写就等于默认值替你决定）：
+
+| 决定 | v1 的做法 | v2 的做法 | 不写会怎样 |
+| --- | --- | --- | --- |
+| 位置信息 | RoPE 0…21 + 每步重排 | 全部 `position_ids = 0` | 顺序变成模型可学的信号，消融看起来变成“重排很重要” |
+| 池化 | 末尾 CLS | 23 个输出均值 | 因果掩码下只有末尾位置能看到全行 |
+| 每列编码 | 类别词表 / 评分等级 / route id / 延迟分桶 | 同左 | 高基数连续列当普通数值会丢掉“路由效应” |
+| 词表语料 | train + test（label-free） | 同左 | 只用 train 会让低频 code 在测试集上退化为 unknown |
+
+**诊断信号**：
+
+- **验证集好、测试集差**：先查词表与 side features 是否吃了测试集特征（传导式），再看是否用了外部标签。
+- **换骨干没用**（large 不比 base 好、DeBERTa 更差、随机初始化与预训练相同）：说明收益来自 **tokenizer + 数据表示**，不是语言预训练（[[kaggle-q-ft-v2]], L76–L78）。此时应该把精力投在编码方案，而不是换更大的模型。
+- **单折提升小于 1e-3**：先看折间跨度。两个来源的五折跨度都是 1.6e-3 量级，1e-4 的“改进”不可分辨（[[leaderboard-vs-cv]]）。
+- **同样的 side features 给 GBDT 增益更大**：这是正常现象（transformer 的逐值嵌入已经学到一部分），不要据此判定“transformer 不行”（[[kaggle-q-ft-v2]], L100）。
+
+**与 FT-T 的分工**：FT-T 是“小模型 + 统一协议 + 15 seeds”的**基准级**工具；Q-FT 系列是“大骨干 + 单赛题 + 单种子”的**探索级**工具。选型时前者用来定基线，后者用来回答“如果给模型更大的表征容量、更多预训练，还剩多少空间”。
 
 ## 默认还是调参：四格判断
 
@@ -198,7 +244,7 @@ optimizer = model.make_default_optimizer()  # AdamW 1e-4, wd 1e-5 + 豁免组
 
 ## 关联页面
 
-- 来源：[[ft-transformer]]
-- 概念：[[tabular-deep-learning]]、[[multi-layer-perceptron]]、[[ensembles]]、[[feature-preprocessing]]、[[hyperparameter-search]]、[[cross-validation]]、[[evaluation-metrics]]
+- 来源：[[ft-transformer]]、[[kaggle-q-ft]]、[[kaggle-q-ft-v2]]
+- 概念：[[tabular-deep-learning]]（LLM 当骨干、LoRA、order-free、RTD）、[[multi-layer-perceptron]]、[[ensembles]]、[[feature-preprocessing]]、[[hyperparameter-search]]、[[cross-validation]]、[[evaluation-metrics]]
 - 对照：[[gbdt-vs-tabular-dl]]
 - 相邻实践：[[competition-ml-workflow]]、[[preprocessing-pipeline-design]]、[[hyperparameter-search-and-tuning]]、[[cross-validation-design-and-tuning]]、[[ensembles-selection-and-tuning]]

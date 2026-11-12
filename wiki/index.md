@@ -25,6 +25,8 @@ tags:
 - [[hyra-1-0|Hyra-1.0：腾讯混元的递归自我改进科研智能体]] — 轻量 harness、经验库与双层评估循环，覆盖多类科研场景。
 - [[hyra-2-0|Hyra 2.0：从解题到造工具]] — 多项目长周期 harness、分层记忆、知识分级与工具化科研成果。
 - [[kaggle-getting-started|Kaggle 入门指南：竞赛型 MLE 的通用流程与一次完整赛题复盘]] — 七段流程、XGB 调参、Stacking 与 CV/LB 张力，代码绑定旧 API。
+- [[kaggle-q-ft|Q-FT：把表格行当嵌入喂给 Qwen 的 Tabular Transformer]] — 21 列→22 个位置、三段式嵌入与 RMSNorm、LoRA 10.1M、重排增强；含 Qwen 配置与参数账本手算复核。
+- [[kaggle-q-ft-v2|Q-FT v2：把表格行读成集合的 order-free ModernBERT]] — `position_ids=0`、side features、RTD 自监督预训练；含 149M 参数复核与单折/OOF 偏差。
 - [[ft-transformer|Revisiting Deep Learning Models for Tabular Data（FT-Transformer）]] — 同协议比较 9 个表格 DL 模型与 2 个 GBDT；ResNet/FT-T 基线、注意力重要性、合成 α 实验与官方实现核查。
 - [[sklearn-linear-models|scikit-learn 用户指南 1.1「Linear Models」]] — 线性估计器与求解器约定；记录严重折叠块丢失、公式空缺与外部核查。
 - [[sklearn-lda-qda|scikit-learn 用户指南 1.2「Linear and Quadratic Discriminant Analysis」]] — 生成式分类、Mahalanobis 几何、降维与协方差收缩；保留参考文献丢失等分歧。
@@ -61,7 +63,7 @@ tags:
 - [[research-memory-tiers|研究记忆分层与知识成熟度分级]] — 项目状态、agent 记忆、跨任务 Books，以及观察/已验证/约定三级。
 - [[experience-bank|经验库（Experience Bank）]] — 结构化 solution/日志/评分与多样化灵感的合成机制。
 - [[evaluator-solution-co-evolution|评估器与解的共进化]] — 无现成评估器时的双层循环，以及独立复核后的新瓶颈。
-- [[leaderboard-vs-cv|排行榜与本地验证（Leaderboard vs CV）]] — 本地 CV、Public LB、Private LB 的分工与切分复刻前提。
+- [[leaderboard-vs-cv|排行榜与本地验证（Leaderboard vs CV）]] — 本地 CV、Public LB、Private LB 的分工与切分复刻前提；单折试点与全折 OOF 的口径差。
 - [[regularization-and-sparsity|正则化与稀疏性（Regularization and Sparsity）]] — 惩罚、收缩、平滑、结构约束与随机化预算；区分稀疏与重要性。
 - [[gaussian-discriminant-analysis|高斯判别分析（Gaussian Discriminant Analysis）]] — LDA/QDA/GaussianNB 的假设嵌套、Mahalanobis 几何与参数代价。
 - [[naive-bayes|朴素贝叶斯（Naive Bayes）]] — 条件独立的收益与代价、五类变体、平滑与概率估计边界。
@@ -72,7 +74,7 @@ tags:
 - [[feature-selection|特征选择（Feature Selection）]] — 三家族、代理指标假设、阈值/个数、成本与选择稳定性。
 - [[multi-layer-perceptron|多层感知机（Multi-layer Perceptron, MLP）]] — 参数化非线性、输出面、求解器、非凸优化与 L2。
 - [[manifold-learning|流形学习（Manifold Learning）]] — 被保量、kNN 图、坐标输出、MDS/t-SNE 与接口边界。
-- [[tabular-deep-learning|表格数据的深度学习（Tabular Deep Learning）]] — 把每一列变成一个 token：Feature Tokenizer、PreNorm、默认配置、预处理契约与失败模式。
+- [[tabular-deep-learning|表格数据的深度学习（Tabular Deep Learning）]] — 把每一列变成一个 token：Feature Tokenizer、PreNorm、默认配置、预处理契约与失败模式；含 LLM 骨干、LoRA 与 order-free 三条路线的对照。
 
 ## 实践
 
@@ -81,7 +83,7 @@ tags:
 - [[metric-selection-and-thresholding|指标选择与阈值落地的流程：先声明目标泛函，再选严格一致的评分，最后单独定阈值]] — 评分映射、响应方法、主指标护栏与阈值四步法。
 - [[research-agent-harness|科研智能体 Harness 设计]] — 树搜索、单循环、多项目、进化种群与单文件贪心五种形态。
 - [[evaluator-design-and-reward-hacking|评估器设计与 reward hacking 防护]] — 作弊案例、固定验证、独立复核、噪声选择与证据纪律。
-- [[competition-ml-workflow|竞赛型 MLE 工作流（Kaggle 类任务）]] — 七段流程、时效性边界、CV/LB 张力与自动化程度。
+- [[competition-ml-workflow|竞赛型 MLE 工作流（Kaggle 类任务）]] — 七段流程、时效性边界、CV/LB 张力、`raw features only` 与特征工程的替代关系。
 - [[linear-models-as-baselines|把线性模型当基线：预处理约束、正则强度选择与常见坑]] — 尺度、共线性、内置 CV/IC、LDA/QDA、线性 SVM 与 NearestCentroid。
 - [[svm-selection-and-tuning|SVM 的选型与调参]] — 规模选实现、缩放、C/γ、概率迁移、多类与成本。
 - [[nearest-neighbors-selection-and-tuning|最近邻的选型与调参]] — 缩放、k/r、权重、搜索结构、预计算图与 NCA 对照。
@@ -95,7 +97,7 @@ tags:
 - [[covariance-estimation-selection-and-tuning|协方差估计的选型与调参：先判 n/p、再定 α 的来源、最后选损失口径]] — 收缩、GraphicalLasso、MCD、结构与似然目标。
 - [[outlier-detection-selection-and-tuning|异常检测的选型与调参：先判污染与是否要上线，再选形状假设，最后定阈值]] — 形状、容量旋钮、阈值五步与评估路径。
 - [[preprocessing-pipeline-design|预处理管线的落地设计：顺序、默认值、诊断信号与常见坑]] — 七阶段顺序、默认值、折内拟合与诊断。
-- [[tabular-model-selection|表格任务选型：先立 GBDT 与 ResNet 两个基线，再决定要不要上 FT-Transformer]] — 五个准入问题、基线顺序、默认/调参四格、评估协议与 14 条坑。
+- [[tabular-model-selection|表格任务选型：先立 GBDT 与 ResNet 两个基线，再决定要不要上 FT-Transformer]] — 五个准入问题、基线顺序、默认/调参四格、评估协议、LLM 骨干作为第五候选与 14 条坑。
 
 ## 工具
 
@@ -107,7 +109,7 @@ tags:
 ## 比较
 
 - [[hyra-1-0-vs-2-0|Hyra 1.0 与 2.0 对照：解题范式 vs 工具范式]] — 目标、组织、记忆、验证、结果形态与证据强度对照。
-- [[gbdt-vs-tabular-dl|GBDT 与表格深度模型：没有普适赢家]] — 默认 vs 调参、逐数据集胜负、成本、机制与基准偏差。
+- [[gbdt-vs-tabular-dl|GBDT 与表格深度模型：没有普适赢家]] — 默认 vs 调参、逐数据集胜负、成本、机制、基准偏差，以及人工特征收益的 4 倍差（n=1）。
 
 ## 研究
 

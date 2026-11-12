@@ -16,6 +16,8 @@ sources:
   - "[[sklearn-linear-models]]"
   - "[[sklearn-svm]]"
   - "[[sklearn-cross-validation]]"
+  - "[[kaggle-q-ft]]"
+  - "[[kaggle-q-ft-v2]]"
 status: draft
 verified: 2026-11-12
 applies_to:
@@ -70,6 +72,23 @@ AIDE 在固定验证划分上搜索代码，autoresearch 用固定 5 分钟 `val
 
 CV 不是天然更可靠：折间 std 不是标准误，分层可能压小方差，选择偏差与泄漏也会进入分数（[[sklearn-cross-validation]]）。
 
+## 单折试点与全折 OOF 不是同一个量
+
+[[kaggle-q-ft]] 与 [[kaggle-q-ft-v2]] 都先用 **fold-0** 跑消融、再用 **5 折 OOF** 报结果，两次的偏差方向一致、量级不同：
+
+| | fold-0 | 5 折 OOF | 单折乐观偏差 |
+| --- | --- | --- | --- |
+| Q-FT | 0.960444（[[kaggle-q-ft]], L129） | 0.959795（L142） | **+6.5e-4** |
+| Q-FT v2 | 0.960977（[[kaggle-q-ft-v2]], L145） | 0.960798（L30） | **+1.8e-4** |
+
+还有一层容易被忽略的差异：**「OOF 分数」本身有两个口径**。Q-FT 报告的 0.959795 低于它自己的五折均值 0.959811（[[kaggle-q-ft]], L146）——说明报的是**合并预测的 AUC**，不是「各折 AUC 的均值」。两者不等（AUC 是秩统计量，合并计算会改变分母与排序），均值也不可互换。
+
+可操作的三条：
+
+1. 报数时写明「pooled OOF」还是「fold-mean」，并始终附逐折数组；
+2. 单折试点适合**方向筛选**（差异 > 5e-3 时可信），不适合**定幅度**——上面两例的“改进”只有 3e-4–1e-3，与单折偏差同量级；
+3. 若消融只在 fold-0 上做，则最终报告的 OOF 与消融表的差值**不可相加**（v2 的导语就把两者混成了 +1e-3，参见该来源页分歧 1）。
+
 ## 给提升定义噪声底
 
 - 固定并记录切分、种子、数据版本和指标；
@@ -86,6 +105,7 @@ CV 不是天然更可靠：折间 std 不是标准误，分层可能压小方差
 - 把 Public LB 当最终目标反复优化；
 - 把内置 CV 当无泄漏黑盒；
 - 把单次最佳分数当泛化估计；
+- 把单折试点的提升当成全折结论，或把「合并 OOF」与「各折均值」当同一个数；
 - 忽略 stacking 与搜索复用同一切分的双重偏差；
 - 把折间 std 当标准误。
 
@@ -100,6 +120,6 @@ CV 不是天然更可靠：折间 std 不是标准误，分层可能压小方差
 
 ## 关联页面
 
-- 来源：[[kaggle-getting-started]]、[[aide]]、[[autoresearch]]、[[sklearn-linear-models]]、[[sklearn-cross-validation]]
+- 来源：[[kaggle-getting-started]]、[[aide]]、[[autoresearch]]、[[sklearn-linear-models]]、[[sklearn-cross-validation]]、[[kaggle-q-ft]]、[[kaggle-q-ft-v2]]
 - 概念：[[cross-validation]]、[[hyperparameter-search]]、[[evaluation-metrics]]
 - 实践：[[competition-ml-workflow]]、[[evaluator-design-and-reward-hacking]]、[[cross-validation-design-and-tuning]]

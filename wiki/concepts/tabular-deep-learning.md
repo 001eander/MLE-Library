@@ -14,18 +14,22 @@ tags:
 sources:
   - "[[ft-transformer]]"
   - "[[sklearn-preprocessing]]"
+  - "[[kaggle-q-ft]]"
+  - "[[kaggle-q-ft-v2]]"
 status: draft
 verified: 2026-11-12
 applies_to:
   - rtdl_revisiting_models 0.0.2（本地 checkout e3ed46c，2024-11-13）
   - PyTorch >=1.8,<3
+  - Qwen/Qwen3-0.6B-Base（config.json 于 2026-11-12 核对）
+  - answerdotai/ModernBERT-base（safetensors.total = 149,655,232，2026-11-12 核对）
 ---
 
 # 表格数据的深度学习（Tabular Deep Learning）
 
 表格 DL 与图像/文本 DL 的根本差别不在“用什么层”，而在**输入是什么**：一张表有 $k$ 列，列与列之间没有天然顺序，数值列与类别列的语义不同，而且 $k$ 通常远小于序列长度。FT-Transformer 的做法是把每一列变成一个 $d$ 维 token，再在“特征序列”上做注意力（[[ft-transformer]], p. 4）。本页整理这条路线的最小代数、默认配置、预处理契约、归纳偏置与失败模式；具体选型见 [[tabular-model-selection]]，与 GBDT 的对照见 [[gbdt-vs-tabular-dl]]。
 
-> **证据边界**：架构与实验数字来自 [[ft-transformer]]（NeurIPS 2021，arXiv v5）；代码行为来自官方仓库的本地 checkout（`package/rtdl_revisiting_models.py`，commit `e3ed46c`）。本页没有重跑训练；`stats.json` 的结果复核见来源页的“官方实现核查”。
+> **证据边界**：架构与实验数字来自 [[ft-transformer]]（NeurIPS 2021，arXiv v5）；代码行为来自官方仓库的本地 checkout（`package/rtdl_revisiting_models.py`，commit `e3ed46c`）。Q-FT 两节来自 Kaggle 竞赛帖 [[kaggle-q-ft]] 与 [[kaggle-q-ft-v2]]（单次 5 折、单种子、无代码），其参数账本由本库按 Hugging Face 配置手算复核。本页没有重跑任何训练。
 
 ## 一张表就是 $k$ 个 token
 
@@ -171,6 +175,67 @@ FT-T 的归纳偏置可以概括为三条：
 - **Epsilon 单模型最差**：0.8982，低于（更差于）TabNet 0.8896 等（表 2）；该数据集用了 Linformer 缩放与启发式默认配置，未做完整调参；
 - **注意力不是因果解释**：AM 与 PT/IG 的秩相关只是排序一致性；AM 与 IG 的排序相关不代表两者的重要性含义相同（[[ft-transformer]], p. 10）。
 
+## LLM 当骨干：把表当成一句话
+
+FT-T 把每列变成一个 token，但 token 只在一个小 Transformer 里（929K 参数）。[[kaggle-q-ft]] 把同一件事推到极端：**token 直接进一个语言模型**，维度与词向量对齐。
+
+**接口**：Hugging Face 模型可以接收 `inputs_embeds` 而不是 token id，因此可以完全跳过词嵌入表——模型看到的是 22 个 1,024 维向量，而不是文本（[[kaggle-q-ft]], L84）。这是“不把行写成文本”的技术前提。
+
+**三段式嵌入**（每列一个 embedder，[[kaggle-q-ft]], L41–L46）：
+
+$$t_j=\mathrm{RMSNorm}\Big(e^{\text{col}}_j+e^{\text{val}}_j(x_j)+f^{\text{num}}_j(x_j)\Big)\cdot g,\qquad \mathrm{RMS}(t_j)\approx 0.030$$
+
+- $e^{\text{col}}$：列身份，用列名的语言模型词向量（如 “Flight Distance” 各 token 的均值）**初始化**后训练；
+- $e^{\text{val}}$：按该列的 code 查表；
+- $f^{\text{num}}$：只给数值列，标准化后的 $x$ 过 $\sin(2\pi f x)/\cos(2\pi f x)$（32 个可学习频率）再进一个小 MLP（64 → 1,024，图上是单层 + ReLU）；
+- $g$：把 RMS 压到 ≈0.030（“Qwen 典型词向量的大小”），让表 token 与文本 token 同尺度。
+
+**逐列编码是这个方案里最可复用的部分**（[[kaggle-q-ft]], L54–L60）：类别列用词表，评分列直接用等级，Age 每个不同值一个 code，Flight Distance 用“出现 ≥3 次的距离各给一个 route id + 其余归 rare”的词表（3,301），延迟分 8 个桶；同时**只有这 4 个数值列**额外接数值嵌入。注意 Age 的 code 是 29、数值是 $-0.217$——code 与数值是两条并行通道，不是二选一。
+
+**代价**：解码器只有因果注意力，因此只有最后一个位置（CLS）能看到全部特征。作者的对策是**训练时每行每步重排特征顺序**，推理时对 5 种顺序的 logit 取均值（[[kaggle-q-ft]], L93、L120）。这条增强是全篇唯一大于折间波动的消融：固定顺序 0.953546 vs 重排 0.960444（**−0.0069**）。
+
+## 冻结骨干 + 低秩适配（LoRA）
+
+[[kaggle-q-ft]] 用 LoRA 把可训练参数压到骨干的约 2%（[[kaggle-q-ft]], L99–L104）：
+
+$$\text{output}=Wx+\frac{\alpha}{r}B(Ax),\qquad r=16,\ \alpha=32,\ \alpha/r=2$$
+
+- **B 初始化为零** → 第 0 步精确等价于原始权重；训练只动 $A,B$；
+- 挂在**每层全部 7 个投影**上：attention 的 q/k/v/o + MLP 的 gate/up/down；
+- 参数账本（本库按 Qwen3-0.6B-Base 的 `config.json` 手算，与来源一致）：每层 360,448 × 28 层 = **10,092,544**；另有 feature tokenizer + CLS/头约 **3.87M**；冻结骨干 440,466,432（不含被 tie 的词嵌入表）；
+- 冻结**不等于免费**：0.6B 权重仍要跑前向与反向（[[kaggle-q-ft]], L104）。
+
+一个反直觉的读数：**冻结骨干（只训 tokenizer + 头）只比 LoRA 低 0.0007**（0.959788 vs 0.960444，[[kaggle-q-ft]], L131）。也就是说在这个任务上，LoRA 的容量不是瓶颈；同一个作者的“随机初始化骨干与预训练骨干只差 8e-6”进一步说明**语言预训练本身没有提供收益**——但那条证据只有单折、且两组可训练参数集不同（见来源页分歧 3）。
+
+## order-free：把「表是集合」从训练技巧变成结构约束
+
+FT-T 表达“特征是一个集合”的方式是**不注入位置信息**；Q-FT 的方式是**重排 + 因果掩码**（训练技巧）；[[kaggle-q-ft-v2]] 的方式是**编码器 + 所有 token 的 `position_ids` 都设为 0**（结构约束）。
+
+- ModernBERT 用 RoPE，位置由传入的 `position_ids` 驱动；全部传 0 就没有位置可言（[[kaggle-q-ft-v2]], L66）；
+- 作者自查：打乱特征顺序后输出变化约 **3e-6**（浮点误差量级），因此训练不需要重排、推理只需一次前向（[[kaggle-q-ft-v2]], L68）；
+- 池化从“读末尾 CLS”改为 **23 个输出向量的均值**（21 特征 + 2 summary）；CLS head、attention-pooling、mean+max 在噪声内相同（[[kaggle-q-ft-v2]], L72）。
+
+**边界**：ModernBERT-base 是局部窗口 128 与全局注意力每 3 层交替（`local_attention=128`、`global_attn_every_n_layers=3`），所以“所有 token 互相可见”只在**行长 < 128** 时成立——这个任务一行 24 个 token，局部≈全局。若把行拉长到数百 token，这条等价性就不再成立（[[kaggle-q-ft-v2]] 分歧 6）。
+
+**两条加在 token 上的外部信息**（同一来源）：每个特征 token 额外加 **9 个**关于该取值的数（计数、路由画像、无标签典型性残差、原始数据的平滑 log-odds），另加 **2 个 summary token**（28 个行统计数、17 个原始数据块）——折 0 约 +4e-4。**同类特征给 GBDT 约 +1.6e-3**，是 transformer 的近 4 倍（[[kaggle-q-ft-v2]], L100）；作者的解读是逐值嵌入已经学到了 counts 与路由画像能说的东西。这是“人工特征 vs 模型内建表征”可替代性的一个直接读数，见 [[gbdt-vs-tabular-dl]]。
+
+**表格自监督预训练**（同一来源，L105–L113）：ELECTRA 式的替换 token 检测（RTD）——随机把 15% 的值换成同列的另一行值，逐 token 判断真/假。不使用标签，因此语料可以是 train + test + 外部数据集（1.13M 行），且**与 CV 折无关**：只跑一次，5 折共享同一初始化。折 0 约 +3e-4；预训练 10 epochs 反而更差，用外部数据集做**有监督**预训练则完全没用（L120）。
+
+## 三条路线的对照
+
+| | FT-Transformer（[[ft-transformer]]） | Q-FT（[[kaggle-q-ft]]） | Q-FT v2（[[kaggle-q-ft-v2]]） |
+| --- | --- | --- | --- |
+| 位置信息 | 无（不注入） | RoPE 0…21 + 每行重排 | RoPE，全部位置编号 0 |
+| 注意力 | 双向 | 因果 | 双向（局部 128 / 每 3 层全局） |
+| 池化 | `[CLS]` | 末尾 CLS | 23 个输出均值 |
+| 数值特征 | 逐特征标量乘 | 周期特征 + 小 MLP | 同左 + 9 个 side features |
+| 类别特征 | 查找表 | 查找表 + 列嵌入 | 同左 |
+| 预训练 | 无 | 语言预训练（消融称无用） | 语言 + 表格 RTD |
+| 可训练参数 | 929K（100 个数值特征） | 10.1M LoRA + 3.9M tokenizer | 全部 149M |
+| 数据规模 | 11 个数据集，多为千—万行 | ~70 万行，单赛题 | ~70 万行 + 1.13M 预训练语料 |
+
+共同点比差异更值得记：**三条路线都把每一列变成一个向量，都主张列的顺序没有语义**。差别在于用什么机制表达这个假设（不注入 / 训练时重排 / 位置恒零），以及用多大的骨干去混合这些 token。
+
 ## 与其它页面的关系
 
 - 选型与落地：[[tabular-model-selection]]
@@ -178,7 +243,7 @@ FT-T 的归纳偏置可以概括为三条：
 - 基线概念：[[multi-layer-perceptron]]、[[ensembles]]、[[regularization-and-sparsity]]
 - 预处理契约：[[feature-preprocessing]]、[[preprocessing-pipeline-design]]
 - 评估协议：[[cross-validation]]、[[hyperparameter-search]]、[[evaluation-metrics]]
-- 来源：[[ft-transformer]]
+- 来源：[[ft-transformer]]、[[kaggle-q-ft]]、[[kaggle-q-ft-v2]]
 
 ## 待解问题
 
@@ -190,3 +255,6 @@ FT-T 的归纳偏置可以概括为三条：
 6. PreNorm + 去掉第一层 norm 的“CRUCIAL”是否随层数/数据规模变化？
 7. 把 FT-T 蒸馏到 ResNet/MLP 的精度-延迟曲线？
 8. 无位置编码是否意味着 FT-T 对特征重排完全不变？数值/类别列的内部顺序是否也无关？（代码上是，但未做实验验证）
+9. 「不注入位置」与「位置恒为零」在 RoPE 下是否严格等价？两者对注意力分布的影响是否相同？（Q-FT v2 用 3e-6 的自查间接支持等价，但没有对照实验）
+10. 表格 RTD 的收益能外推到多大数据规模？1.13M 行语料里有多大比例是测试集特征，这部分“传导式”信息值多少分？
+11. token 级嵌入（每列一个向量）与 FT-T 的线性投影，在**类别列少、数值列多**的数据上谁更省？Q-FT 的 tokenizer 需要 3,479 个 code 的词表，这在基数更高的赛题里会膨胀到多少？

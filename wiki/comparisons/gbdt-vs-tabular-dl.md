@@ -12,6 +12,8 @@ tags:
   - benchmark
 sources:
   - "[[ft-transformer]]"
+  - "[[kaggle-q-ft]]"
+  - "[[kaggle-q-ft-v2]]"
 status: draft
 verified: 2026-11-12
 applies_to:
@@ -113,6 +115,25 @@ ResNet 随目标变“树友好”而显著退化；CatBoost 相反；FT-T 在�
 
 一个可操作的推论：**如果 GBDT 在你的数据上大幅领先，先把它当“目标函数更像树”的信号**，不要只用“DL 调参不够”解释；反之，如果 FT-T 大幅领先，检查 GBDT 是否受类别数/类别特征/调参预算限制。
 
+## 单一竞赛证据：人工特征给 GBDT 的收益约为 DL 的 4 倍
+
+上面是 11 个数据集的同协议基准；下面这条只有 **n=1**，但方向明确，且恰好能检验“机制”一节的说法。
+
+[[kaggle-q-ft-v2]] 在同一赛题上给 transformer 与 GBDT 喂了**同类人工特征**（counts、路由画像、无标签典型性残差、外部数据集的平滑 log-odds，加上两个行级 summary token），读数：
+
+| 模型 | 加入这类特征后的增益 |
+| --- | --- |
+| token 化的 transformer（ModernBERT） | 约 **+4e-4** AUC（fold 0，两个种子一致） |
+| GBDT | 约 **+1.6e-3** AUC |
+
+（[[kaggle-q-ft-v2]], L100。）作者的解读是：**transformer 的逐值嵌入已经学到了 counts 与路由画像能说的东西**，所以同一批信息的边际价值被压到 1/4。
+
+**为什么写进本页**：它给出了“GBDT 赢”的一个与目标函数形态无关的解释——**人工特征与模型内建表征是部分可替代的**。这与 FT-T 论文的 α 实验互补：α 实验说明“目标函数形态”会拉开差距（[[ft-transformer]], p. 9，见上一节），这条说明“**特征供给**”也会拉开差距，而且方向相反（DL 把特征吸收进嵌入，GBDT 把特征当输入）。
+
+**证据强度声明**：(a) 单一赛题、单次 5 折、单种子；(b) 剪藏未给 GBDT 的配置、也未确认两侧用的是**完全相同**的 9 个特征（只说 “the same kind of features”）；(c) transformer 侧的 +4e-4 与消融表的 +2.87e-4 不一致（见来源页分歧 3）。因此这条只能当**方向性机制证据**，不能当量化的选型依据。
+
+**仍可行动的推论**：如果你已经在给模型喂大量统计类特征，先问一句“模型自己能不能从逐列嵌入里学出来”；若模型是 GBDT/线性/扁平 MLP，这类特征仍然值得做。
+
 ## 基准偏差：这篇论文的结论有边界
 
 [[ft-transformer]] 的 11 个数据集有明确的形态偏差（[[ft-transformer]], p. 6、p. 14）：
@@ -150,9 +171,10 @@ ResNet 随目标变“树友好”而显著退化；CatBoost 相反；FT-T 在�
 6. FT-T 的增益是否主要来自“更像树”的目标，还是来自 embedding/注意力对类别特征的处理？需要真实数据的消融。
 7. 在在线延迟约束下，蒸馏后的 FT-T 与 GBDT 的精度-延迟曲线如何？
 8. 如果把调参预算统一为“相同 wall-clock 时间”，结论是否改变？表 11 只覆盖 3 个数据集。
+9. “同类人工特征给 GBDT 的收益是 DL 的 4 倍”在多大数据集上成立？需要同一批特征、同一验证划分的受控对照。
 
 ## 关联页面
 
-- 来源：[[ft-transformer]]
+- 来源：[[ft-transformer]]、[[kaggle-q-ft]]、[[kaggle-q-ft-v2]]
 - 概念：[[tabular-deep-learning]]、[[ensembles]]、[[decision-trees]]、[[multi-layer-perceptron]]、[[evaluation-metrics]]
 - 实践：[[tabular-model-selection]]、[[competition-ml-workflow]]、[[hyperparameter-search-and-tuning]]、[[cross-validation-design-and-tuning]]
