@@ -13,10 +13,11 @@ tags:
   - workflow
 sources:
   - "[[sklearn-ensembles]]"
+  - "[[sklearn-stacking-example]]"
 status: draft
-verified: 2026-11-11
+verified: 2026-11-12
 applies_to:
-  - scikit-learn 1.9.1（文档与 API 签名，见 [[sklearn-ensembles]]）
+  - scikit-learn 1.9.1（文档与 API 签名，见 [[sklearn-ensembles]]、[[sklearn-stacking-example]]）
 ---
 
 # 集成模型的选型与调参
@@ -59,9 +60,20 @@ MDI 是训练期统计且偏好高基数，不适合当无偏特征解释；需�
 
 - Bagging 适合基模型不是树或需要自定义抽样策略时；默认只有 10 个基模型，需主动设预算。
 - 硬投票看多数类，平票按类标签升序；软投票看平均概率，要求 `predict_proba` 且最好校准。
+- **Stacking 先看 [[stacking]]**（结构、第二层的三种约束、折外与全量的错配），下面只是落地清单。
 - Stacking 使用折外预测，成本约为基模型 ×(K+1)，还要加上第二层。分组/时序数据不能随意随机 K 折。
 - 多层 stacking 不会自动提高收益，先核对折外分布与最终基模型的差异。
 - **大规模 pair 池的协议**（[[kaggle-tfms-llms-tabular]]）：概率先 clip（`1e-15`，再 `±30`）转 logit；L2 逻辑回归（`C=1`）在 4 折 OOF 上拟合、预测第 5 折；测试侧平均 5 个折模型。加**一个不同类**的模型能值 +4.9e-4，而 9 个同族 TFM 互堆只值 +5e-5（细节见 [[ensembles]]）。
+
+### Stacking 的七步落地清单
+
+1. **写清切分能否复刻推理分布**：有组/用户/时序时先换 splitter，否则折外预测这一步本身就是漏的。
+2. **声明第二层与约束**：无约束+截距（`RidgeCV`，默认）、纯非负、还是凸（scikit-learn 无内置，需自定义估计器）。约束决定权重能不能读成「份额」。
+3. **声明正则与成员选择**：$ℓ_2$ 只收缩，$ℓ_1$ 会把弱成员压到恰好 0；两组权重不可互推。
+4. **报差值时同时报折间波动**：官方示例是 $R^2$ 0.80±0.03 对 0.79±0.03（[[sklearn-stacking-example]] 图 3），用户指南自己的例子是 0.53 对 0.53（[[sklearn-ensembles]], L779、L822）。差值小于折间标准差时不要写「提升」。
+5. **不要用第二层在 OOF 上的分数当系统分数**：推理时喂给它的是全量重训的基模型，评估整个 stack 只能用外层 CV。
+6. **必须做成本帐**：基模型 ×(K+1) + 第二层；调参时每个候选重跑整个 stack。
+7. **成员多样性优先于成员数量**：同族成员互堆接近零收益，一个「与池内都不像」的成员可能值几百个像的。
 
 ## 五、AdaBoost
 
@@ -79,6 +91,8 @@ MDI 是训练期统计且偏好高基数，不适合当无偏特征解释；需�
 - 把 `max_bins` 硬上限当建议；
 - 忽略类别基数与未见类别；
 - 用非折外预测做 stacking；
+- 把第二层在 OOF 上的分数当成整个 stack 的分数；
+- 只报均值不报折间波动，把 0.01 的差写成提升；
 - 用未校准概率做软投票；
 - 把 MDI 当因果重要性；
 - 忽略版本弃用，如 `GradientBoosting*.criterion`；
@@ -92,12 +106,13 @@ MDI 是训练期统计且偏好高基数，不适合当无偏特征解释；需�
 | 预算与学习率/树大小扫描 | 高 |
 | 早停与实际轮数报告 | 高 |
 | 折外预测与泄漏审计 | 中 |
+| Stacking 的第二层约束、成本帐与折间波动报告 | 中 |
 | 约束、校准与最终解释 | 中–低 |
 
 运行时对照只在 `uv` 目标版本环境中执行，不沿用历史本机实验。
 
 ## 关联页面
 
-- 来源：[[sklearn-ensembles]]、[[sklearn-outlier-detection]]
-- 概念：[[ensembles]]、[[decision-trees]]、[[cross-validation]]
+- 来源：[[sklearn-ensembles]]、[[sklearn-outlier-detection]]、[[sklearn-stacking-example]]
+- 概念：[[ensembles]]、[[stacking]]、[[decision-trees]]、[[cross-validation]]
 - 实践：[[decision-trees-selection-and-tuning]]、[[hyperparameter-search-and-tuning]]、[[feature-selection-workflow]]

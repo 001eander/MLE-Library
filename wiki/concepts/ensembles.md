@@ -16,6 +16,7 @@ sources:
   - "[[sklearn-outlier-detection]]"
   - "[[ft-transformer]]"
   - "[[kaggle-tfms-llms-tabular]]"
+  - "[[sklearn-stacking-example]]"
 status: draft
 verified: 2026-11-12
 applies_to:
@@ -75,10 +76,10 @@ Extra-Trees 进一步随机化阈值（L456–L489）。`max_features` 默认随
 
 - **Bagging**：四种抽样变体由样本/特征是否有放回抽取组合而成（L572–L596）。
 - **Voting**：硬投票多数类，平票按类标签升序；软投票平均概率，要求基模型提供 `predict_proba`（L598–L693）。
-- **Stacking**：用折外预测训练第二层，CV 从评估手段变成训练机制（L727–L829）。二分类时每个基模型的两列概率共线，只保留一列（L795–L796）。
+- **Stacking**：用折外预测训练第二层，CV 从评估手段变成训练机制（L727–L829）。二分类时每个基模型的两列概率共线，只保留一列（L795–L796）。机制、第二层的约束形态与评估纪律另见 [[stacking]]。
 - **AdaBoost**：逐轮调整样本权重；默认分类器是 stump，回归器是 `max_depth=3` 的回归树（L831–L866，API 外部核查）。
 
-Stacking 的关键不是「第二层更复杂」，而是折外预测是否近似未来数据。若训练集有组或时间结构，随机 K 折可能让折外预测泄漏，见 [[cross-validation]]。
+Stacking 的关键不是「第二层更复杂」，而是折外预测是否近似未来数据。若训练集有组或时间结构，随机 K 折可能让折外预测泄漏，见 [[stacking]] 与 [[cross-validation]]。
 
 ## 大规模 stacking：245 个 pair 的工程细节
 
@@ -153,5 +154,5 @@ Stacking 的关键不是「第二层更复杂」，而是折外预测是否近�
 ## 关联页面
 
 - 来源：[[sklearn-ensembles]]、[[sklearn-outlier-detection]]、[[ft-transformer]]、[[kaggle-tfms-llms-tabular]]
-- 概念：[[decision-trees]]、[[cross-validation]]、[[regularization-and-sparsity]]、[[anomaly-detection]]、[[generative-classification]]、[[leaderboard-vs-cv]]
+- 概念：[[decision-trees]]、[[cross-validation]]、[[stacking]]、[[regularization-and-sparsity]]、[[anomaly-detection]]、[[generative-classification]]、[[leaderboard-vs-cv]]
 - 实践：[[ensembles-selection-and-tuning]]、[[hyperparameter-search-and-tuning]]

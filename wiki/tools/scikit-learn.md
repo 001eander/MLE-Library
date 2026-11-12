@@ -27,6 +27,7 @@ sources:
   - "[[sklearn-hyperparameter-tuning]]"
   - "[[sklearn-metrics]]"
   - "[[sklearn-preprocessing]]"
+  - "[[sklearn-stacking-example]]"
 status: draft
 verified: 2026-11-12
 applies_to:
@@ -141,12 +142,14 @@ applies_to:
 | `Bagging*` | `n_estimators=10`、`max_samples=None`（→1.0）、`max_features=1.0`、`bootstrap=True` |
 | `VotingClassifier` | `voting='hard'`、`weights=None`、`flatten_transform=True` |
 | `VotingRegressor` | `weights=None` |
-| `StackingClassifier` | `cv=None`（→5 折）、`stack_method='auto'`、`passthrough=False` |
-| `StackingRegressor` | `cv=None`、`passthrough=False` |
+| `StackingClassifier` | `cv=None`（→5 折 `StratifiedKFold`）、`stack_method='auto'`（`predict_proba` → `decision_function` → `predict`）、`passthrough=False`、`final_estimator=None`（→`LogisticRegression`） |
+| `StackingRegressor` | `cv=None`（→5 折 `KFold`）、`passthrough=False`、`stack_method='auto'`（回归→`predict`）、`final_estimator=None`（→`RidgeCV()`） |
 | `AdaBoostClassifier` | `n_estimators=50`、`learning_rate=1.0`、默认 stump |
 | `AdaBoostRegressor` | 默认 `max_depth=3` 回归树、`loss='linear'` |
 
 RF 平均概率而非硬投票；Stacking 必须用折外预测；`max_bins` 上限 255 且数值箱 + 缺失箱是另一计数口径。
+
+Stacking 的两个实现细节以 1.9.1 页面自带的参数表为准（[[sklearn-stacking-example]]）：① `cv=None` 时用 5 折，且这些 splitter **以 `shuffle=False` 实例化**，因此跨调用折划分相同；`cv` 只用于 `cross_val_predict` 产折外预测，**不用于模型评估**；② `cv="prefit"` 假定基模型已拟合、不再重训，此时 `final_estimator_` 用的是**全训练集**上的预测，而非折外预测，文档明写此时有过拟合风险。机制与评估纪律见 [[stacking]]。
 
 ### `neighbors`
 
@@ -339,6 +342,7 @@ Halving 第一轮也评估全部候选；`cv_results_` 是长表；`refit` 决�
 - `KBinsDiscretizer.quantile_method`：1.7 新增，1.9 默认改 `'averaged_inverted_cdf'`；
 - `SplineTransformer.handle_missing` 与 `MaxAbsScaler.clip`：1.8 新增；
 - `GroupKFold.shuffle`/`random_state`：1.6 新增；
+- **示例页 `plot_stack_predictors` 在 1.9 被整篇重写**：1.6–1.8 是 Ames Housing（`fetch_openml` + `ColumnTransformer` + RF/GBDT）版本，1.9 换成 1-D 合成数据 + 样条/HGBT + `SuperLearner` 对照（[[sklearn-stacking-example]]）。同一 URL 在不同版本下教不同的课，引用二手资料前需先确认版本；
 - `TimeSeriesSplit.gap`/`max_train_size`/`test_size`：0.24 新增；
 - `cross_validate.return_train_score`：0.21 起默认 `False`；
 - `make_scorer.response_method`：1.8 起默认 `'predict'`。

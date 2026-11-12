@@ -47,6 +47,7 @@ tags:
 - [[sklearn-hyperparameter-tuning|scikit-learn 用户指南 3.2「Tuning the hyper-parameters of an estimator」]] — 网格、随机与逐次减半的预算曲线、`refit` 与失败语义。
 - [[sklearn-metrics|scikit-learn 用户指南 3.4「Metrics and scoring」]] — 目标泛函与严格一致评分；仅保留 4/54 小节，指标本体严重缺失。
 - [[sklearn-preprocessing|scikit-learn 用户指南 8.3「Preprocessing data」]] — 有状态预处理契约、缩放、编码、展开与目标编码交叉拟合；公式折叠块丢失。
+- [[sklearn-stacking-example|scikit-learn 示例「Combine predictors using stacking」]] — 1.9 重写版：一维合成数据上的三模型叠加、`RidgeCV`/`LassoCV` 元权重与 SuperLearner 对照；含 1.9 前 Ames Housing 版本的对照与整块参数表丢失。
 
 ## 概念
 
@@ -73,6 +74,7 @@ tags:
 - [[nearest-neighbors|最近邻方法（Nearest Neighbors）]] — 非泛化学习、邻域、搜索结构、预计算图、质心与 NCA。
 - [[decision-trees|决策树（Decision Trees）]] — 分段常数、轴对齐划分、贪心不稳定性、缺失值与结构剪枝。
 - [[ensembles|集成方法（Ensembles）]] — 平均降方差、顺序降偏差、GBDT/RF/Stacking 与随机化预算。
+- [[stacking|叠加与折外预测（Stacking / OOF）]] — 两层结构、三种元权重约束、第二层即成员选择器、折外与全量的错配、成本与收益判据。
 - [[feature-selection|特征选择（Feature Selection）]] — 三家族、代理指标假设、阈值/个数、成本与选择稳定性。
 - [[multi-layer-perceptron|多层感知机（Multi-layer Perceptron, MLP）]] — 参数化非线性、输出面、求解器、非凸优化与 L2。
 - [[manifold-learning|流形学习（Manifold Learning）]] — 被保量、kNN 图、坐标输出、MDS/t-SNE 与接口边界。

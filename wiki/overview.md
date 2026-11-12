@@ -35,7 +35,7 @@ tags:
 
 ## 当前来源
 
-目前收录 **28 个来源**。
+目前收录 **29 个来源**。
 
 ### 自动化科研与竞赛
 
@@ -59,8 +59,9 @@ tags:
 - [[sklearn-ensembles|1.11 Ensembles]]：平均与顺序两类组合策略。
 - [[sklearn-feature-selection|1.13 Feature selection]]：过滤、嵌入与包裹式选择。
 - [[sklearn-neural-networks|1.17 Neural networks]]：MLP、非凸优化与求解器契约。
+- [[sklearn-stacking-example|示例 Combine predictors using stacking]]：1.9 重写的一维回归叠加示例，含元权重与 SuperLearner 对照。
 
-对应概念：[[regularization-and-sparsity]]、[[gaussian-discriminant-analysis]]、[[support-vector-machines]]、[[nearest-neighbors]]、[[naive-bayes]]、[[decision-trees]]、[[ensembles]]、[[feature-selection]]、[[multi-layer-perceptron]]。
+对应概念：[[regularization-and-sparsity]]、[[gaussian-discriminant-analysis]]、[[support-vector-machines]]、[[nearest-neighbors]]、[[naive-bayes]]、[[decision-trees]]、[[ensembles]]、[[stacking]]、[[feature-selection]]、[[multi-layer-perceptron]]。
 
 ### 无监督产物
 
