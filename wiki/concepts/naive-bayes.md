@@ -117,6 +117,8 @@ applies_to:
 
 **本库综合**：三族零成本基线最好**一起跑**，因为它们的失效方式互不重叠——线性模型怕非线性交互，LDA/QDA 怕非高斯，NB 怕特征冗余。三者都失败时，才值得把算力投给树模型。
 
+这四个族都有一个共同前提：**都在建 $p(x\mid y)$ 或直接建 $p(y\mid x)$**。把这条轴拉出来看（包括“放弃独立假设、换成自回归神经密度”的现代实例）见 [[generative-classification]]。
+
 ## 待解问题
 
 - **NB 的概率“多坏”、能不能救？** 来源只给警告（L42）。需要 `sklearn.calibration` 作为独立来源。**部分线索**：[[sklearn-svm]] 的 Platt 校准是同一问题的另一条已知路径，但它在 1.9 已被弃用（理由是非线程安全），且不保证与分数同序——说明“校准”本身是一个有代价的独立步骤。
@@ -129,5 +131,5 @@ applies_to:
 
 - 来源：[[sklearn-naive-bayes]]
 - 工具：[[scikit-learn]]（`naive_bayes` 估计器矩阵与默认值）
-- 概念：[[gaussian-discriminant-analysis]]（`GaussianNB` ⊂ LDA ⊂ QDA 的嵌套与参数代价推导）、[[regularization-and-sparsity]]（平滑作为第四个正则化面）、[[support-vector-machines]]（另一个“分数 ≠ 概率”的来源与四层输出）、[[leaderboard-vs-cv]]（排序指标 vs 概率指标）
+- 概念：[[gaussian-discriminant-analysis]]（`GaussianNB` ⊂ LDA ⊂ QDA 的嵌套与参数代价推导）、[[generative-classification]]（生成式分类的总轴、证据可加性与 LLM 实例）、[[regularization-and-sparsity]]（平滑作为第四个正则化面）、[[support-vector-machines]]（另一个“分数 ≠ 概率”的来源与四层输出）、[[leaderboard-vs-cv]]（排序指标 vs 概率指标）
 - 实践：[[linear-models-as-baselines]]（零成本基线族的定位与尺度约束）

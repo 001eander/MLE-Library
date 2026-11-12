@@ -16,6 +16,7 @@ sources:
   - "[[sklearn-preprocessing]]"
   - "[[kaggle-q-ft]]"
   - "[[kaggle-q-ft-v2]]"
+  - "[[kaggle-tfms-llms-tabular]]"
 status: draft
 verified: 2026-11-12
 applies_to:
@@ -23,13 +24,14 @@ applies_to:
   - PyTorch >=1.8,<3
   - Qwen/Qwen3-0.6B-Base（config.json 于 2026-11-12 核对）
   - answerdotai/ModernBERT-base（safetensors.total = 149,655,232，2026-11-12 核对）
+  - GPT-2 124M（Hugging Face `gpt2`，仅「第四条路线」一节，见 [[kaggle-tfms-llms-tabular]]）
 ---
 
 # 表格数据的深度学习（Tabular Deep Learning）
 
 表格 DL 与图像/文本 DL 的根本差别不在“用什么层”，而在**输入是什么**：一张表有 $k$ 列，列与列之间没有天然顺序，数值列与类别列的语义不同，而且 $k$ 通常远小于序列长度。FT-Transformer 的做法是把每一列变成一个 $d$ 维 token，再在“特征序列”上做注意力（[[ft-transformer]], p. 4）。本页整理这条路线的最小代数、默认配置、预处理契约、归纳偏置与失败模式；具体选型见 [[tabular-model-selection]]，与 GBDT 的对照见 [[gbdt-vs-tabular-dl]]。
 
-> **证据边界**：架构与实验数字来自 [[ft-transformer]]（NeurIPS 2021，arXiv v5）；代码行为来自官方仓库的本地 checkout（`package/rtdl_revisiting_models.py`，commit `e3ed46c`）。Q-FT 两节来自 Kaggle 竞赛帖 [[kaggle-q-ft]] 与 [[kaggle-q-ft-v2]]（单次 5 折、单种子、无代码），其参数账本由本库按 Hugging Face 配置手算复核。本页没有重跑任何训练。
+> **证据边界**：架构与实验数字来自 [[ft-transformer]]（NeurIPS 2021，arXiv v5）；代码行为来自官方仓库的本地 checkout（`package/rtdl_revisiting_models.py`，commit `e3ed46c`）。Q-FT 两节来自 Kaggle 竞赛帖 [[kaggle-q-ft]] 与 [[kaggle-q-ft-v2]]（单次 5 折、单种子、无代码），其参数账本由本库按 Hugging Face 配置手算复核；「第四条路线」一节来自同赛题的方案帖 [[kaggle-tfms-llms-tabular]]（同样单次 5 折、无代码）。本页没有重跑任何训练。
 
 ## 一张表就是 $k$ 个 token
 
@@ -221,6 +223,27 @@ FT-T 表达“特征是一个集合”的方式是**不注入位置信息**；Q-
 
 **表格自监督预训练**（同一来源，L105–L113）：ELECTRA 式的替换 token 检测（RTD）——随机把 15% 的值换成同列的另一行值，逐 token 判断真/假。不使用标签，因此语料可以是 train + test + 外部数据集（1.13M 行），且**与 CV 折无关**：只跑一次，5 折共享同一初始化。折 0 约 +3e-4；预训练 10 epochs 反而更差，用外部数据集做**有监督**预训练则完全没用（L120）。
 
+## 第四条路线：不训 tokenizer，把整行写成句子
+
+前三节（FT-T、Q-FT、Q-FT v2）的共同前提是**要设计一个 feature tokenizer**：逐列词表、code 词表、side features。[[kaggle-tfms-llms-tabular]] 把这一步直接去掉：把整行写成 `"列 is 值"` 用 `", "` 连接的文本，交给一个普通 GPT（L50–L55）。剩下唯一的设计选择是 **target 写在哪里**：
+
+| | target LAST（Detective） | target FIRST（Storyteller） |
+| --- | --- | --- |
+| 建模对象 | $P(\text{target}\mid\text{features})$，判别式 | $P(\text{features}\mid\text{target})$，用 Bayes 反转（[[generative-classification]]） |
+| 训练 | 按「特征在前」微调，loss 可只放在标签 token 上 | 先复刻原数据集，再每折续训「目标在前 + 随机列序」 |
+| 推理 | 截到 `satisfaction is`，读下一个 token 的 `" True"` / `" False"` | 每个 target 值跑一次，对 ~30 个列序做 log-sum-exp |
+| 每行前向 | 1 | $2\times30=60$ |
+| 本赛题 AUC | ~0.961（L48） | **0.96242**（L212） |
+| 成本 | — | 复刻 ~10 h + 每折 ~2 h（单 A100） |
+
+**三条实现约束**（都是「不做 tokenizer 之后新的失败源」）：
+
+1. **文本格式必须与原数据逐字一致**：整数写 `36`、浮点写 `0.0`、缺失写 `None`、标签写 `True`/`False`（L145）；格式差异会被模型当成证据。
+2. **分词器要选对**：作者称本赛题里逐位数字分词器（如 Qwen）更差（L146）——但那是归因假设，两者在规模与预训练上同时不同。
+3. **列序要显式打乱**：训练每步重排，推理时对多个顺序取平均；顺序平均是全篇第二大效应（6 → 30 阶值 **+6e-4**，图 `orders_curve.png`）。
+
+**与前三节的定位差别**：Q-FT v2 用 149M 全量微调 + 结构化的 order-free（[[kaggle-q-ft-v2]]），这条路线用 124M + 训练时重排 + 推理平均 30 阶——**训练更便宜（~2 h/折），推理贵 60 倍**。机制上它的主张是：数据本身由语言模型生成、标签最先写出，因此「生成器自己会怎么回答」才是最优分类器（L195–L206，**来源假设**）。
+
 ## 三条路线的对照
 
 | | FT-Transformer（[[ft-transformer]]） | Q-FT（[[kaggle-q-ft]]） | Q-FT v2（[[kaggle-q-ft-v2]]） |
@@ -234,7 +257,7 @@ FT-T 表达“特征是一个集合”的方式是**不注入位置信息**；Q-
 | 可训练参数 | 929K（100 个数值特征） | 10.1M LoRA + 3.9M tokenizer | 全部 149M |
 | 数据规模 | 11 个数据集，多为千—万行 | ~70 万行，单赛题 | ~70 万行 + 1.13M 预训练语料 |
 
-共同点比差异更值得记：**三条路线都把每一列变成一个向量，都主张列的顺序没有语义**。差别在于用什么机制表达这个假设（不注入 / 训练时重排 / 位置恒零），以及用多大的骨干去混合这些 token。
+共同点比差异更值得记：**三条路线都把每一列变成一个向量，都主张列的顺序没有语义**。差别在于用什么机制表达这个假设（不注入 / 训练时重排 / 位置恒零），以及用多大的骨干去混合这些 token。而**第四条路线（上一节）连「每列一个向量」都不要了**：列身份交给文本里的列名，模型读的是词序列而不是向量序列——它把「设计 tokenizer」的工作量换成了「设计序列化格式 + 付推理成本」。
 
 ## 与其它页面的关系
 
@@ -243,7 +266,7 @@ FT-T 表达“特征是一个集合”的方式是**不注入位置信息**；Q-
 - 基线概念：[[multi-layer-perceptron]]、[[ensembles]]、[[regularization-and-sparsity]]
 - 预处理契约：[[feature-preprocessing]]、[[preprocessing-pipeline-design]]
 - 评估协议：[[cross-validation]]、[[hyperparameter-search]]、[[evaluation-metrics]]
-- 来源：[[ft-transformer]]、[[kaggle-q-ft]]、[[kaggle-q-ft-v2]]
+- 来源：[[ft-transformer]]、[[kaggle-q-ft]]、[[kaggle-q-ft-v2]]、[[kaggle-tfms-llms-tabular]]
 
 ## 待解问题
 
@@ -258,3 +281,5 @@ FT-T 表达“特征是一个集合”的方式是**不注入位置信息**；Q-
 9. 「不注入位置」与「位置恒为零」在 RoPE 下是否严格等价？两者对注意力分布的影响是否相同？（Q-FT v2 用 3e-6 的自查间接支持等价，但没有对照实验）
 10. 表格 RTD 的收益能外推到多大数据规模？1.13M 行语料里有多大比例是测试集特征，这部分“传导式”信息值多少分？
 11. token 级嵌入（每列一个向量）与 FT-T 的线性投影，在**类别列少、数值列多**的数据上谁更省？Q-FT 的 tokenizer 需要 3,479 个 code 的词表，这在基数更高的赛题里会膨胀到多少？
+12. 文本化整行（第四条路线）与 token 化路线在同一数据、同一预算下谁更好？本篇 0.96242 对 v2 0.960798 相差 1.6e-3，但两者的外部数据、预训练与骨干全不同，不是受控对照。
+13. 序列化格式的设计空间有多大？分隔符、小数位、缺失写法、列名措辞各自的敏感度没有对照（[[kaggle-tfms-llms-tabular]] 只给了一句「照原样写」）。

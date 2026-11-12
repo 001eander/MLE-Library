@@ -15,6 +15,7 @@ sources:
   - "[[ft-transformer]]"
   - "[[kaggle-q-ft]]"
   - "[[kaggle-q-ft-v2]]"
+  - "[[kaggle-tfms-llms-tabular]]"
 status: draft
 verified: 2026-11-12
 applies_to:
@@ -69,6 +70,8 @@ applies_to:
 
 （数字来自 [[kaggle-q-ft]], L138–L146 与 [[kaggle-q-ft-v2]], L30；**单次 5 折、单种子、无代码**。）
 
+> **基线同一性存疑**：同一赛题的第三篇（[[kaggle-tfms-llms-tabular]]）把 **XGBoost 0.95985、RealMLP 0.95931** 列为本条目的 **baseline**（L178–L179），而自己的**调参** XGBoost 是 **0.96149**（L219）。两行数字与上表中「调参 XGBoost 0.959852」「调参 RealMLP 0.959311」**五位有效数字完全相同**。合理假设：上表的两个“调参”对照实际上是未充分调参的基线；如果是，Q-FT 两篇的「ties a tuned XGBoost」应改读为「比调参 XGBoost 低约 1.7e-3」。在这一点被澄清前，不要把这张表的 XGBoost/RealMLP 两行当成“调参上限”。TabPFN-3.5 与 Kumo 也有小幅差异（0.961248 vs 0.96115、0.960378 vs 0.96004），可能是不同运行的同一模型。
+
 **先看结论再看成本**：这条路线在同一道题上**没有赢过调参 XGBoost**（v1 低 5.7e-5，v2 靠外部数据 + 自监督预训练才高出 0.00094），也低于两个表格基础模型。所以它不是“更强的基线”，而是一个**在特定数据形态下值得一试的候选**。
 
 **四个准入问题**（四个都答“是”才继续）：
@@ -95,6 +98,41 @@ applies_to:
 - **同样的 side features 给 GBDT 增益更大**：这是正常现象（transformer 的逐值嵌入已经学到一部分），不要据此判定“transformer 不行”（[[kaggle-q-ft-v2]], L100）。
 
 **与 FT-T 的分工**：FT-T 是“小模型 + 统一协议 + 15 seeds”的**基准级**工具；Q-FT 系列是“大骨干 + 单赛题 + 单种子”的**探索级**工具。选型时前者用来定基线，后者用来回答“如果给模型更大的表征容量、更多预训练，还剩多少空间”。
+
+## 第六个候选：行文本化的 GPT 分类器
+
+[[kaggle-tfms-llms-tabular]] 把上一条路线再简化一步：**不训 tokenizer**，把整行写成 `"列 is 值"` 的句子，直接交给 GPT-2。唯一的设计选择是 target 放哪：末尾 = 判别式，句中 = 生成式（见 [[generative-classification]]）。同一赛题的读数：
+
+| 模型 | OOF AUC | 成本 |
+| --- | --- | --- |
+| target first（GPT-2 small，30 个列序） | **0.96242**（L212） | 复刻 ~10 h + 每折 ~2 h；**每行 60 次前向** |
+| target anywhere（24 epochs） | 0.96245（L213） | 同上 |
+| 调参 XGBoost（作者自己的） | 0.96149（L219） | — |
+| target last（同族） | ~0.961（L217） | 每行 1 次前向 |
+
+**五个准入问题**（前三个必须答“是”）：
+
+1. **数据是否足够大且行内字段不太多？** 约 13 万行原始数据 + 22 个字段是这次成功的条件；每行前向成本随字段数线性增长。
+2. **推理预算能接受 $2K\times O$ 次前向吗？** $K$ 类 × $O$ 个列序，本例是 60 次；判别式版本只要 1 次。
+3. **能接受「先把原数据集复刻一遭」的前置成本吗？** 60-epoch replica 比 8-epoch 的高 **+1.2e-3 AUC**（L124）——是这个配方里最大的单效应。
+4. **数据是真实的，还是合成的？** 若真实，没有任何对照支持生成式（target first）优越；作者的机制解释只适用于「数据由 LM 写成」的情形（L158、L195–L204）。
+5. **指标是排序型吗？** AUC 下非归一化的 log-sum-exp 无害；要报概率、定阈值、优化交叉熵时，缺的归一化必须补。
+
+**四条必须先写下来的决定**：
+
+| 决定 | 本来源的做法 | 不写会怎样 |
+| --- | --- | --- |
+| target 位置 | 末尾（判别）/ 句首（生成）/ 随机（第三种变体） | 变成不可解释的「提示魔法」 |
+| 文本格式 | 整数 `36`、浮点 `0.0`、缺失 `None`、标签 `True`/`False`（L145） | 格式差异被当成证据 |
+| 分词器 | GPT-2 自己的（L146） | 长数字被逐位切分，信号变噪声 |
+| 列序 | 训练每步重排，推理对 30 个顺序 log-sum-exp | 因果模型的顺序偏差无法估计 |
+
+**诊断信号**：
+
+- **target-first 只比 target-last 高不到 2e-3，且数据非合成**：先回到 target-last（便宜 60 倍）。
+- **把行文本写成另一格式（分隔符/小数位）后大跌**：序列化敏感度过高，进入「序列化选择的不确定性远大于模型差异」的状态。
+- **一折上的提升小于 3e-4**：不可分辨（单折比 OOF 高 1.8e-4 ~ 2.3e-4，见 [[leaderboard-vs-cv]]）。
+- **该模型与调参 GBDT 差不到 1e-3**：不要为它重建整个管线，只当作 stack 里的一个成员。
 
 ## 默认还是调参：四格判断
 
@@ -244,7 +282,7 @@ optimizer = model.make_default_optimizer()  # AdamW 1e-4, wd 1e-5 + 豁免组
 
 ## 关联页面
 
-- 来源：[[ft-transformer]]、[[kaggle-q-ft]]、[[kaggle-q-ft-v2]]
-- 概念：[[tabular-deep-learning]]（LLM 当骨干、LoRA、order-free、RTD）、[[multi-layer-perceptron]]、[[ensembles]]、[[feature-preprocessing]]、[[hyperparameter-search]]、[[cross-validation]]、[[evaluation-metrics]]
+- 来源：[[ft-transformer]]、[[kaggle-q-ft]]、[[kaggle-q-ft-v2]]、[[kaggle-tfms-llms-tabular]]
+- 概念：[[tabular-deep-learning]]（LLM 当骨干、LoRA、order-free、RTD、行文本化）、[[generative-classification]]、[[multi-layer-perceptron]]、[[ensembles]]、[[feature-preprocessing]]、[[hyperparameter-search]]、[[cross-validation]]、[[evaluation-metrics]]
 - 对照：[[gbdt-vs-tabular-dl]]
 - 相邻实践：[[competition-ml-workflow]]、[[preprocessing-pipeline-design]]、[[hyperparameter-search-and-tuning]]、[[cross-validation-design-and-tuning]]、[[ensembles-selection-and-tuning]]

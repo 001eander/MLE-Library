@@ -15,11 +15,13 @@ sources:
   - "[[sklearn-ensembles]]"
   - "[[sklearn-outlier-detection]]"
   - "[[ft-transformer]]"
+  - "[[kaggle-tfms-llms-tabular]]"
 status: draft
 verified: 2026-11-12
 applies_to:
   - scikit-learn 1.9.1 的 ensemble 模块（文档与 API 签名，见 [[sklearn-ensembles]]）
   - rtdl_revisiting_models 0.0.2（本地 checkout e3ed46c，2024-11-13；仅“表格深度模型的集成”一节）
+  - 公共 OOF/test pair 池的 stacking 协议（cuML 逻辑回归 `C=1`，见 [[kaggle-tfms-llms-tabular]]）
 ---
 
 # 集成方法（Ensembles）
@@ -78,6 +80,26 @@ Extra-Trees 进一步随机化阈值（L456–L489）。`max_features` 默认随
 
 Stacking 的关键不是「第二层更复杂」，而是折外预测是否近似未来数据。若训练集有组或时间结构，随机 K 折可能让折外预测泄漏，见 [[cross-validation]]。
 
+## 大规模 stacking：245 个 pair 的工程细节
+
+[[kaggle-tfms-llms-tabular]] 给了一个「第二层极简、第一层极宽」的实例：245 个来自社区共享的 OOF/test pair，全部用同一套 `StratifiedKFold(5, shuffle=True, random_state=42)` 生成，因此可以放进同一个逻辑回归（L160–L168）。它的协议可以整段照抄：
+
+1. **统一到 logit 尺度**：概率先 clip 到 `1e-15`，再 clip 到 $\pm30$；已经是 logit 的 pair 直接用；
+2. **折内 refit**：在 4 折的 OOF logit 上拟合 L2 逻辑回归（cuML，`C=1`），预测留出的第 5 折；
+3. **测试侧平均 5 个折模型**，顺带抹掉 cuML 的 run-to-run 噪声。
+
+三个可直接迁移的读数：
+
+| 观察 | 数字 | 含义 |
+| --- | --- | --- |
+| 单对最好 → 245 对 stack | 0.9617 → 0.96218（+4.8e-4） | 宽而强的基模型池确实抬高上限 |
+| **单个新模型 → 245 对 stack** | 0.96218 → 0.96266（**+4.9e-4**） | 加**一个**与池内都不像的模型，和加 245 个互相像的模型同量级 |
+| 9 个 TFM → 它们自己的 stack | 0.96115（最好单个）→ 0.96120（**+5e-5**） | 同族模型的误差高度相关，stack 几乎不收益 |
+
+作者的两个判断值得记：**a)** 提升来自「准确且与其它一切都很不像」——该模型建模 $P(x\mid y)$ 而不是 $P(y\mid x)$，见 [[generative-classification]]；**b)** 最终 stack 里 10 个 GPT 系 pair 承担约 **80%** 的输出，245 个公共 pair「largely cancel each other」（L240）。也就是说，**宽池的作用主要是提高第二层的下限与稳定性，而不是持续贡献增量**。
+
+**这条经验的边界**：① pair 池的 CV 天生偏乐观——部分公开成员在被打分的那一折上早停（L168，见 [[leaderboard-vs-cv]]）；② 全池共享同一套折划分，第二层无法通过换划分来纠错；③ 「承担 80% 输出」没有给出权重口径，不能直接当「贡献 80% 增益」读。
+
 ## 表格深度模型的集成：收益取决于基模型是否已近似集成
 
 [[ft-transformer]] 的协议是 **3 组 × 5 seeds**：把 15 个单模型分成 3 组，组内平均预测，得到 3 个集成（[[ft-transformer]], p. 6）。把表 2 的单模型均值与表 3 的集成均值按 score 方向比较（本库计算，非来源表格）：
@@ -110,6 +132,8 @@ Stacking 的关键不是「第二层更复杂」，而是折外预测是否近�
 - 只用 `max_iter`/`n_estimators` 报预算，忽略早停；
 - 把 `subsample` 当作 `learning_rate` 的替代；
 - Stacking 使用非折外预测；
+- 把「加了很多基模型」当成「第二层变强」，忽略同族模型的误差相关（TFM 例子只值 +5e-5）；
+- 直接用概率而不先统一到 logit 尺度做线性第二层；
 - 软投票平均未校准概率；
 - 忽略类别基数、缺失值与版本约束；
 - 用 MDI 解释高基数或 ID 特征，忘记其训练集统计与高基数偏好（L511–L526）。
@@ -120,6 +144,7 @@ Stacking 的关键不是「第二层更复杂」，而是折外预测是否近�
 - 学习率与轮数的联合预算；
 - `interaction_cst` 与 `monotonic_cst` 的组合；
 - Stacking 折外预测与最终基模型的分布差异；
+- 宽 pair 池（数百个高度相关成员）下，逻辑回归权重集中在少数成员是必然还是可以改善（正则强度、分组 stack、非负约束）；
 - AdaBoost 对标签噪声的敏感性；
 - IsolationForest 作为 bagging 骨架 + 路径聚合的成本模型（[[sklearn-outlier-detection]]）。
 
@@ -127,6 +152,6 @@ Stacking 的关键不是「第二层更复杂」，而是折外预测是否近�
 
 ## 关联页面
 
-- 来源：[[sklearn-ensembles]]、[[sklearn-outlier-detection]]
-- 概念：[[decision-trees]]、[[cross-validation]]、[[regularization-and-sparsity]]、[[anomaly-detection]]
+- 来源：[[sklearn-ensembles]]、[[sklearn-outlier-detection]]、[[ft-transformer]]、[[kaggle-tfms-llms-tabular]]
+- 概念：[[decision-trees]]、[[cross-validation]]、[[regularization-and-sparsity]]、[[anomaly-detection]]、[[generative-classification]]、[[leaderboard-vs-cv]]
 - 实践：[[ensembles-selection-and-tuning]]、[[hyperparameter-search-and-tuning]]

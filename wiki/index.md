@@ -27,6 +27,7 @@ tags:
 - [[kaggle-getting-started|Kaggle 入门指南：竞赛型 MLE 的通用流程与一次完整赛题复盘]] — 七段流程、XGB 调参、Stacking 与 CV/LB 张力，代码绑定旧 API。
 - [[kaggle-q-ft|Q-FT：把表格行当嵌入喂给 Qwen 的 Tabular Transformer]] — 21 列→22 个位置、三段式嵌入与 RMSNorm、LoRA 10.1M、重排增强；含 Qwen 配置与参数账本手算复核。
 - [[kaggle-q-ft-v2|Q-FT v2：把表格行读成集合的 order-free ModernBERT]] — `position_ids=0`、side features、RTD 自监督预训练；含 149M 参数复核与单折/OOF 偏差。
+- [[kaggle-tfms-llms-tabular|TFMs and LLMs with tabular data：S6E10 第一名方案]] — 把整行写成文本，target 放末尾（判别式）或句首（生成式）；含四步配方、11 张目视图表、245 对 pair 的 stacking 协议与跨来源基线冲突。
 - [[ft-transformer|Revisiting Deep Learning Models for Tabular Data（FT-Transformer）]] — 同协议比较 9 个表格 DL 模型与 2 个 GBDT；ResNet/FT-T 基线、注意力重要性、合成 α 实验与官方实现核查。
 - [[sklearn-linear-models|scikit-learn 用户指南 1.1「Linear Models」]] — 线性估计器与求解器约定；记录严重折叠块丢失、公式空缺与外部核查。
 - [[sklearn-lda-qda|scikit-learn 用户指南 1.2「Linear and Quadratic Discriminant Analysis」]] — 生成式分类、Mahalanobis 几何、降维与协方差收缩；保留参考文献丢失等分歧。
@@ -67,6 +68,7 @@ tags:
 - [[regularization-and-sparsity|正则化与稀疏性（Regularization and Sparsity）]] — 惩罚、收缩、平滑、结构约束与随机化预算；区分稀疏与重要性。
 - [[gaussian-discriminant-analysis|高斯判别分析（Gaussian Discriminant Analysis）]] — LDA/QDA/GaussianNB 的假设嵌套、Mahalanobis 几何与参数代价。
 - [[naive-bayes|朴素贝叶斯（Naive Bayes）]] — 条件独立的收益与代价、五类变体、平滑与概率估计边界。
+- [[generative-classification|生成式分类（Generative Classification）]] — 用 $P(x\mid y)$ 反推 $P(y\mid x)$：代数、三个实例（NB/LDA/文本化 GPT）、证据可加性、$K\times O$ 次前向的成本与失效边界。
 - [[support-vector-machines|支持向量机（Support Vector Machines）]] — 最大间隔、hinge、对偶核、样本维稀疏、C/ν 与输出面。
 - [[nearest-neighbors|最近邻方法（Nearest Neighbors）]] — 非泛化学习、邻域、搜索结构、预计算图、质心与 NCA。
 - [[decision-trees|决策树（Decision Trees）]] — 分段常数、轴对齐划分、贪心不稳定性、缺失值与结构剪枝。

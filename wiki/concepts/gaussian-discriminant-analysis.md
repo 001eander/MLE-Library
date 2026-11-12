@@ -14,6 +14,7 @@ sources:
   - "[[sklearn-naive-bayes]]"
   - "[[sklearn-nearest-neighbors]]"
   - "[[sklearn-covariance]]"
+  - "[[kaggle-tfms-llms-tabular]]"
 status: draft
 verified: 2026-11-12
 applies_to:
@@ -34,6 +35,8 @@ applies_to:
 | 训练方式 | 闭式（均值 + 协方差 + 类比例） | 迭代优化（除 OLS/岭） |
 | 超参形态 | 协方差怎么估（收缩/对角/共享） | 正则强度（`alpha`/`C`） |
 | 多类 | 天生（每类一套参数） | 需要 multinomial 或 OvR 策略 |
+
+这条轴的完整图谱（包括**用神经自回归密度模型替代高斯、用一个 GPT 给整行文本打分**的现代实例）见 [[generative-classification]]。本页只展开高斯那一支。
 
 **本库综合**：这个差别的工程含义是——生成式的"超参"作用在**协方差估计**上，判别式的"超参"作用在**系数**上，两者不可互相替代，也不能用同一套调参直觉（见 [[regularization-and-sparsity]] 的「第二个正则化面」）。
 
@@ -151,5 +154,5 @@ LDA 同时是一个降维器，其几何链条（[[sklearn-lda-qda]], L87–L93�
 
 - 来源：[[sklearn-lda-qda]]、[[sklearn-naive-bayes]]、[[sklearn-nearest-neighbors]]
 - 工具：[[scikit-learn]]
-- 概念：[[naive-bayes]]（朴素贝叶斯族与平滑）、[[regularization-and-sparsity]]（系数惩罚 vs 协方差收缩 vs 原型收缩）、[[nearest-neighbors]]（`NearestCentroid` 在最近邻族里的位置）、[[leaderboard-vs-cv]]（收缩强度该怎么选，最终仍是验证问题）
+- 概念：[[naive-bayes]]（朴素贝叶斯族与平滑）、[[generative-classification]]（生成式分类的总轴，含文本化 LLM 实例）、[[regularization-and-sparsity]]（系数惩罚 vs 协方差收缩 vs 原型收缩）、[[nearest-neighbors]]（`NearestCentroid` 在最近邻族里的位置）、[[leaderboard-vs-cv]]（收缩强度该怎么选，最终仍是验证问题）
 - 实践：[[linear-models-as-baselines]]（线性/生成式基线的定位）、[[nearest-neighbors-selection-and-tuning]]（零参数基线的用法）

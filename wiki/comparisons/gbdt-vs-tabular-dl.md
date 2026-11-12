@@ -14,6 +14,7 @@ sources:
   - "[[ft-transformer]]"
   - "[[kaggle-q-ft]]"
   - "[[kaggle-q-ft-v2]]"
+  - "[[kaggle-tfms-llms-tabular]]"
 status: draft
 verified: 2026-11-12
 applies_to:
@@ -134,6 +135,27 @@ ResNet 随目标变“树友好”而显著退化；CatBoost 相反；FT-T 在�
 
 **仍可行动的推论**：如果你已经在给模型喂大量统计类特征，先问一句“模型自己能不能从逐列嵌入里学出来”；若模型是 GBDT/线性/扁平 MLP，这类特征仍然值得做。
 
+## 同一赛题上的五类模型阶梯（n=1，但方向清楚）
+
+[[kaggle-tfms-llms-tabular]] 把同一场竞赛的各类模型放在了一张可比较的尺子上（均 OOF AUC，除注明外）：
+
+| 类别 | 代表 | 分数 |
+| --- | --- | --- |
+| LLM + 文本，target first（生成式） | GPT-2 small + 30 个列序 | **0.96242**（L212） |
+| LLM + 文本，target last（判别式） | 同族模型 | ~0.961（L217） |
+| **调参 GBDT** | 作者自己的 XGBoost | **0.96149**（L219） |
+| 表格基础模型（TFM） | TabPFN-3.5 / 9 个 TFM 的 stack | 0.96115 / 0.96120（L176、L187） |
+| LLM + 表格嵌入（token 化） | Q-FT v2 / Q-FT | 0.960798 / 0.959795（前两篇） |
+| 调参 DL | RealMLP | 0.95931（L179，作为 baseline） |
+
+三个读法：
+
+1. **在这道题上，赢家是「建模方向」而不是「模型大小」**：同一个 124M GPT-2，只把 target 从前排到后，就从 0.961 变成 0.96242；而 0.6B 的 Qwen（Q-FT）是 0.959795。
+2. **TFM 并没有超过调参 GBDT**（0.96115/0.96120 < 0.96149），与该来源 §8 的「四类都能超过调参 GBDT」（L249）相反。
+3. **stack 的边际收益与族内相关性成反比**：9 个 TFM 堆起来只值 +5e-5（[[ensembles]]），而一个文本化 GPT 模型加进 245 对公共 pair 值 +4.9e-4（L238）。
+
+**证据强度与一处必须保留的争议**：全部数字来自同一赛题、同一作者、单次 5 折；且**基线的同一性有争议**——该来源的 XGBoost baseline 0.95985 / RealMLP 0.95931 与前两篇所称的「调参」XGBoost 0.959852 / RealMLP 0.959311 五位有效数字相同（见 [[kaggle-tfms-llms-tabular]] 的「跨来源冲突」）。若那两个其实是未充分调参的基线，则 Q-FT 两节“与调参 GBDT 打平”的定位还要往下调。
+
 ## 基准偏差：这篇论文的结论有边界
 
 [[ft-transformer]] 的 11 个数据集有明确的形态偏差（[[ft-transformer]], p. 6、p. 14）：
@@ -158,6 +180,8 @@ ResNet 随目标变“树友好”而显著退化；CatBoost 相反；FT-T 在�
 | 需要端到端/可微/多任务 | FT-T / ResNet | MLP | 可共享 embedding、接多任务头 |
 | 追求最低 RMSE/最高 Acc | 两者都调参 | — | 没有普适赢家；按验证集定 |
 | 多分类、类别数很多 | FT-T / ResNet | GBDT（可能慢到不可调） | Helena 100 类、ALOI 1000 类；GBDT 在 ALOI 为空 |
+| 推理预算极紧（单次前向） | GBDT / ResNet | 文本化 target-last | 生成式要 $K\times O$ 次前向；本例 60:1 |
+| 数据是某个生成器的输出 | 生成式似然模型（target first） | 调参 GBDT | 只在「能认定生成器、且其序列化可复原」时成立；赛题特异 |
 
 **默认配置的定位**：默认 FT-T 是一个非常好的“开箱基线”，在 9/11 个数据集上同时赢过默认 GBDT（p. 8）。但它不是“调参后仍最强”的保证；如果预算允许，GBDT 与 FT-T 都要调参后再比。
 
@@ -172,9 +196,11 @@ ResNet 随目标变“树友好”而显著退化；CatBoost 相反；FT-T 在�
 7. 在在线延迟约束下，蒸馏后的 FT-T 与 GBDT 的精度-延迟曲线如何？
 8. 如果把调参预算统一为“相同 wall-clock 时间”，结论是否改变？表 11 只覆盖 3 个数据集。
 9. “同类人工特征给 GBDT 的收益是 DL 的 4 倍”在多大数据集上成立？需要同一批特征、同一验证划分的受控对照。
+10. 同一赛题上「文本化生成式 > 调参 GBDT > TFM > token 化 LLM」这个顺序在第二个数据集上还成立吗？
+11. 四类模型（GBDT / TFM / token 化 LLM / 文本化 LLM）的相对位置，在**非合成数据**上是什么样？目前全部证据来自一个 Playground 赛题。
 
 ## 关联页面
 
-- 来源：[[ft-transformer]]、[[kaggle-q-ft]]、[[kaggle-q-ft-v2]]
-- 概念：[[tabular-deep-learning]]、[[ensembles]]、[[decision-trees]]、[[multi-layer-perceptron]]、[[evaluation-metrics]]
+- 来源：[[ft-transformer]]、[[kaggle-q-ft]]、[[kaggle-q-ft-v2]]、[[kaggle-tfms-llms-tabular]]
+- 概念：[[tabular-deep-learning]]、[[generative-classification]]、[[ensembles]]、[[decision-trees]]、[[multi-layer-perceptron]]、[[evaluation-metrics]]
 - 实践：[[tabular-model-selection]]、[[competition-ml-workflow]]、[[hyperparameter-search-and-tuning]]、[[cross-validation-design-and-tuning]]
