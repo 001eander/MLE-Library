@@ -13,6 +13,13 @@
         "a": 1,
         "rgb": 6084257
       }
+    },
+    {
+      "query": "path:wiki/sources  ",
+      "color": {
+        "a": 1,
+        "rgb": 14069084
+      }
     }
   ],
   "collapse-display": false,
