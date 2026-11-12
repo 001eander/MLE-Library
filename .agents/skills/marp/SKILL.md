@@ -1,6 +1,6 @@
 ---
 name: marp
-description: Create, render, and inspect Marp slide decks from MLE-Library knowledge while preserving citations and keeping generated presentations in the wiki. Use when the owner asks for slides, a presentation, a talk, or Marp HTML/PDF/PPTX export.
+description: Create, render, and inspect self-contained narrative Marp slide decks from MLE-Library knowledge while keeping source traceability in wiki pages and generated presentations in the wiki. Use when the owner asks for slides, a presentation, a talk, or Marp HTML/PDF/PPTX export.
 ---
 
 # Marp
@@ -55,12 +55,14 @@ Use `<!-- class: lead -->` without the underscore only when all following slides
 
 ## Authoring rules
 
-- Write slide titles, body copy, and explanatory citations in Simplified Chinese. Preserve source quotations, source locators, and established technical terms where needed for precision.
-- Keep one main idea per slide and prefer concise bullets, diagrams, and tables over paragraphs.
-- Put source citations on the slides where claims appear and include a final sources slide with links or paths.
+- Write slide titles and body copy in concise Simplified Chinese. Preserve source quotations and established technical terms where needed for precision.
+- 默认面向没有读过本 repo 的读者，用连贯讲解组织 deck，使其脱离仓库单独阅读也能理解问题、机制、证据和适用边界。
+- 每张幻灯片聚焦一个主旨。模型机制、结构假设和设计取舍优先于榜单名次，排名只作为支持讲解的证据。
+- 不要直接把结果表格搬入幻灯片。优先使用简短讲解、示意图和必要的简单图表。
+- 内容页默认不放来源、页码或引用脚注。末尾设置“延伸阅读”，列出相关 wiki 页面；精确来源定位继续保存在被引用的 wiki 页面中。
 - Clearly label synthesis, uncertainty, version-sensitive guidance, and hypotheses.
 - Use `# <!-- fit --> Heading` sparingly for a heading that must fit on one line.
-- Treat speaker notes in HTML comments as optional; never hide essential citations only in notes.
+- Treat speaker notes in HTML comments as optional; do not place essential explanations only in notes.
 - Do not assume Obsidian-specific syntax such as Mermaid code blocks will render in Marp. Use native Markdown or an approved pre-rendered asset unless the chosen renderer explicitly supports it.
 
 Marp uses `$...$` for inline math and `$$...$$` for display math. When math is required, declare `math: mathjax` in frontmatter for deterministic rendering; MathJax is the current default, and `math: katex` is the alternative.
