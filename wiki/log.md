@@ -464,3 +464,10 @@
 - 摘要：将剪藏中的 7 张签名图片与 1 段签名视频改为指向 `raw/assets/hyra-2-0/` 的本地相对路径，避免腾讯云 COS 签名参数中的访问密钥 ID 触发 GitHub Push Protection；同步更新来源页剪藏哈希与媒体说明。8 个媒体文件沿用 2026-11-11 已入库副本，未重复下载。
 - 来源：`raw/articles/Hyra 2.0.md`（本地化后 sha256 `be09ef49bd6536215def8d36c6e2bf388d184fd138a6c761e0928092c8d69ef4`）、`raw/assets/hyra-2-0/`
 - 复核：8 个本地媒体的 SHA-256 均与既有核查记录一致；所有者已确认备份当前分支、清理历史中的签名 URL 并推送。
+
+## [2026-11-12] fix | Hyra 1.0 媒体链接本地化
+
+- 文件：`raw/articles/Hyra.md`、`raw/assets/hyra-1-0/`（8 个新媒体文件）、`wiki/sources/hyra-1-0.md`、`wiki/log.md`
+- 摘要：下载剪藏中的 2 张静态图、2 张 GIF、1 段视频与 3 段音频，将签名外链全部改为本地相对路径；同步更新来源页剪藏哈希与媒体说明，清除腾讯云 COS 签名参数中的访问密钥 ID。
+- 来源：`raw/articles/Hyra.md`（本地化后 sha256 `2803506d798e5d967548bff7fd54bc04afc76d87a1cbe200b8ae18b76fea73e7`）、`raw/assets/hyra-1-0/`
+- 复核：8 个文件均下载成功且格式识别正常；本地链接与目标文件已核对，历史清理与推送沿用所有者对本次修复的确认。

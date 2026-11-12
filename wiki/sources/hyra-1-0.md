@@ -2,7 +2,7 @@
 title: "Hyra-1.0：腾讯混元的递归自我改进科研智能体（官方博客）"
 type: source
 created: 2026-11-11
-updated: 2026-11-11
+updated: 2026-11-12
 tags:
   - mle
   - research-agent
@@ -24,10 +24,10 @@ status: draft
 | 原始链接 | <https://hy.tencent.com/research/hyra> |
 | 形态 | 官方技术博客 / 产品发布公告 |
 | 剪藏文件 | `raw/articles/Hyra.md`（123 行） |
-| 剪藏 SHA-256 | `6e9db748d24d1433a87022689bf3893f78fd47c13789c2999dbcceb015a46c2a` |
+| 剪藏 SHA-256 | `2803506d798e5d967548bff7fd54bc04afc76d87a1cbe200b8ae18b76fea73e7` |
 | 发布时间 | 未在剪藏中给出；剪藏文件 `created` 为 2026-11-10，不代表原文发布时间 |
 
-剪藏为中文原文，含 15 条脚注（AlphaEvolve、Einstein Arena、autoresearch、The Bitter Lesson、Recursive、NanoGPT Speedrun、SOL-ExecBench、EinsteinArena、Erich's Packing Center、SILSO 太阳黑子数据、scaling law 论文、AdderBoard、SABRE、Botzone、Claude Code Goal Mode）。文中图片与音视频为外链，本地未保存。
+剪藏为中文原文，含 15 条脚注（AlphaEvolve、Einstein Arena、autoresearch、The Bitter Lesson、Recursive、NanoGPT Speedrun、SOL-ExecBench、EinsteinArena、Erich's Packing Center、SILSO 太阳黑子数据、scaling law 论文、AdderBoard、SABRE、Botzone、Claude Code Goal Mode）。2026-11-12 已将文中的 2 张静态图、2 张 GIF、1 段视频与 3 段音频下载到 `raw/assets/hyra-1-0/`，并把签名外链改为本地相对路径，以避免签名参数中的访问密钥 ID 进入远程仓库。
 
 ## 概要
 
