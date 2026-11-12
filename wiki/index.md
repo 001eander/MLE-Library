@@ -29,6 +29,7 @@ tags:
 - [[kaggle-q-ft-v2|Q-FT v2：把表格行读成集合的 order-free ModernBERT]] — `position_ids=0`、side features、RTD 自监督预训练；含 149M 参数复核与单折/OOF 偏差。
 - [[kaggle-tfms-llms-tabular|TFMs and LLMs with tabular data：S6E10 第一名方案]] — 把整行写成文本，target 放末尾（判别式）或句首（生成式）；含四步配方、11 张目视图表、245 对 pair 的 stacking 协议与跨来源基线冲突。
 - [[ft-transformer|Revisiting Deep Learning Models for Tabular Data（FT-Transformer）]] — 同协议比较 9 个表格 DL 模型与 2 个 GBDT；ResNet/FT-T 基线、注意力重要性、合成 α 实验与官方实现核查。
+- [[gandalf|GANDALF：用门控特征学习单元做表格特征选择]] — GRU 门控去时序化、t-softmax 稀疏掩码与掩码聚合解释性；含两套基准的 ADTM 读数、9 张图的目视核查与 10 条内部矛盾。
 - [[sklearn-linear-models|scikit-learn 用户指南 1.1「Linear Models」]] — 线性估计器与求解器约定；记录严重折叠块丢失、公式空缺与外部核查。
 - [[sklearn-lda-qda|scikit-learn 用户指南 1.2「Linear and Quadratic Discriminant Analysis」]] — 生成式分类、Mahalanobis 几何、降维与协方差收缩；保留参考文献丢失等分歧。
 - [[sklearn-naive-bayes|scikit-learn 用户指南 1.9「Naive Bayes」]] — 条件独立、五类变体、平滑与增量拟合；含授权回填记录及 `partial_fit` 分歧。
@@ -79,6 +80,7 @@ tags:
 - [[multi-layer-perceptron|多层感知机（Multi-layer Perceptron, MLP）]] — 参数化非线性、输出面、求解器、非凸优化与 L2。
 - [[manifold-learning|流形学习（Manifold Learning）]] — 被保量、kNN 图、坐标输出、MDS/t-SNE 与接口边界。
 - [[tabular-deep-learning|表格数据的深度学习（Tabular Deep Learning）]] — 把每一列变成一个 token：Feature Tokenizer、PreNorm、默认配置、预处理契约与失败模式；含 LLM 骨干、LoRA 与 order-free 三条路线的对照。
+- [[gated-feature-learning-unit|门控特征学习单元（GFLU）]] — 把 GRU 门控搬到阶段维：t-softmax 稀疏掩码、掩码只进两个门、Beta 初始化与参数账本、掩码求和式解释性的边界。
 
 ## 实践
 

@@ -16,6 +16,7 @@ sources:
   - "[[kaggle-q-ft]]"
   - "[[kaggle-q-ft-v2]]"
   - "[[kaggle-tfms-llms-tabular]]"
+  - "[[gandalf]]"
 status: draft
 verified: 2026-11-12
 applies_to:
@@ -133,6 +134,19 @@ applies_to:
 - **把行文本写成另一格式（分隔符/小数位）后大跌**：序列化敏感度过高，进入「序列化选择的不确定性远大于模型差异」的状态。
 - **一折上的提升小于 3e-4**：不可分辨（单折比 OOF 高 1.8e-4 ~ 2.3e-4，见 [[leaderboard-vs-cv]]）。
 - **该模型与调参 GBDT 差不到 1e-3**：不要为它重建整个管线，只当作 stack 里的一个成员。
+
+## 可选候选：GFLU 式逐阶段门控（GANDALF）
+
+[[gandalf]] 代表第三种结构来源：不 token 化、不用注意力，用 GRU 式门控逐阶段重写特征表示，并在每阶段用 t-softmax 掩码做全局特征选择（机制见 [[gated-feature-learning-unit]]）。它不是本文档的基线之一，只在下面四个问题都答「是」时值得当候选：
+
+1. **列多、且不少列是噪声？** 作者自述优势「might be more pronounced in datasets with a higher feature count or where the relationship between features and target outcomes isn't straightforward」（[[gandalf]], p. 14），并只在特征数 > 20 的子集上做实验（p. 10）。
+2. **能接受阶段间顺序计算？** 「its inherent sequential processing across stages, which precludes parallel processing」（p. 14）。阶段数在调参中可达 30（表 6，p. 19）。
+3. **需要的是列级全局重要性，而不是实例级解释？** 重要性是各阶段掩码之和 $I=\sum_n M_n$（式 17，p. 8），不随样本变化；但它只反映门控支路的依赖，候选支路始终看全特征。
+4. **能腾出一次 100 trials 的贝叶斯搜索预算？** 论文没有给可开箱的默认配置，只给搜索空间（五个维度）与逐数据集最优值（表 6/7，p. 19–20），且实验中 MLP 头固定为 32/16（p. 11）。
+
+**代价与证据强度**：论文报的是 ADTM，Tabular Benchmark 18 个数据集子集上 0.829 第一，TabSurvey 4 个数据集上 0.945 第三（[[gandalf]], p. 9–10）；两者都是自己不重跑基线、无显著性检验、多数数据集单折的结果。硬件是单卡 RTX 3060（p. 8），所以成本门槛低，但**本库没有独立复现，也未核查 `pytorch_tabular` 的实现与论文是否一致**。因此它的定位是「在小表上值得跑一次对照」，而不是「新的默认基线」。
+
+**一条坑**：不要引用「only three crucial hyperparameters」当作调参成本优势。同一篇的搜索空间含 5 个维度（含 learning rate 与 weight decay），而 FANOVA 显示阶段数影响最大且「doesn't show any particular pattern」，最优值在 2 到 30 之间都有（[[gandalf]], p. 11–13、p. 19）。
 
 ## 默认还是调参：四格判断
 
@@ -282,7 +296,7 @@ optimizer = model.make_default_optimizer()  # AdamW 1e-4, wd 1e-5 + 豁免组
 
 ## 关联页面
 
-- 来源：[[ft-transformer]]、[[kaggle-q-ft]]、[[kaggle-q-ft-v2]]、[[kaggle-tfms-llms-tabular]]
-- 概念：[[tabular-deep-learning]]（LLM 当骨干、LoRA、order-free、RTD、行文本化）、[[generative-classification]]、[[multi-layer-perceptron]]、[[ensembles]]、[[feature-preprocessing]]、[[hyperparameter-search]]、[[cross-validation]]、[[evaluation-metrics]]
+- 来源：[[ft-transformer]]、[[kaggle-q-ft]]、[[kaggle-q-ft-v2]]、[[kaggle-tfms-llms-tabular]]、[[gandalf]]
+- 概念：[[tabular-deep-learning]]（LLM 当骨干、LoRA、order-free、RTD、行文本化）、[[gated-feature-learning-unit]]、[[generative-classification]]、[[multi-layer-perceptron]]、[[ensembles]]、[[feature-preprocessing]]、[[hyperparameter-search]]、[[cross-validation]]、[[evaluation-metrics]]
 - 对照：[[gbdt-vs-tabular-dl]]
 - 相邻实践：[[competition-ml-workflow]]、[[preprocessing-pipeline-design]]、[[hyperparameter-search-and-tuning]]、[[cross-validation-design-and-tuning]]、[[ensembles-selection-and-tuning]]

@@ -471,3 +471,19 @@
 - 摘要：下载剪藏中的 2 张静态图、2 张 GIF、1 段视频与 3 段音频，将签名外链全部改为本地相对路径；同步更新来源页剪藏哈希与媒体说明，清除腾讯云 COS 签名参数中的访问密钥 ID。
 - 来源：`raw/articles/Hyra.md`（本地化后 sha256 `2803506d798e5d967548bff7fd54bc04afc76d87a1cbe200b8ae18b76fea73e7`）、`raw/assets/hyra-1-0/`
 - 复核：8 个文件均下载成功且格式识别正常；本地链接与目标文件已核对，历史清理与推送沿用所有者对本次修复的确认。
+
+## [2026-11-12] ingest | GANDALF（arXiv:2207.08548v6）
+
+- 文件：`wiki/sources/gandalf.md`（新建）、`wiki/concepts/gated-feature-learning-unit.md`（新建）、`wiki/concepts/tabular-deep-learning.md`、`wiki/comparisons/gbdt-vs-tabular-dl.md`、`wiki/practices/tabular-model-selection.md`、`wiki/index.md`、`wiki/overview.md`、`wiki/log.md`
+- 摘要：第三十个来源，本库第一篇**用门控做特征选择**的表格架构，也是第一篇把「表格 DL」从「每列一个 token」扩到「逐阶段重写表示」的来源。按所有者决定，GFLU 与 t-softmax **独立成概念页**（`concepts/gated-feature-learning-unit.md`），`tabular-deep-learning` 只留一条指针；矛盾与口径一律按原文表述记录，不做过度解读。来源页含元数据、逐页结构表、机制与公式、两套基准读数、9 张图的逐张目视记录、10 条分歧与口径、局限、10 项待解问题、页码索引。
+- 来源：`raw/papers/GANDALF.pdf`（25 页、679,823 B、sha256 `46fa3d94545665ca23a9dbffb20a9575999dcd2a05e6165fb8c471bb195b1ae0`），提取文本 `raw/extracted/GANDALF.md`（1,354 行，`pdftotext -layout`，25 个 `## Page N`，frontmatter 哈希与 PDF 一致）。arXiv:2207.08548v6，边注 2024-01-10，故 `published: 2024`（编号前缀对应 2022-07 首次提交）。
+- `raw/` 变更：无。PDF 与提取文本此前已在 `raw/` 中，哈希核对一致，未修改、未重新抽取。
+- 机制要点：$N$ 个 GFLU 串联后接 $K$ 层 MLP（实验固定 2 隐藏层 32/16，回归加训练集均值 $T_0$）。GFLU 把 GRU 的时间步换成阶段、权重逐阶段不同，**掩码只进更新门与重置门，候选用全特征**（式 9–12），掩码由 t-softmax 产生（式 5–8），`F_n ~ Beta(a_n,b_n)`、`a_n,b_n ~ U(0.5,10)`（式 15），`t` 初值用 r-softmax 反推（式 16），解释性用 $I=\sum_n M_n$（式 17）。概念页把这些拆成可复用的四块：四处改造、前向代数、t-softmax 代数、初始化与解释性，并补两处标为**综合**的推导（`Init Sparsity` 的置零比例恰为 $r$；每阶段参数量 $6d^2+d$）。
+- 转换损失：散文与公式几乎完整，三处硬缺口：① 表 3/表 5 的「最优值加粗」丢失，无法从文本恢复哪些单元格被作者标为最优；② 图 4 与图 7 的横轴模型名被拆散（如 `ost ost ALF`），必须目视才能把 0.957/0.947/0.945 与 XGBoost/CatBoost/GANDALF 对齐；③ 9 张图全部为位图，提取文本只留轴标签碎片。表 1/2/3/4/5/6/7 的数值在 `-layout` 模式下完整保留。
+- 图表核查：`pdftoppm -r 130` 渲染 p. 2、4、5、6、7、9、10、12、13、19、20、21，另对 p. 4、5、13 做 300 dpi 裁切，逐张目视。结论：图 2 的图例区分 `Full Feature Flow` 与 `Masked Feature Flow`，是「掩码只进两个门」的直接证据；图 3 的 MACs/参数量都在对数轴且 GANDALF 箱体最低一档；图 4 横轴 15 个模型，GANDALF 排第三；图 5a 的 FANOVA 中位数为 Stages≈0.45 > Init Sparsity≈0.30 ≈ Dropout≈0.28；图 6a 的 NDCG 读数（GANDALF 0.88/0.81/0.82/0.82/0.79/0.92 对 XGBoost 0.62/0.76/0.80/0.78/0.78/0.90）与 DeepLIFT 的 $K\le15$ 段为目视读得，$K=25/50$ 取自提取文本；图 7 的 GANDALF 曲线在第 4 个 trial 到 14 后平在 13–14，与图注「13 of 18 in 5 trials」有 1 个数据集的差；图 6 的两个下排子图标题都排成「c.」。
+- 关键判断：① 两套基准给出不同名次——Tabular Benchmark 18/45 子集上 ADTM 0.829 第一，TabSurvey 4 个数据集上 0.945 **第三**（XGBoost 0.957、CatBoost 0.947），因此「与 GBDT 打平」只在第二套基准上成立；② 该协议**不重跑基线**，所有对照模型的分数来自基准原发布，与 [[ft-transformer]] 的同协议比较不可并列，也不能把 0.829 与「平均排名 1.8」直接对比；③ 贡献的可复用部分不是数字而是 GFLU 的三处设计（逐阶段权重、掩码只进门、t-softmax 代替 entmax/sparsemax 免排序），其中「掩码只进门」只有定性经验支持，没有对照数字；④ 解释性读的是门控支路的依赖，候选支路始终看全特征，$I$ 不能当因果归因。
+- 分歧（10 条，全部按原文表述，见来源页）：① TabSurvey「5 datasets」对表 2/表 5 的 4 个；②「20 models」对表 5 的 21 行、图 4 的 15 个；③ 表 3 的「R2」出现 4.85/8.53 这类大于 1 的值，且表 4 标准差与表 3 分数不同量级；④「只有三个关键超参」对 5 维搜索空间，且 init sparsity 亦属架构超参；⑤ 推荐 sparsity 0–0.5 对表 6 中 5 个 > 0.6 的最优值；⑥ 式 4 印刷错误（$H_t$ 应为 $\tilde H_t$、$h_{t-1}$ 应为 $H_{t-1}$）；⑦「top 25 features」为 ground truth 对 21–24 特征的 5 个数据集；⑧ MoRF/LeRF 结论对图 6c/6d 两条曲线都降到 0、图 9 的 jannis 面板 LeRF 早期崩塌；⑨ 图 6 子图编号重复「c.」、正文引成 6b/6c、图 7 图注与曲线差 1；⑩ 原文称 t-softmax「all the weights are positive」，与式 6 的 ReLU 不一致。
+- 局限：无显著性检验、多数数据集单折、18 个数据集为筛选子集、解释性 ground truth 本身是事后归因、消融只扰动前 14 个特征、未给可开箱的默认配置、未核查 `pytorch_tabular` 实现。
+- 决策：所有者指定 ① GFLU/t-softmax **独立成概念页**，`tabular-deep-learning` 只留一条；② 矛盾**按原文文本**记录，不引入原文之外的推断；③ `pytorch_tabular` 官方实现核查**本轮留空**（本机对 api.github.com 请求返回 403），只在待解问题里登记。
+- 未做：未核查 GitHub 仓库、未跑任何示例或基准、未安装环境；未把 `.cache/pdf/46fa3d94/` 的 19 个临时文件（11 页 130 dpi、3 页 300 dpi、5 张裁切）入库；未改 `raw/`；未补 [[ft-transformer]] 与本文在 covertype/Higgs 等重叠数据集上的逐数字对照（两篇协议不同，留作待解问题）。
+- 复核：变更全部**未提交**，等待所有者复核 diff 后再决定是否提交 `ingest: GANDALF`。

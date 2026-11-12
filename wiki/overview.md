@@ -35,7 +35,7 @@ tags:
 
 ## 当前来源
 
-目前收录 **29 个来源**。
+目前收录 **30 个来源**。
 
 ### 自动化科研与竞赛
 
@@ -85,11 +85,12 @@ tags:
 ### 表格数据与模型比较
 
 - [[ft-transformer|FT-Transformer]]：同协议比较 9 个表格 DL 模型与 2 个 GBDT；两个可复用基线（ResNet、FT-Transformer）、注意力特征重要性与合成 α 实验；含官方实现核查。
+- [[gandalf|GANDALF]]：用 GRU 式门控与逐阶段稀疏掩码做表格特征表示；两套公开基准上的 ADTM 读数（Tabular Benchmark 0.829 第一、TabSurvey 0.945 第三），无独立复现。
 - [[kaggle-q-ft|Q-FT]]：把每列变成一个 1,024 维向量直接喂给 Qwen3-0.6B；三段式嵌入 + RMSNorm、LoRA 10.1M、重排增强；单次 5 折、无代码。
 - [[kaggle-q-ft-v2|Q-FT v2]]：编码器 + 位置恒零 + side features + RTD 自监督预训练；每折降到 6.5 分钟，但仍低于两个表格基础模型；已不是严格的 raw features only。
 - [[kaggle-tfms-llms-tabular|TFMs and LLMs with tabular data]]：把整行写成 `"列 is 值"` 直接交给 GPT-2，只改 target 位置；生成式 side（target first）在合成数据上 0.96242，超过调参 XGBoost；含 245 对公共 pair 的 stacking 协议。
 
-对应概念与实践：[[tabular-deep-learning]]（含 LLM 骨干、LoRA、order-free 与行文本化四条路线）、[[generative-classification]]、[[tabular-model-selection]]、[[gbdt-vs-tabular-dl]]。
+对应概念与实践：[[tabular-deep-learning]]（含 LLM 骨干、LoRA、order-free 与行文本化四条路线）、[[gated-feature-learning-unit]]、[[generative-classification]]、[[tabular-model-selection]]、[[gbdt-vs-tabular-dl]]。
 
 工具总表见 [[scikit-learn]]，动态目录见 [[catalog]]。
 

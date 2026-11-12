@@ -15,6 +15,7 @@ sources:
   - "[[kaggle-q-ft]]"
   - "[[kaggle-q-ft-v2]]"
   - "[[kaggle-tfms-llms-tabular]]"
+  - "[[gandalf]]"
 status: draft
 verified: 2026-11-12
 applies_to:
@@ -116,6 +117,25 @@ ResNet 随目标变“树友好”而显著退化；CatBoost 相反；FT-T 在�
 
 一个可操作的推论：**如果 GBDT 在你的数据上大幅领先，先把它当“目标函数更像树”的信号**，不要只用“DL 调参不够”解释；反之，如果 FT-T 大幅领先，检查 GBDT 是否受类别数/类别特征/调参预算限制。
 
+## 另一套基准上的读数：GANDALF 的第一名发生在它自己选的子集上
+
+上两节全部来自 [[ft-transformer]] 的 11 数据集同协议。[[gandalf]] 给的是同一时期另一份读数，但**协议不同**：作者只跑自己的模型，其余模型沿用 Tabular Benchmark 与 TabSurvey 已发布的分数，不重跑（[[gandalf]], p. 9）。
+
+| 基准 | GANDALF | 最强的 GBDT | 最强的 DL 对手 | 逐数据集最优 |
+| --- | --- | --- | --- | --- |
+| Tabular Benchmark（18/45 数据集，ADTM↑） | **0.829** | XGBoost 0.577 | SAINT 0.384、FT-T 0.370 | 13/18 |
+| TabSurvey（4 数据集，ADTM↑） | 0.945 | XGBoost 0.957、CatBoost 0.947 | SAINT 0.915 | 2/4 |
+
+（图 3 p. 9、图 4 p. 10、表 3 p. 17、表 5 p. 18。TabSurvey 的 ADTM 对回归做了方向改写，MSE 越低越好。）
+
+三个读法：
+
+1. **「第一」只对 Tabular Benchmark 的 18 个数据集子集成立**。该子集按「仅中等规模、无 target/data 变换、特征数 > 20」筛出（[[gandalf]], p. 10），而 TabSurvey 上同一模型落后 XGBoost 约 0.012、落后 CatBoost 0.002。
+2. **不能把 0.829 与 FT-T 的「平均排名 1.8」直接对比**：前者是 min-max 缩放后的 ADTM 均值，后者是跨 11 个数据集的平均名次，且数据集集合、指标与调参预算都不同。两篇只在 covertype、Higgs、heloc 等数据集名称上重叠。
+3. **TabSurvey 上的两胜两负值得单独看**：GANDALF 在 Covertype（97.7）与 Cal. Housing 的 MSE（0.16）上最优，在 Adult（86.7 vs LightGBM 87.4）与 HIGGS（76.9 vs SAINT 79.8）上不是。
+
+**证据边界**：无显著性检验；表 1 中多数数据集只有 1 折，只有 9 个数据集有标准差（[[gandalf]], p. 16–17）；表 3 与表 4 的量级不一致，回归指标的尺度无法从原文确定（见 [[gandalf]] 分歧 3）；图 4 只画 15 个模型而表 5 有 21 个，筛选规则未说明。因此这张表只能读成「在别人的基准上，GANDALF 在最强的 GBDT 之列，但没有稳定超过它们」，不能读成「DL 赢了 GBDT」。
+
 ## 单一竞赛证据：人工特征给 GBDT 的收益约为 DL 的 4 倍
 
 上面是 11 个数据集的同协议基准；下面这条只有 **n=1**，但方向明确，且恰好能检验“机制”一节的说法。
@@ -201,6 +221,6 @@ ResNet 随目标变“树友好”而显著退化；CatBoost 相反；FT-T 在�
 
 ## 关联页面
 
-- 来源：[[ft-transformer]]、[[kaggle-q-ft]]、[[kaggle-q-ft-v2]]、[[kaggle-tfms-llms-tabular]]
-- 概念：[[tabular-deep-learning]]、[[generative-classification]]、[[ensembles]]、[[decision-trees]]、[[multi-layer-perceptron]]、[[evaluation-metrics]]
+- 来源：[[ft-transformer]]、[[kaggle-q-ft]]、[[kaggle-q-ft-v2]]、[[kaggle-tfms-llms-tabular]]、[[gandalf]]
+- 概念：[[tabular-deep-learning]]、[[gated-feature-learning-unit]]、[[generative-classification]]、[[ensembles]]、[[decision-trees]]、[[multi-layer-perceptron]]、[[evaluation-metrics]]
 - 实践：[[tabular-model-selection]]、[[competition-ml-workflow]]、[[hyperparameter-search-and-tuning]]、[[cross-validation-design-and-tuning]]
