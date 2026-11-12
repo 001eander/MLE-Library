@@ -25,6 +25,7 @@ tags:
 - [[hyra-1-0|Hyra-1.0：腾讯混元的递归自我改进科研智能体]] — 轻量 harness、经验库与双层评估循环，覆盖多类科研场景。
 - [[hyra-2-0|Hyra 2.0：从解题到造工具]] — 多项目长周期 harness、分层记忆、知识分级与工具化科研成果。
 - [[kaggle-getting-started|Kaggle 入门指南：竞赛型 MLE 的通用流程与一次完整赛题复盘]] — 七段流程、XGB 调参、Stacking 与 CV/LB 张力，代码绑定旧 API。
+- [[ft-transformer|Revisiting Deep Learning Models for Tabular Data（FT-Transformer）]] — 同协议比较 9 个表格 DL 模型与 2 个 GBDT；ResNet/FT-T 基线、注意力重要性、合成 α 实验与官方实现核查。
 - [[sklearn-linear-models|scikit-learn 用户指南 1.1「Linear Models」]] — 线性估计器与求解器约定；记录严重折叠块丢失、公式空缺与外部核查。
 - [[sklearn-lda-qda|scikit-learn 用户指南 1.2「Linear and Quadratic Discriminant Analysis」]] — 生成式分类、Mahalanobis 几何、降维与协方差收缩；保留参考文献丢失等分歧。
 - [[sklearn-naive-bayes|scikit-learn 用户指南 1.9「Naive Bayes」]] — 条件独立、五类变体、平滑与增量拟合；含授权回填记录及 `partial_fit` 分歧。
@@ -71,6 +72,7 @@ tags:
 - [[feature-selection|特征选择（Feature Selection）]] — 三家族、代理指标假设、阈值/个数、成本与选择稳定性。
 - [[multi-layer-perceptron|多层感知机（Multi-layer Perceptron, MLP）]] — 参数化非线性、输出面、求解器、非凸优化与 L2。
 - [[manifold-learning|流形学习（Manifold Learning）]] — 被保量、kNN 图、坐标输出、MDS/t-SNE 与接口边界。
+- [[tabular-deep-learning|表格数据的深度学习（Tabular Deep Learning）]] — 把每一列变成一个 token：Feature Tokenizer、PreNorm、默认配置、预处理契约与失败模式。
 
 ## 实践
 
@@ -93,6 +95,7 @@ tags:
 - [[covariance-estimation-selection-and-tuning|协方差估计的选型与调参：先判 n/p、再定 α 的来源、最后选损失口径]] — 收缩、GraphicalLasso、MCD、结构与似然目标。
 - [[outlier-detection-selection-and-tuning|异常检测的选型与调参：先判污染与是否要上线，再选形状假设，最后定阈值]] — 形状、容量旋钮、阈值五步与评估路径。
 - [[preprocessing-pipeline-design|预处理管线的落地设计：顺序、默认值、诊断信号与常见坑]] — 七阶段顺序、默认值、折内拟合与诊断。
+- [[tabular-model-selection|表格任务选型：先立 GBDT 与 ResNet 两个基线，再决定要不要上 FT-Transformer]] — 五个准入问题、基线顺序、默认/调参四格、评估协议与 14 条坑。
 
 ## 工具
 
@@ -104,6 +107,7 @@ tags:
 ## 比较
 
 - [[hyra-1-0-vs-2-0|Hyra 1.0 与 2.0 对照：解题范式 vs 工具范式]] — 目标、组织、记忆、验证、结果形态与证据强度对照。
+- [[gbdt-vs-tabular-dl|GBDT 与表格深度模型：没有普适赢家]] — 默认 vs 调参、逐数据集胜负、成本、机制与基准偏差。
 
 ## 研究
 

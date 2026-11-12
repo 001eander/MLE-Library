@@ -35,7 +35,7 @@ tags:
 
 ## 当前来源
 
-目前收录 **24 个来源**。
+目前收录 **25 个来源**。
 
 ### 自动化科研与竞赛
 
@@ -80,6 +80,12 @@ tags:
 - [[sklearn-preprocessing|8.3 Preprocessing data]]：有状态变换、类别编码、展开与目标编码交叉拟合。
 
 对应概念与实践：[[cross-validation]]、[[hyperparameter-search]]、[[evaluation-metrics]]、[[feature-preprocessing]]、[[cross-validation-design-and-tuning]]、[[hyperparameter-search-and-tuning]]、[[metric-selection-and-thresholding]]、[[preprocessing-pipeline-design]]。
+
+### 表格数据与模型比较
+
+- [[ft-transformer|FT-Transformer]]：同协议比较 9 个表格 DL 模型与 2 个 GBDT；两个可复用基线（ResNet、FT-Transformer）、注意力特征重要性与合成 α 实验；含官方实现核查。
+
+对应概念与实践：[[tabular-deep-learning]]、[[tabular-model-selection]]、[[gbdt-vs-tabular-dl]]。
 
 工具总表见 [[scikit-learn]]，动态目录见 [[catalog]]。
 

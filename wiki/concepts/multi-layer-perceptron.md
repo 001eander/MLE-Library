@@ -10,10 +10,12 @@ tags:
   - scikit-learn
 sources:
   - "[[sklearn-neural-networks]]"
+  - "[[ft-transformer]]"
 status: draft
-verified: 2026-11-11
+verified: 2026-11-12
 applies_to:
   - scikit-learn 1.8.0 – 1.9.1 的 neural_network 模块（文档与 API 签名，见 [[sklearn-neural-networks]]）
+  - rtdl_revisiting_models 0.0.2（本地 checkout e3ed46c，2024-11-13；仅“表格 DL 的 sanity check”一节）
 ---
 
 # 多层感知机（Multi-layer Perceptron, MLP）
@@ -64,6 +66,14 @@ L137 要求缩放并对测试集复用同一个缩放器，L147 推荐 `Standard
 `early_stopping` 从训练集内部切验证数据；`n_iter_no_change` 在开启早停时看验证分数，否则看训练损失（实现外部核查）。时间或分组结构下需要检查内部随机划分的泄漏。
 
 `warm_start=True` + `max_iter=1` 是手动训练循环（L153–L162）：`n_iter_` 是本次 fit 的迭代数，不跨 fit 累计；权重从上轮解继续更新。它不等于 `partial_fit` 接收新样本，也不保证优化器状态与一次性训练完全相同。
+
+## 表格 DL 的 sanity check
+
+[[ft-transformer]] 把 MLP 作为表格 DL 的简单基线：调参后平均排名 **4.8**，优于 TabNet（7.5）、SNN（6.4）、AutoInt/GrowNet（5.7），接近 DCN2（4.7），但不如 ResNet（3.3）与 FT-T（1.8）（[[ft-transformer]], p. 7）。结论是“调参让简单模型有竞争力”，不是“MLP 最强”。
+
+实现上，该论文的 ResNet 块可以看作 MLP + BatchNorm + 残差：`x + Dropout(Linear(Dropout(ReLU(Linear(BatchNorm(x))))))`（[[ft-transformer]], p. 3）。官方包的 `MLP` 对所有层用同一宽度，并标注与论文的 `# NOTE[DIFF]`：论文对首尾层单独调宽，但同宽在这些数据集上不更差（`package/rtdl_revisiting_models.py` L35–L39）。因此不要把“搜索空间里首尾层单独调”当成复现的必要条件。
+
+实践含义：先跑调参 MLP，再上 ResNet/FT-T；如果 MLP 已接近 GBDT，复杂架构的边际收益需要用验证集证明。
 
 ## 成本与失效模式
 

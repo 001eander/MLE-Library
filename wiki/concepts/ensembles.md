@@ -14,10 +14,12 @@ tags:
 sources:
   - "[[sklearn-ensembles]]"
   - "[[sklearn-outlier-detection]]"
+  - "[[ft-transformer]]"
 status: draft
-verified: 2026-11-11
+verified: 2026-11-12
 applies_to:
   - scikit-learn 1.9.1 的 ensemble 模块（文档与 API 签名，见 [[sklearn-ensembles]]）
+  - rtdl_revisiting_models 0.0.2（本地 checkout e3ed46c，2024-11-13；仅“表格深度模型的集成”一节）
 ---
 
 # 集成方法（Ensembles）
@@ -75,6 +77,22 @@ Extra-Trees 进一步随机化阈值（L456–L489）。`max_features` 默认随
 - **AdaBoost**：逐轮调整样本权重；默认分类器是 stump，回归器是 `max_depth=3` 的回归树（L831–L866，API 外部核查）。
 
 Stacking 的关键不是「第二层更复杂」，而是折外预测是否近似未来数据。若训练集有组或时间结构，随机 K 折可能让折外预测泄漏，见 [[cross-validation]]。
+
+## 表格深度模型的集成：收益取决于基模型是否已近似集成
+
+[[ft-transformer]] 的协议是 **3 组 × 5 seeds**：把 15 个单模型分成 3 组，组内平均预测，得到 3 个集成（[[ft-transformer]], p. 6）。把表 2 的单模型均值与表 3 的集成均值按 score 方向比较（本库计算，非来源表格）：
+
+| 模型 | 平均相对改进 | 中位相对改进 | 典型数据集 |
+| --- | --- | --- | --- |
+| FT-Transformer | **0.85%** | **0.73%** | CA 2.4%、HE 1.8%、YA 1.2% |
+| ResNet | 0.60% | 0.51% | CA 1.65% |
+| NODE | 0.41% | 0.40% | YE 0.77% |
+
+来源的解释是 FT-T/ResNet 从集成中受益更多，NODE 本身已近似 ensemble（[[ft-transformer]], p. 7）。换句话说，**集成收益与基模型的方差/多样性有关，不是所有模型都同等受益**；一个已经带集成结构的模型，再加 seed averaging 的边际收益更小。
+
+另一个边界：表 8/9 中默认 XGBoost 的单模型与集成数值完全相同（±0.0）。若训练在固定种子下确定，5 个“不同种子”可能给出同一模型，集成收益为零（**本库假设**，需按 XGBoost 版本与线程配置验证）。
+
+实践上：分类器集成平均**概率**（先 `expit`/`softmax`）而不是 logits（repo `bin/ensemble.py` L34–L65）；GBDT 本身是 boosting 集成，再做 seed averaging 的收益要看基模型方差。
 
 ## 正则化的三种机制
 

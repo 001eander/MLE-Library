@@ -13,6 +13,7 @@ sources:
   - "[[kaggle-getting-started]]"
   - "[[aide]]"
   - "[[sklearn-cross-validation]]"
+  - "[[ft-transformer]]"
 status: draft
 verified: 2026-11-12
 applies_to:
@@ -104,7 +105,7 @@ applies_to:
 
 - 「逐组加入特征并记录边际收益」这条流程有没有公开的对照记录？来源只有「全加 → 变差 → 调参无效」的一次观测（L290）。
 - 合并 train/test 做无监督变换，在 2016 年的赛事里是否真的带来了分数收益？来源未做 A/B。
-- 现代表格任务的默认流程（LightGBM/CatBoost + 目标编码 + k 折 + seed averaging）与本文的差异，需要另外的来源支撑；本库暂无。
+- 现代表格任务的默认流程（LightGBM/CatBoost + 目标编码 + k 折 + seed averaging）与本文的差异，现在由 [[ft-transformer]] **部分覆盖**：同协议比较、GBDT vs DL、FT-T 与 ResNet 基线。但该来源以数值特征为主（11 个数据集中只有 Adult 有类别特征）、无缺失值实验，因此类别特征/缺失值/多划分下的默认流程仍需新来源。选型见 [[tabular-model-selection]]，对照见 [[gbdt-vs-tabular-dl]]。
 - 来源的七段流程是否遗漏了「赛题理解/泄漏排查」这类阶段？作者在 EDA 里提到了「产品 ID 会不会导致 Overfitting」（L257），但流程图上没有对应步骤。
 
 ## 关联页面

@@ -17,10 +17,12 @@ sources:
   - "[[sklearn-feature-selection]]"
   - "[[sklearn-linear-models]]"
   - "[[sklearn-nearest-neighbors]]"
+  - "[[ft-transformer]]"
 status: draft
 verified: 2026-11-12
 applies_to:
   - scikit-learn 1.9.1 的 `sklearn.preprocessing`（文档论述与 API 签名，见 [[sklearn-preprocessing]]）
+  - rtdl_revisiting_models 0.0.2（本地 checkout e3ed46c，2024-11-13；仅“表格 DL 的默认预处理”一节）
 ---
 
 # 特征预处理（Feature Preprocessing）
@@ -71,6 +73,32 @@ applies_to:
 - **幂变换**：Yeo-Johnson/Box-Cox 是参数化单调映射；Box-Cox 要求严格正数据，λ 由极大似然估计，`standardize=True` 默认再标准化。
 
 分位数是经验秩映射，幂变换是参数化、可逆、可外推的映射。不能把「保秩」理解为「保住几何」。
+
+## 表格 DL 的默认预处理：分位数 + 目标标准化
+
+[[ft-transformer]] 的协议给出一条与 GBDT 不同的默认管线（[[ft-transformer]], p. 6、p. 14）：
+
+- 数值特征默认 `QuantileTransformer(output_distribution='normal')`；`n_quantiles=max(min(n_train//30, 1000), 10)`、`subsample=1e9`；fit 前对 train 加 `N(0, 1e-3)` 噪声（按列 std 缩放），以处理取值种类很少的特征；
+- Helena/ALOI 用标准化；Epsilon 用原始特征（预处理反而伤害深度模型）；
+- 回归目标按 train 均值/标准差标准化；
+- GBDT 不做特征预处理（树对平移/缩放不敏感）；
+- 类别特征：神经网络同维 embedding；XGBoost one-hot；CatBoost 内置支持。
+
+```python
+normalizer = sklearn.preprocessing.QuantileTransformer(
+    output_distribution='normal',
+    n_quantiles=max(min(X['train'].shape[0] // 30, 1000), 10),
+    subsample=1e9,
+    random_state=seed,
+)
+if noise:
+    stds = np.std(X_train, axis=0, keepdims=True)
+    noise_std = noise / np.maximum(stds, noise)
+    X_train += noise_std * np.random.default_rng(seed).standard_normal(X_train.shape)
+normalizer.fit(X_train)   # 只 fit train；再 transform val/test
+```
+
+注意：这是**经验协议**，不是“分位数变换普遍优于标准化”的证明；来源只在一个统一协议里使用它。分位数变换保秩但改相关/距离，见上一节。
 
 ## 类别编码
 
