@@ -63,7 +63,7 @@ Use `<!-- class: lead -->` without the underscore only when all following slides
 - Clearly label synthesis, uncertainty, version-sensitive guidance, and hypotheses.
 - Use `# <!-- fit --> Heading` sparingly for a heading that must fit on one line.
 - Treat speaker notes in HTML comments as optional; do not place essential explanations only in notes.
-- Do not assume Obsidian-specific syntax such as Mermaid code blocks will render in Marp. Use native Markdown or an approved pre-rendered asset unless the chosen renderer explicitly supports it.
+- Do not assume Obsidian-specific syntax such as Mermaid code blocks will render in Marp. A `mermaid` fence exports as a code block (verified with Marp CLI 4.5.1); use native Markdown or a pre-rendered asset. For the diagram workflow — inline Mermaid in wiki notes, pre-rendered SVG in decks — use the `visualizer` skill.
 
 Marp uses `$...$` for inline math and `$$...$$` for display math. When math is required, declare `math: mathjax` in frontmatter for deterministic rendering; MathJax is the current default, and `math: katex` is the alternative.
 
