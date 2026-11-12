@@ -37,7 +37,7 @@ verified: 2026-11-11
 | 插图 | 6 张，已入库 `raw/assets/sklearn-ensembles/`（全部目视核查，读数见「图表核查」） |
 | 代码 | 29 段：HGBT 分类（L40–L49）、缺失值两段（L81–L89、L95–L102）、样本权重（L118–L131）、`categorical_features` 三种写法（L147、L153、L159）、单调约束（L190–L193）、交互约束树形图（L219–L224）、GBC 分类（L270–L280）、GBR 回归（L286–L299）、warm_start（L314–L332）、特征重要性（L397–L405）、RF 拟合（L423–L427）、DT/RF/ET 交叉验证对照（L461–L486）、RF warm_start（L548–L560、L566–L567）、Bagging+KNN（L586–L589）、Voting 硬投票（L607–L631）、软投票（L662–L673）、GridSearchCV（L680–L692）、VotingRegressor（L704–L718）、Stacking 三段（L736–L741、L746–L754、L760–L766、L776–L790）、多层 Stacking（L802–L823）、AdaBoost（L849–L857） |
 
-入库说明：本页依据本地剪藏撰写，引用写作 `[[sklearn-ensembles]], L24`。凡超出剪藏内容的部分（默认值、弃用、源码行为、丢失的折叠块）都显式标注「外部核查」，本机执行结果标注「实测（1.6.1）」。
+入库说明：本页依据本地剪藏撰写，引用写作 `[[sklearn-ensembles]], L24`。凡超出剪藏内容的部分（默认值、弃用、源码行为、丢失的折叠块）都显式标注「外部核查」；不包含历史本机运行时实验。
 
 > [!warning] 本文件未被修改
 > 本次**没有取得所有者对 `raw/` 回填的授权**，剪藏保持抓取时的原始字节（sha256 `3859a2d4…`，末行无换行）。丢失内容在「转换损失」中逐块记录，**未写回原文件**；下文的行号全部指向原始剪藏。
@@ -139,7 +139,7 @@ verified: 2026-11-11
 ### 3. HGBT 的五个结构能力（来源论述）
 
 1. **缺失值原生**（L76–L105）：训练时每个切分点同时评估「NaN 走左」与「NaN 走右」的增益；预测时按学到的方向走。若某特征训练时**没出现 NaN**，预测时的 NaN 被送到「样本更多的子节点」（L105）——这是一个与特征值无关的默认方向。
-2. **类别特征原生**（L140–L166）：优于 one-hot（等价切分需要更多深度）与序数编码（类别是名义量）。开启方式四种：布尔掩码、索引列表、列名列表、`"from_dtype"`（L147–L162）。基数必须 ≤ `max_bins`（L164 写「less than」，实测是 `<=`，见「分歧」）；未见类别预测时按缺失处理（L166）。
+2. **类别特征原生**（L140–L166）：优于 one-hot（等价切分需要更多深度）与序数编码（类别是名义量）。开启方式四种：布尔掩码、索引列表、列名列表、`"from_dtype"`（L147–L162）。基数必须 ≤ `max_bins`（L164 写「less than」，源码检查为 `<=`，见「分歧」）；未见类别预测时按缺失处理（L166）。
 3. **样本权重**（L113–L136）：权重乘梯度与 Hessian，因此 `weight=0` 的样本等价于删除（L118–L134）；但**分箱阶段的分位数计算不看权重**（L136）——所以加权会改变叶子值，不改变候选切分点。
 4. **单调约束**（L174–L209）：`monotonic_cst=[1,-1,0]`；只约束「其余特征不变时」的偏效应（L198），不能表达交叉约束；多类分类不支持（L204）；类别特征不支持（L209）。
 5. **交互约束**（L217–L228）：`interaction_cst=[{0},{1},{2}]` 禁止一切交互；未列出的特征自动自成一组，所以 `[{0}]` 等价于 `[{0},{1,2}]`（L228）。来源注明与 LightGBM 的重叠组逻辑一致（L226）。
@@ -148,9 +148,7 @@ verified: 2026-11-11
 
 ### 4. 早停是默认行为，不是一个选项（来源论述 + 外部核查）
 
-L72 写明：「**early-stopping is enabled by default if the number of samples is larger than 10,000**」，由 `early_stopping`、`scoring`、`validation_fraction`、`n_iter_no_change`、`tol` 控制；默认用验证损失，用 callable scorer 会显著变慢。
-
-实测（1.6.1）：10,050 样本、`max_iter=100` 时 `do_early_stopping_=True`、`n_iter_=76`——**你以为在跑 100 轮，实际只跑了 76 轮**，而且训练集内部被切出 10% 做验证（`validation_fraction=0.1`）。
+L72 写明：「**early-stopping is enabled by default if the number of samples is larger than 10,000**」，由 `early_stopping`、`scoring`、`validation_fraction`、`n_iter_no_change`、`tol` 控制；默认用验证损失，用 callable scorer 会显著变慢。因此 `max_iter` 是上限而不是保证轮数，训练集内部还会按 `validation_fraction` 切出验证数据。
 
 **本库综合**：这让 `max_iter` 的含义变成「上限」而非「轮数」，与 `GradientBoosting*` 的 `n_estimators`（默认无早停，跑满）**语义不同**。跨实现比较「树的数量」前必须先确认早停状态，否则比较的是两个不同的预算。
 
@@ -189,11 +187,11 @@ L369 的图（`plot_gradient_boosting_regularization_001`）把五条测试偏�
 
 **本库综合**：来源原文说「Subsampling without shrinkage, on the other hand, does poorly」（L369），图证实了这一点。所以 `subsample` 不能替代 `learning_rate`——它降方差，不降步长。
 
-### 8. 随机森林降方差，但 scikit-learn 是「平均概率」不是「投票」（来源论述 + 实测）
+### 8. 随机森林降方差，但 scikit-learn 是「平均概率」不是「投票」（来源论述）
 
 RF 的两处随机性——bootstrap 抽样（L434）与每节点特征子集（L436）——目的是**让各树的预测误差解耦**，从而在平均时相互抵消（L438）。代价是偏差略升。
 
-关键实现细节：**scikit-learn 平均的是 `predict_proba`，不是硬投票**（L442）。实测（1.6.1）：7 棵树的 `predict_proba` 与「各树 `predict_proba` 的算术平均」最大绝对差为 `0.0`。
+关键实现细节：**scikit-learn 平均的是 `predict_proba`，不是硬投票**（L442）。
 
 **本库综合**：这条常被忽略，但它决定了三件事：(a) RF 的概率是「树间平均」，比单树平滑，但仍不是校准概率；(b) `predict` = `predict_proba` 的 argmax，因此**平票按概率和**而非票数；(c) 想复刻「硬投票 RF」必须自己遍历 `estimators_`。
 
@@ -225,7 +223,7 @@ RF 仍选**最优阈值**，ET 则「为每个候选特征随机抽阈值，再�
 
 ### 12. Voting：硬投票丢信息，软投票要概率（来源论述 + 丢失的平票规则）
 
-- 硬投票 = 多数类（官方 1.11.4.1，**剪藏整节丢失**）；平票时「按类标签**升序**取」（官方页原文，实测 1.6.1：4 个分类器投 2,2,1,1 → 返回 `1`）。
+- 硬投票 = 多数类（官方 1.11.4.1，**剪藏整节丢失**）；平票时「按类标签**升序**取」（官方页原文）。
 - 软投票 = 加权概率和的 argmax（L636–L638）；3 类示例的加权平均为 `0.37/0.40/0.23`，取类 2（L644–L651）。
 - 软投票要求每个基模型都有 `predict_proba`（L659）。
 
@@ -239,7 +237,7 @@ RF 仍选**最优阈值**，ET 则「为每个候选特征随机抽阈值，再�
 
 - 第一层在 `predict` 时用**全量训练数据**拟合的模型（`estimators_`），而第二层见过的输入是折外预测——两者分布略有差异，这是 stacking 的固有偏差；
 - `stack_method='auto'` 按 `predict_proba` → `decision_function` → `predict` 的顺序选（L771）；
-- 二分类 + `predict_proba` 时**第一列被丢弃**（两列完全共线，L795–L796）；实测 `transform` 形状为 `(n_samples, n_estimators)`；
+- 二分类 + `predict_proba` 时**第一列被丢弃**（两列完全共线，L795–L796）；`transform` 因而为每个基模型保留一列；
 - 多层 stacking 就是把 `final_estimator` 再设成一个 `Stacking*`（L798–L823）。
 
 来源对收益的表述很克制：「as good as the best predictor of the base layer and even sometimes outperforms it」，但训练**计算代价高**（L793）。剪藏自带示例的读数值得记住：单层 R2 = **0.53**（L779），多层 R2 = **0.53**（L822）——**官方示例自己没跑出提升**。
@@ -248,7 +246,7 @@ RF 仍选**最优阈值**，ET 则「为每个候选特征随机抽阈值，再�
 
 机制（L835）：初始 $w_i=1/N$；每轮提高被错分样本的权重、降低被正确分类样本的权重；下一轮弱学习器被迫关注上一轮错例；最后按加权多数（和）组合。分类用 SAMME、回归用 R2（L841–L842）。
 
-默认弱学习器是**决策 stump**（L860），实测 1.6.1：`AdaBoostClassifier` 的 `estimators_[0]` 是 `max_depth=1` 的 `DecisionTreeClassifier`；`AdaBoostRegressor` 则是 `max_depth=3` 的回归树，`loss='linear'`（外部核查 + 实测）——所以「默认 stump」这句只对分类器成立。
+默认弱学习器是**决策 stump**（L860）；1.9.1 源码签名显示 `AdaBoostRegressor` 使用 `max_depth=3` 的回归树且 `loss='linear'`——所以「默认 stump」这句只对分类器成立。
 
 剪藏示例读数：iris 5 折 CV **0.95**（L857）。图 6（`plot_adaboost_multiclass_001`）在 300 棵树上测试误差从 0.62 降到 ≈0.30 后**平台化**，说明「树更多不再更好」在 AdaBoost 上同样成立。
 
@@ -384,32 +382,11 @@ L870–L892 的 7 条「脚注」不是参考文献，而是正文段落的复�
 ### 源码层面的两个数字
 
 - **`max_bins` 与「256 bins」的关系**：源码注释写 `n_bins = max_bins + 1  # + 1 for missing values`。所以 L28 的「typically 256 bins」与 L64 的「255（默认）」说的是同一件事的两半：255 个数值箱 + 1 个缺失箱。剪藏没有解释这层关系。
-- **类别基数检查是 `>` 不是 `>=`**：源码 `if categories.size > self.max_bins` 抛错，错误信息为「cardinality <= max_bins」；而 L164 写「must be **less than** the `max_bins` parameter」。实测（1.6.1）3 个类别 + `max_bins=3` 可以通过，4 个类别才报错。见「分歧」第 1 条。
+- **类别基数检查是 `>` 不是 `>=`**：源码 `if categories.size > self.max_bins` 抛错，错误信息为「cardinality <= max_bins」；而 L164 写「must be **less than** the `max_bins` parameter」。见「分歧」第 1 条。
 
-## 本机运行时复核（scikit-learn 1.6.1）
+## 验证边界
 
-以下 10 条在 1.6.1 上执行（PyPI 当前最高可安装版本；1.9.1 未安装，机制层结论按源码判断可跨版本，数值结论不跨版本）。
-
-| # | 检查 | 结果 |
-| --- | --- | --- |
-| 1 | 训练集无 NaN 时，预测 NaN 的走向 | `X=[[0],[1],[2]], y=[0,0,1]` → `predict([[nan]])=[0]`；左子节点 2 个样本，**走样本多的分支**，复现 L105 |
-| 2 | 未见类别按缺失处理 | `categorical_features=[True]`，训练类别 {0,1}，`predict([[5]])=[0]`，复现 L166 |
-| 3 | `max_bins=256` | `InvalidParameterError`：「must be an int in the range [2, 255]」 |
-| 4 | 类别基数 = `max_bins` | **不报错**（3 类 + `max_bins=3`）；4 类才报 `ValueError`（「cardinality <= 3」）。与 L164 的「less than」不符 |
-| 5 | `sample_weight=0` 等价删除 | 复现 L118–L134：`predict([[1,0]])=[1]`，`predict_proba=0.99902` |
-| 6 | 早停默认开启的后果 | 10,050 样本、`max_iter=100` → `do_early_stopping_=True`、`n_iter_=76` |
-| 7 | 硬投票平票 | 4 个分类器投 2,2,1,1 → `predict=1`（类标签升序最小者）；软投票同数据 `proba=[0,0.5,0.5]` → `predict=1` |
-| 8 | Stacking 的二分类概率列 | `StackingClassifier`（2 个基模型）`transform` 形状 `(200, 2)` = 每模型 1 列（第一列已丢）；`stack_method_=['predict_proba','predict_proba']` |
-| 9 | RF 是平均概率而非投票 | 7 棵树：`rf.predict_proba` 与「各树 `predict_proba` 平均」最大绝对差 **0.0** |
-| 10 | RF `warm_start` 等价性 | `n_estimators=10` + `warm_start` 再 fit 到 20，与一次性 20 棵的 `predict_proba` **完全一致**（`allclose=True`），复现 L563 |
-
-另有三条顺带确认：
-
-- `AdaBoostClassifier(n_estimators=3)` 的基学习器是 `DecisionTreeClassifier(max_depth=1)`；`AdaBoostRegressor` 是 `DecisionTreeRegressor(max_depth=3)`、`loss='linear'`。
-- `ExtraTreesClassifier(oob_score=True)` 直接抛 `ValueError: Out of bag estimation only available if bootstrap=True`（默认 `bootstrap=False`）。
-- `BaggingClassifier()` 的 `estimators_[0]` 是 `DecisionTreeClassifier`，`max_samples` 属性为 `1.0`（参数默认 `None`），`bootstrap=True`、`max_features=1.0`。
-
-**版本警告**：第 3、4 条依赖参数约束实现；第 1、2 条依赖 HGBT 的分箱生长器；第 9、10 条依赖 RF 的聚合实现。这三处 1.6.1 与 1.9.1 源码结构一致，但**未在 1.9.1 上复跑**。
+本页不包含历史本机运行时实验或性能读数。运行时行为只在 `uv` 创建的目标版本环境中重新验证后收录。
 
 ## 图表核查
 
@@ -428,11 +405,11 @@ L870–L892 的 7 条「脚注」不是参考文献，而是正文段落的复�
 
 ## 分歧
 
-1. **类别基数：文档说「less than」，实现允许等于**。L164：「The cardinality of each categorical feature must be less than the `max_bins` parameter」；1.9.1 源码检查 `categories.size > self.max_bins`，错误信息为「cardinality <= max_bins」；实测 1.6.1：3 类 + `max_bins=3` 通过、4 类才报错。按文档只能取 ≤254，按实现可取 ≤255。**保留来源原话 + 记录实现口径**，不修改剪藏。
+1. **类别基数：文档说「less than」，实现允许等于**。L164：「The cardinality of each categorical feature must be less than the `max_bins` parameter」；1.9.1 源码检查 `categories.size > self.max_bins`，错误信息为「cardinality <= max_bins」。按文档只能取 ≤254，按实现可取 ≤255。**保留来源原话 + 记录实现口径**，不修改剪藏。
 2. **「256 bins」与「255（默认）」的措辞冲突**。L28 说「typically 256 bins」，L64 说「recommended to use as many bins as possible (255), which is the default」。源码注释 `n_bins = max_bins + 1  # + 1 for missing values` 说明两者是「数值箱 255 + 缺失箱 1」。剪藏未解释，容易读成矛盾。
 3. **HGBT 的适用边界被剪掉一半**。L24 只留「orders of magnitude faster … larger than tens of thousands」，官方的同一主题框还写「小样本时 `GradientBoosting*` 可能更好，因为分箱会让切分点过于粗糙」。这不是矛盾，而是**剪藏侧的单边结论**；本页按官方补齐。
 4. **`max_features` 的「default」用词**。L493 先给「好默认值」：回归 `1.0`、分类 `"sqrt"`；紧接着说「The default value of `max_features=1.0` is equivalent to bagged trees」。字面上「默认值 1.0」与分类的 `"sqrt"` 冲突；按 API，RF 分类默认 `"sqrt"`、回归默认 `1.0`，`1.0` 只是「等价于 bagged trees」的那个**取值**。本库按 API 口径理解，保留来源原句。
-5. **「默认弱学习器是 stump」只对分类器成立**。L860 写在 AdaBoost 一节末尾，而该节同时覆盖分类与回归；实测 `AdaBoostRegressor` 的基学习器是 `max_depth=3` 的回归树（源码同）。文档没有区分。
+5. **「默认弱学习器是 stump」只对分类器成立**。L860 写在 AdaBoost 一节末尾，而该节同时覆盖分类与回归；1.9.1 源码签名显示 `AdaBoostRegressor` 的基学习器是 `max_depth=3` 的回归树。文档没有区分。
 6. **Stacking 示例的 R2 没有提升**。单层 0.53（L779）、多层 0.53（L822）。来源正文说 stacking「有时能超过最好的基模型」（L793），但**自己的示例没有超过**。两者不矛盾（示例未给单模型基线），但引用「stacking 更好」时不能引这个示例。
 7. **`GradientBoosting*` 的 `criterion` 参数在 1.9 已弃用，而正文完全不提**。这不是文档内部矛盾，而是**文档与 API 的时间错位**：正文的「树大小」只讲 `max_depth`/`max_leaf_nodes`，而 API 里 `criterion` 正在被移除（1.11）。引用本节时不应推断「`criterion` 仍可用」。
 8. **尾部脚注是转换器痕迹，不是文献**。7 条 `[^n]` 复制了正文段落，且缺 `[^3]`/`[^6]`。任何「按脚注引用」的尝试都会指回正文本身。
@@ -443,7 +420,7 @@ L870–L892 的 7 条「脚注」不是参考文献，而是正文段落的复�
 - **19 条参考文献丢失**，本页无法核对任何原始论文（Friedman 2001/2002、Breiman 1996/1998/1999/2001、Fisher 1958、Wolpert 1992、Freund & Schapire、Louppe 2014、XGBoost、LightGBM 等）。
 - **剪藏不含任何分类/回归 GBDT 的损失表**，因此本页不能给出「哪个损失对应哪个初始值」的完整对照（只有 `feature_importances_` 与 HGBT 的五种回归损失名）。
 - **相邻章节的覆盖边界**：[[sklearn-feature-selection]]、[[sklearn-cross-validation]] 与 [[sklearn-hyperparameter-tuning]] 已入库，可补充特征选择、Stacking 的 `cv` 语义与调参方法；5.2 Permutation importance、8.4 缺失值插补和 `sklearn.calibration` 仍未入库。
-- **运行复核只做到 1.6.1**。1.9 新增/变更的行为（`criterion` 弃用、`absolute_error` 的 NaN 支持、`categorical_features` 默认值）未实测。
+- **不包含历史本机运行时实验**。1.9 新增/变更的行为（`criterion` 弃用、`absolute_error` 的 NaN 支持、`categorical_features` 默认值）按源码、API 或版本史记录，运行时行为待在 `uv` 目标版本环境中复核。
 - **未验证**：HGBT 与 RF 在同一数据上的实际速度比与精度比；分箱对精度的影响随样本量的拐点；`interaction_cst` 与 `monotonic_cst` 的组合限制；`max_features` 对 HGBT 的实际作用（正文只说「减小可显著缩短运行时间」，L376）。
 - 本节**没有任何关于特征缩放/编码/管道**的说明（属 8.3）；树集成通常不需要缩放，但**本条不是来源论述**，是外部常识，本页不据此下结论。
 - 图 1–6 的读数是定性/近似读数（无坐标表格），不要当作精确数值引用。

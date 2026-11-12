@@ -2,7 +2,7 @@
 title: "autoresearch：让智能体夜间自主跑单 GPU 训练实验（karpathy 仓库 README 剪藏）"
 type: source
 created: 2026-11-11
-updated: 2026-11-11
+updated: 2026-11-12
 tags:
   - mle
   - research-agent
@@ -99,7 +99,7 @@ status: draft
 
 ### 7. 快速开始（L37–L51）
 
-`uv` 安装 → `uv sync` → `uv run prepare.py`（一次性，约 2 分钟）→ `uv run train.py`（约 5 分钟）。四步都能跑通，说明环境可用。
+README 给出的流程是 `uv` 安装 → `uv sync` → `uv run prepare.py`（一次性，约 2 分钟）→ `uv run train.py`（约 5 分钟）。本页不据此声称任何历史本机已跑通。
 
 ## 图表核查
 

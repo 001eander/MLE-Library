@@ -18,7 +18,7 @@ source_kind: article
 status: draft
 verified: 2026-11-12
 applies_to:
-  - scikit-learn 1.9.1（文档正文；行为在本机 1.6.1 复核）
+  - scikit-learn 1.9.1（文档正文与 API 签名）
 ---
 
 # scikit-learn 用户指南 2.5「Decomposing signals in components」
@@ -38,7 +38,7 @@ applies_to:
 | 文档版本 | **1.9.1**（1.8→1.9 的关键词改动已出现在剪藏里；见「版本判定」） |
 | 插图 | **23 张唯一图，全部下载入库** `raw/assets/sklearn-decomposition/`，其中 **15 张已目视核查**（见「图表核查」） |
 
-入库说明：本页依据本地剪藏撰写，引用写作 `[[sklearn-decomposition]], L16`。凡超出剪藏内容的部分（API 默认值、官方折叠块原文、运行时行为）都显式标注「外部核查」「官方 1.9.1 页」或「本机实测」。
+入库说明：本页依据本地剪藏撰写，引用写作 `[[sklearn-decomposition]], L16`。凡超出剪藏内容的部分（API 默认值、官方折叠块原文）都显式标注「外部核查」或「官方 1.9.1 页」；不包含历史本机运行时实验。
 
 > [!warning] 本文件未被修改
 > 本次**没有取得所有者对 `raw/` 回填的授权**，剪藏保持抓取时的原始字节（sha256 `7a95373a…`）。丢失的 4 个折叠块与参考文献只在「转换损失」一节里按官方 1.9.1 页记录，**未写回原文件**。所有行号指向原始剪藏。
@@ -84,33 +84,33 @@ applies_to:
 
 ### A. PCA 家族（L16–L67）
 
-- **PCA 只中心化、不缩放**（L16）。这是全节最重要的一条预处理契约：`PCA` 的 `fit` 会减去每列均值，但不会除以标准差。**是否缩放由调用者决定**，而缩放会改变主成分（本机实测 iris 上 2 维 PCA + logistic 的 5 折 CV：原始 0.96、标准化后 0.9133——不是「一定更好」，而是「换了一个模型」）。
-- **`whiten=True` 把各成分缩到单位方差**（L16），用于下游模型假设信号各向同性的场合（RBF SVM、KMeans）。本机实测 iris：白化后两轴方差 0.9933 / 0.9933；不白化是 4.2001 / 0.2411。**白化不是「更好的 PCA」，是把协方差改成单位阵**。
+- **PCA 只中心化、不缩放**（L16）。这是全节最重要的一条预处理契约：`PCA` 的 `fit` 会减去每列均值，但不会除以标准差。**是否缩放由调用者决定**，而缩放会改变主成分与下游模型。
+- **`whiten=True` 把各成分缩到单位方差**（L16），用于下游模型假设信号各向同性的场合（RBF SVM、KMeans）。**白化不是「更好的 PCA」，是把成分协方差改成单位阵**。
 - **PCA 有概率解释，`score` 可用于交叉验证**（L20）。剪藏只给这一句，没有给似然公式；因此「PCA 的 `score` 一定比重建误差好」不能从本页推出。
-- **`IncrementalPCA` 用小批量近似 PCA，并支持外存**（L34–L40）：`partial_fit` 逐块喂数据，或用 `numpy.memmap`。它只存成分与噪声方差的估计，因此内存取决于**每批样本数**，不是总样本数（L40）。来源说结果「almost exactly match」PCA；本机实测 batch=150（全量）时与 PCA 逐位相同，batch=10/30 时坐标最大差 0.01271 / 0.00970。
+- **`IncrementalPCA` 用小批量近似 PCA，并支持外存**（L34–L40）：`partial_fit` 逐块喂数据，或用 `numpy.memmap`。它只存成分与噪声方差的估计，因此内存取决于**每批样本数**，不是总样本数（L40）。来源说结果「almost exactly match」PCA，具体批大小影响需按目标环境评估。
 - **randomized SVD 的代价**（L63、L65）：时间复杂度 $O(n_{max}^2\cdot n_{components})$，精确法是 $O(n_{max}^2\cdot n_{min})$；内存是 $2\cdot n_{max}\cdot n_{components}$，精确法是 $n_{max}\cdot n_{min}$。**这是在「成分数远小于 $\min(n,p)$」时才有意义**。
-- **randomized 的 `inverse_transform` 不是精确逆**（L67），即使 `whiten=False`。本机 digits 上 10 维：randomized 与 full 的重建误差同为 751.787，但两者的反投影矩阵差 0.567——**差异小不等于可忽略，做重构任务时要显式比较**。
-- **SparsePCA 的目标**（L81–L99）：在重构误差上加 $ℓ_{1,1}$ 惩罚，`alpha` 控制稀疏度；成分被约束为单位球内的向量。来源说「larger values shrink many coefficients to zero」。本机 iris（3 成分）：`alpha` 0.01/0.1/1/10 → 零元素 3/3/8/10（共 12 个），重建误差 1.903/1.911/2.4/10.721——**稀疏的代价是重构**，且 `alpha=10` 已经明显过罚。
-- **`MiniBatchSparsePCA` 不实现 `partial_fit`**（L102）：它「在精神上」是在线算法，但方向是**特征**而不是样本，因此不能按样本增量喂。本机 `hasattr(...,'partial_fit')` 为 False。这是本库第一处「MiniBatch 名字不等于可在线学习」的反例。
+- **randomized 的 `inverse_transform` 不是精确逆**（L67），即使 `whiten=False`。做重构任务时应显式比较近似解与 full 解，不能只看单个重建误差。
+- **SparsePCA 的目标**（L81–L99）：在重构误差上加 $ℓ_{1,1}$ 惩罚，`alpha` 控制稀疏度；成分被约束为单位球内的向量。来源说「larger values shrink many coefficients to zero」，即稀疏度与重构误差需要共同评估。
+- **`MiniBatchSparsePCA` 不实现 `partial_fit`**（L102）：它「在精神上」是在线算法，但方向是**特征**而不是样本，因此不能按样本增量喂。这是本库第一处「MiniBatch 名字不等于可在线学习」的反例。
 
 ### B. Kernel PCA（L114–L130）
 
 - **KernelPCA = 核 + PCA**（L114）：用核把样本映到高维（隐式）空间再做线性 PCA，因此能做非线性降维、去噪、压缩与结构化预测；支持 `transform` 与 `inverse_transform`。
-- **反投影是近似**（L118）：`KernelPCA.inverse_transform` 用 kernel ridge 学「PCA 基 → 原空间」的映射，不是精确逆。本机 iris（RBF, 4 成分, `fit_inverse_transform=True`）：KernelPCA 重建误差 6.9775，线性 PCA 3.8993——**核 PCA 的「重构」不能与线性 PCA 的重构误差直接比**。
+- **反投影是近似**（L118）：`KernelPCA.inverse_transform` 用 kernel ridge 学「PCA 基 → 原空间」的映射，不是精确逆。**核 PCA 的「重构」不能与线性 PCA 的重构误差直接比**。
 - **成分数上界从特征数换成样本数**（L130）：$n_{components}\le n_{samples}$。当 $n$ 很大而只要前几十个成分时，完整 kPCA 是浪费；中心化 Gram 矩阵的有效秩远小于其尺寸，因此近似特征求解器能以很小精度损失换速度。
 - 剪藏**没有**说 `eigen_solver` 的三个取值与 arpack 的自动启用条件；这些在丢失的 *Eigensolvers* 折叠块里（官方 1.9.1 页）。因此「`eigen_solver='auto'` 在 $n_{components}<10$ 且 $n_{samples}>200$ 时用 arpack」**不能引剪藏**，只能引官方页。
 
 ### C. TruncatedSVD 与 LSA（L134–L136）
 
-- **`TruncatedSVD` 只算前 $k$ 个奇异值**（L134），不要求 $X$ 中心化；**若先减去每列均值，则截断 SVD 等价于 PCA**（L136）。本机实测：对已中心化的 iris，`TruncatedSVD(2)` 与 `PCA(2)` 的投影最大差 0.0；未中心化时前两个「解释方差比」是 0.5288 / 0.4485，与 PCA 的 0.9246 / 0.0531 完全不同。
+- **`TruncatedSVD` 只算前 $k$ 个奇异值**（L134），不要求 $X$ 中心化；**若先减去每列均值，则截断 SVD 等价于 PCA**（L136）。是否中心化会改变所得表示，不能混用两种预处理。
 - 这条等价关系是**文本 LSA 与 PCA 的桥**：词-文档矩阵通常稀疏、非负、不中心化，直接做 TruncatedSVD 就是 LSA。
 - 剪藏**丢了** LSA 的数学（$X\approx U_k\Sigma_k V_k^\top$、训练集变换 $U_k\Sigma_k$、测试集乘 $V_k$）与「LSA/LSI 名称」的折叠块；这些只在官方 1.9.1 页。
 
 ### D. 字典学习与稀疏编码（L150–L206）
 
-- **`SparseCoder` 用固定字典做稀疏编码，不学习字典**（L150）。来源说它「does not implement a `fit` method」；1.6.1 实际有一个**空操作 `fit`**（为 Pipeline API 存在，返回 self、不改变状态）——见「分歧」1。读文档时应把「没有 `fit`」理解为「没有学习」，不是「对象没有这个方法」。
-- **五种 `transform` 方法**（L152–L160）：OMP、LARS、Lasso-LARS、坐标下降 Lasso、阈值法。来源明确：**阈值法最快但重构不准**；图像重建用 OMP 最准、无偏（L158）。本机验证：`SparseCoder(transform_algorithm='omp', transform_n_nonzero_coefs=3)` 每行恰好 3 个非零；`threshold` 的零比例取决于 `transform_alpha`，默认 `None` 时不会自动稀疏。
-- **`split_code`（API 里叫 `split_sign`）把编码长度翻倍**（L160–L162）：正部在前、负部的绝对值在后，因此结果非负，长度 `2 * n_components`。本机 `DictionaryLearning(split_sign=True)`：普通编码 `(3, 8)` → split 编码 `(3, 16)`，且全部非负。**这是给下游线性模型「分别给正负载荷不同权重」用的**，不是更稀疏的编码。
+- **`SparseCoder` 用固定字典做稀疏编码，不学习字典**（L150）。来源说它「does not implement a `fit` method」；实现外部核查有一个**空操作 `fit`**（为 Pipeline API 存在，返回 self、不改变状态）——见「分歧」1。读文档时应把「没有 `fit`」理解为「没有学习」，不是「对象没有这个方法」。
+- **五种 `transform` 方法**（L152–L160）：OMP、LARS、Lasso-LARS、坐标下降 Lasso、阈值法。来源明确：**阈值法最快但重构不准**；图像重建用 OMP 最准、无偏（L158）。`transform_n_nonzero_coefs` 与 `transform_alpha` 分别控制非零个数与正则强度。
+- **`split_code`（API 里叫 `split_sign`）把编码长度翻倍**（L160–L162）：正部在前、负部的绝对值在后，因此结果非负，长度 `2 * n_components`。**这是给下游线性模型「分别给正负载荷不同权重」用的**，不是更稀疏的编码。
 - **`DictionaryLearning` 学一个（通常过完备的）字典**（L170），优化目标是重构 + 对码的 $ℓ_{1,1}$ 惩罚，字典原子约束在单位球内；求解方式是**交替**：固定字典解多个 Lasso 得码，再固定码更新字典（L174）。这解释了它为什么慢、为什么非凸。
 - **字典/码都可以加正性约束**（L184）；源图用红/蓝/白表示负/正/零。
 - **`MiniBatchDictionaryLearning` 有 `partial_fit`**（L196–L198），但**默认没有停止条件**（L198）：轮数由 `max_iter` 决定，早停只看 `max_no_improvement`。这是它与 `MiniBatchNMF` 的共同点，也是「在线」不等于「会自动停」的例子。
@@ -119,30 +119,30 @@ applies_to:
 
 - **潜变量模型**（L214–L220）：$x_i = W h_i + \mu + \epsilon$，$h_i\sim\mathcal N(0,I)$，$\epsilon\sim\mathcal N(0,\Psi)$；边缘分布 $x\sim\mathcal N(\mu, WW^\top+\Psi)$。这就是「把 $X$ 分解成低秩 + 噪声」的概率版本。
 - **$\Psi=\sigma^2 I$ → 概率 PCA；$\Psi=\operatorname{diag}(\psi_1,\dots,\psi_n)$ → Factor Analysis**（L246–L250）。两者的差别只有一句：**噪声是否各向同性**。FA 的 $W$ 叫因子载荷矩阵。
-- **FA 的主要优势是异方差噪声**（L258）：它能为每个方向单独建模噪声方差，因此在异方差数据上模型选择优于 PPCA。本机 iris：FA 的 `noise_variance_` 是 `[0.016, 0.098, 0.004, 0.041]`（4 个不同值），PCA 只有一个各向同性噪声尺度。
-- **FA 的成分不保证正交**（L254）：来源明确说「one can not make any general statements about these components (e.g. whether they are orthogonal)」。本机 FA（3 成分）的载荷相关系数最大 0.555；PCA 的成分则两两正交。
-- **旋转用于解释**（L260）：`rotation='varimax'` 最大化载荷平方的方差，倾向于「简单结构」（每个因子只受少数特征影响）。但**旋转不改变拟合优度，也不保证在你的数据上更稀疏**；本机 iris 上 varimax 的「$|loading|<0.1$」个数 4，不旋转是 3，最大非对角相关反而从 0.7399 升到 0.8904（见「分歧」6）。
+- **FA 的主要优势是异方差噪声**（L258）：它能为每个方向单独建模噪声方差，因此在异方差数据上模型选择优于 PPCA。
+- **FA 的成分不保证正交**（L254）：来源明确说「one can not make any general statements about these components (e.g. whether they are orthogonal)」。
+- **旋转用于解释**（L260）：`rotation='varimax'` 最大化载荷平方的方差，倾向于「简单结构」（每个因子只受少数特征影响）。但**旋转不改变拟合优度，也不保证在你的数据上更稀疏**。
 
 ### F. ICA（L268–L282）
 
 - **ICA 把多变量信号分成最大独立的加性子成分**（L268），用 FastICA 实现。它**通常不是降维**，而是分离叠加信号（盲源分离）。
 - **因为 ICA 模型没有噪声项，必须白化**（L268）：可以内部用 `whiten` 参数，或外部先用 PCA 白化。**白化不是可选预处理，是模型正确性的条件**。
-- 本机 1.6.1 有两个容易踩的行为：`whiten='unit-variance'` 输出 2 维、各轴方差 1；`whiten='arbitrary-variance'` 输出 2 维但方差 0.007；`whiten=False` 时**输出维数变成 4**、`components_` 是 `(4,4)`，尽管 `n_components` 属性仍是 2——**`whiten=False` 会忽略 `n_components`**。另外 `whiten=True`（布尔）在 1.6.1 直接 `InvalidParameterError`，只接受两个字符串或 `False`（1.3 起默认 `'unit-variance'`；外部核查）。
+- `whiten` 的类型与默认随版本变化：1.3 起默认 `'unit-variance'`，布尔 `True` 不再是合法取值（外部核查）。`n_components` 与白化方式的组合行为需在 `uv` 目标版本环境中复核。
 
 ### G. NMF（L286–L373）
 
 - **NMF 假设数据与成分都非负**（L286），把 $X$ 分解成 $W,H\ge0$，最小化 $\frac12\lVert X-WH\rVert_F^2$；与 PCA 的差别是**表示是加法的**（叠加成分，不做减法），因此适合图像与文本的「零件」表示（L290）。
-- **初始化决定结果**（L300–L306）：`init` 可为 `'nndsvd'`/`'nndsvda'`/`'nndsvdar'`/`'random'`。来源明确：基本 NNDSVD 更适合稀疏分解，稠密数据推荐 NNDSVDa/NNDSVDar；**`solver='mu'` 无法更新初始化中的零**，与基本 NNDSVD 的大量零一起用会更差（L304）。本机验证（4 成分、`solver='mu'`）：`nndsvd` 留 5 个零、重构误差 4.4395；`nndsvda` 0 个零、2.3878；`nndsvdar` 0 个零、1.4714；`random` 0 个零、2.0252。**同一模型、同一数据，初始化能把误差差近 3 倍。**
+- **初始化决定结果**（L300–L306）：`init` 可为 `'nndsvd'`/`'nndsvda'`/`'nndsvdar'`/`'random'`。来源明确：基本 NNDSVD 更适合稀疏分解，稠密数据推荐 NNDSVDa/NNDSVDar；**`solver='mu'` 无法更新初始化中的零**，与基本 NNDSVD 的大量零一起用会更差（L304）。
 - **L1/L2 先验**（L306–L316）：`alpha_W`/`alpha_H` 控制强度，`l1_ratio`（$\rho$）控制 L1/L2 混合；先验按 `n_features`（对 W）与 `n_samples`（对 H）缩放，以保持与数据项的相对量级。剪藏给了完整目标函数，但公式被渲染成 `n _ f e a t u r e s` 这类拆字。
-- **beta-divergence**（L320–L347）：Frobenius（$\beta=2$）、KL（$\beta=1$）、IS（$\beta=0$）是同一族；$\beta\in(0,1)$ 的定义要连续延拓。本机同一份非负 iris（加 0.01）上：$\beta=2$ 误差 3.9579、$\beta=1$ 2.475、$\beta=1.5$ 3.091、$\beta=0$ 1.6254——**不同 $\beta$ 的 `reconstruction_err_` 不可直接比较**，因为量纲/尺度不同。
-- **`fit_transform` 返回 W，`components_` 是 H，`transform` 用 H 分解新 X**（L349–L358）。本机实测 `transform(X)` 与 `fit_transform(X)` 并不逐位相同：`init='random'` 最大差 3.72e-4，`init='nndsvda'` 7.68e-4。**不要把两者当成同一个矩阵**；需要训练集编码时用 `fit_transform` 的返回值，或固定 `H` 后另行保存。
-- **`MiniBatchNMF` 有 `partial_fit`**（L367–L373），`batch_size` 控制批大小，`forget_factor` 让旧批次的权重衰减；本机连续 5 次 `partial_fit` 后 `components_` 为 `(3,4)`、`transform` 可用。
+- **beta-divergence**（L320–L347）：Frobenius（$\beta=2$）、KL（$\beta=1$）、IS（$\beta=0$）是同一族；$\beta\in(0,1)$ 的定义要连续延拓。**不同 $\beta$ 的 `reconstruction_err_` 不可直接比较**，因为目标与尺度不同。
+- **`fit_transform` 返回 W，`components_` 是 H，`transform` 用 H 分解新 X**（L349–L358）。`transform(X)` 是在固定 H 后重新求编码，不能保证与 `fit_transform(X)` 逐位相同；需要训练集编码时应保存 `fit_transform` 的返回值。
+- **`MiniBatchNMF` 有 `partial_fit`**（L367–L373），`batch_size` 控制批大小，`forget_factor` 让旧批次的权重衰减。
 
 ### H. LDA 主题模型（L379–L407）
 
 - **LDA 是三层生成模型**（L379–L388）：语料有 $D$ 篇文档、每篇 $N_d$ 个词、共 $K$ 个主题；$\alpha$ 是文档-主题 Dirichlet 先验，$\eta$ 是主题-词 Dirichlet 先验。图里的阴影节点是观测到的词，未阴影是潜变量。
 - **`LatentDirichletAllocation` 用在线变分贝叶斯**（L392–L396），支持 batch 与 online 两种更新；online 保证收敛到局部最优，但**最优点的质量与收敛速度依赖 mini-batch 大小与学习率设置**（L396）。
-- **矩阵方向**（L398）：输入是「文档-词」矩阵；分解得到「主题-词」矩阵（存 `components_`）与「文档-主题」矩阵（由 `transform` 计算）。本机：2 主题、4 词表 → `components_` `(2,4)`、`transform` `(6,2)`、每行和为 1、perplexity 5.3101。
+- **矩阵方向**（L398）：输入是「文档-词」矩阵；分解得到「主题-词」矩阵（存 `components_`）与「文档-主题」矩阵（由 `transform` 计算）。
 - **`partial_fit` 可用于顺序到达的数据**（L400）。
 - LDA 的生成过程细节（每篇文档的主题比例、每个词的主题分配、ELBO）在丢失的 *Details on modeling text corpora* 折叠块里；剪藏只有图与记号说明。
 
@@ -237,41 +237,20 @@ applies_to:
 - `KernelPCA` 的 `'randomized'` 求解器自 **1.0** 加入。
 - `LatentDirichletAllocation` 的默认 `learning_method` 自 **0.20** 起是 `'batch'`；`n_topics` 在 0.19 改名为 `n_components`。
 
-## 本机实测（scikit-learn 1.6.1，20 条）
+## 验证边界
 
-**版本警告**：本机是 1.6.1（PyPI 当前可安装的最高版本；1.9.1 未安装）。以下只证明**机制存在**，不能替代对 1.9.1 的数值核对；涉及默认值（`n_components='auto'`、`FastICA.whiten`、`MiniBatchDictionaryLearning.batch_size`）的条目已在 1.9 变过，引用时必须带版本。
-
-1. **PCA 不缩放，缩放会换模型**：iris 上 2 维 PCA + logistic 的 5 折 CV，原始 0.96、`StandardScaler` 后 0.9133；`PCA.mean_` 是原均值 `[5.843, 3.057, 3.758, 1.199]`，不是 0——**中心化在内部，缩放不在**。
-2. **白化确实把方差变成 1**：iris、2 成分，`whiten=True` 的两轴方差 0.9933 / 0.9933；不白化 4.2001 / 0.2411。
-3. **randomized 的反投影不精确**：digits、10 成分，randomized 与 full 的重建误差都是 751.787，但两个反投影矩阵的 Frobenius 差 0.567；`inverse_transform(transform(X))` 不等于 `X` 的低秩投影。
-4. **IncrementalPCA 的 batch 效应**：iris、2 成分，`batch_size=150`（全量）与 PCA 逐位相同；`batch_size=30` 坐标最大差 0.00970；`batch_size=10` 0.01271。解释方差比 0.9237/0.0529（batch=10）→ 0.9246/0.0531（batch=150）。
-5. **TruncatedSVD 的中心化等价**：对已中心化的 iris，`TruncatedSVD(2)` 与 `PCA(2)` 投影最大差 0.0；未中心化时前两个解释方差比 0.5288/0.4485。
-6. **SparsePCA 的 alpha 同时改稀疏度与重构**：iris、3 成分，`alpha=0.01/0.1/1.0/10.0` → 零元素 3/3/8/10（共 12 个），重建误差 1.903/1.911/2.4/10.721。**`alpha=10` 已经过罚**。
-7. **KernelPCA 的反投影是近似**：iris、RBF、4 成分、`fit_inverse_transform=True`，重建误差 6.9775；线性 PCA 3.8993。两者不可直接比。
-8. **FastICA 的 `whiten=False` 会忽略 `n_components`**：1.6.1 上 `FastICA(n_components=2, whiten=False)` 的 `transform(X)` 形状 `(150, 4)`、`components_` `(4,4)`，但 `n_components` 属性仍是 2；`whiten='unit-variance'` 输出 `(150,2)`、方差 1；`whiten='arbitrary-variance'` 输出 `(150,2)`、方差 0.007。`whiten=True` 直接 `InvalidParameterError`。
-9. **NMF 的 `transform` 与 `fit_transform` 不逐位相同**：iris 非负、2 成分，`init='random'` 最大差 3.72e-4；`init='nndsvda'` 7.68e-4。训练集编码应保存 `fit_transform` 的返回值。
-10. **NMF 初始化决定零与误差**：4 成分、`solver='mu'`，`nndsvd` 零 5 个、误差 4.4395；`nndsvda` 零 0、2.3878；`nndsvdar` 零 0、1.4714；`random` 零 0、2.0252。
-11. **NMF 的 beta 尺度不可比**：同一份非负 iris（+0.01），`beta_loss=2/1/1.5/0` → 误差 3.9579/2.475/3.091/1.6254。
-12. **FactorAnalysis 的噪声方差是逐特征**：iris、2 成分，`noise_variance_` = `[0.016, 0.098, 0.004, 0.041]`（4 个不同值）；载荷最大非对角相关 0.555。
-13. **varimax 不保证更稀疏**：iris、3 成分，`rotation='varimax'` 的 `|loading|<0.1` 个数 4（不旋转 3），最大非对角载荷相关 0.8904（不旋转 0.7399）。**旋转改善的是「简单结构」的解释，不是这个阈值下的稀疏度**。
-14. **LDA 的矩阵方向**：6 篇文档、4 词、2 主题，`components_` `(2,4)`、`transform` `(6,2)`、每行和 1、perplexity 5.3101。
-15. **DictionaryLearning 的 `split_sign` 把编码翻倍**：8 原子，普通 `(3,8)`，`split_sign=True` `(3,16)`，且全部非负（45 个零）。
-16. **SparseCoder 的 `fit` 是空操作**：1.6.1 `hasattr(sc, 'fit')` 为 True，源码是 `Do nothing and return the estimator unchanged`；`transform_algorithm='omp'` + `n_nonzero_coefs=3` 每行 3 个非零。
-17. **三个 MiniBatch 的 `partial_fit` 不一致**：`MiniBatchNMF` 有（连续 5 次后 `components_` `(3,4)`、`transform` `(5,3)`）；`MiniBatchDictionaryLearning` 有；`MiniBatchSparsePCA` **没有**。
-18. **PCA 的 `n_components` 默认是 `None`**（1.9.1 签名；1.6.1 同）：它会取 `min(n_samples, n_features)`；`PCA(2)` 的简写只指定 2，不等于默认。
-19. **`IncrementalPCA` 的 `batch_size=None`** 在 1.6.1 等价于 `5 * n_features`（外部核查源码；本机未逐值验证），因此“默认 batch”不是 1，也不是全量。
-20. **`FactorAnalysis(random_state=0)` 是默认**：同一数据重复 `fit` 的载荷逐位相同；换 `random_state` 会改结果（本机未量化差异，只确认默认固定）。
+本页不包含历史本机运行时实验或性能读数。运行时行为只在 `uv` 创建的目标版本环境中重新验证后收录。
 
 ## 分歧
 
-1. **「`SparseCoder` does not implement a `fit` method」（L150）与 1.6.1 实现不符。** 它有一个空操作 `fit`（为 Pipeline API 存在），`hasattr(...,'fit')` 为 True。正确读法：**没有学习**，不是没有方法。引用时应写「不学习字典」，不要写「不能放进 Pipeline」。
-2. **「`MiniBatchSparsePCA` 是 online algorithm」（L102）与「不实现 `partial_fit`」并存，容易误读。** 它的「online」是沿**特征**方向，不是样本方向；因此不能 `partial_fit` 新样本。本机 `hasattr` 为 False。
-3. **FastICA 的 `whiten` 在 1.6.1 不接受布尔 `True`，且 `whiten=False` 会忽略 `n_components`。** 正文 L268 只说「whitening must be applied」「using the `whiten` argument」，没有说参数类型与维数后果。实测：`whiten=False` 输出 4 维（原始特征数），`components_` `(4,4)`；`whiten='unit-variance'` 才是 2 维。
-4. **NMF 的 `transform` 不是 `fit_transform` 的精确复用。** L349–L358 的示例把 `W = fit_transform(X)` 与 `W_new = transform(X_new)` 并列，读者容易以为 `transform(X)` 会返回同一个 W；实测差 3.72e-4（random）/7.68e-4（nndsvda）。差异小，但在重构/对齐任务里不能假设逐位相等。
+1. **「`SparseCoder` does not implement a `fit` method」（L150）与实现不符。** 实现外部核查有一个空操作 `fit`（为 Pipeline API 存在）。正确读法：**没有学习**，不是没有方法。引用时应写「不学习字典」，不要写「不能放进 Pipeline」。
+2. **「`MiniBatchSparsePCA` 是 online algorithm」（L102）与「不实现 `partial_fit`」并存，容易误读。** 它的「online」是沿**特征**方向，不是样本方向；因此不能 `partial_fit` 新样本。
+3. **FastICA 的 `whiten` 类型与输出维数需要按版本核对。** 正文 L268 只说「whitening must be applied」「using the `whiten` argument」，没有说参数类型与维数后果；1.3 起布尔 `True` 不再合法，`n_components` 与不同白化方式的组合行为待在 `uv` 目标版本环境中复核。
+4. **NMF 的 `transform` 不是 `fit_transform` 的精确复用。** L349–L358 的示例把 `W = fit_transform(X)` 与 `W_new = transform(X_new)` 并列，但后者是在固定 H 后重新求编码，不能保证逐位相等；在重构/对齐任务里不能混用。
 5. **正文把 `_007` 当 `dict_img2`（L186），但图标题是「Cluster centers - MiniBatchKMeans」。** 这是官方资产错配：同一张图在 `plot_faces_decomposition` 示例里是聚类中心，不是字典。引用该图必须按图标题写。
-6. **「Varimax tends to produce sparser factors」（L260）在 iris 的 3 成分上没有兑现。** 实测 `|loading|<0.1` 的个数 4（不旋转 3），最大非对角相关反而从 0.7399 升到 0.8904。这不是说来源错，而是说「稀疏」是**渐近/数据依赖**的倾向，不能当成保证；在小样本、少因子上尤其如此。
-7. **「PCA centers but does not scale」（L16）与「PCA 是标准预处理」的常见说法冲突。** 来源说得对：缩放不在 `PCA` 里。但这也意味着 `PCA` 之后接距离型模型时，**未缩放的主成分仍受原始量纲支配**；本机 iris 上缩放前后 CV 0.96 → 0.9133，方向与「缩放总是更好」相反。
-8. **`KernelPCA.inverse_transform` 是近似（L118），但剪藏没给「近似到什么程度」。** 本机 6.9775 vs 线性 PCA 3.8993，说明核 PCA 的「重构」在 RBF 核下可能明显差于线性 PCA；不能用它做精确去噪评估。
+6. **「Varimax tends to produce sparser factors」（L260）是倾向而非保证。** 稀疏程度与载荷相关结构依赖数据和因子数，不能把旋转后的简单结构理解为每个数据集都更稀疏。
+7. **「PCA centers but does not scale」（L16）与「PCA 是标准预处理」的常见说法冲突。** 来源说得对：缩放不在 `PCA` 里。但这也意味着 `PCA` 之后接距离型模型时，**未缩放的主成分仍受原始量纲支配**。
+8. **`KernelPCA.inverse_transform` 是近似（L118），但剪藏没给「近似到什么程度」。** 核 PCA 的「重构」不能与线性 PCA 的误差直接比较，也不能默认适合精确去噪。
 9. **正文的 `split_code` 与 API 的 `split_sign` 不同名（L160）。** `SparseCoder`/`DictionaryLearning`/`MiniBatchDictionaryLearning` 的签名都只有 `split_sign`；按正文写 `split_code=` 会直接 `TypeError`。这是本页最容易被复制错的一个参数名。
 10. **正文的 `transform_method` 与 API 的 `transform_algorithm` 不同名（L152）。** 正文说「五个 transform 方法由 `transform_method` 初始化参数控制」，而 1.9.1 签名是 `transform_algorithm`；同段还提到 `transform_n_nonzero_coefs`/`transform_alpha`，这些名字倒是对的。
 
@@ -283,22 +262,22 @@ applies_to:
 - **本节没有下游用法**：分解结果如何进 `Pipeline`、如何防泄漏、`transform` 与 `fit_transform` 在测试集上的语义、NMF 的 W/H 如何保存，全节未提。
 - **本节没有复杂度表**：只有 randomized PCA 与 KernelPCA 的少量复杂度；字典学习、NMF、LDA 的成本只能从实现/经验推断。
 - **5 个官方示例脚本一个都没运行**（`plot_pca_vs_lda`、`plot_faces_decomposition`、`plot_incremental_pca`、`plot_kernel_pca`、`plot_image_denoising`），图中的时间/数值只能当量级。
-- **本机实测只到 1.6.1**：`FastICA.whiten` 的类型、`NMF.n_components='auto'`、`MiniBatchDictionaryLearning.batch_size` 都已在 1.9 不同；不能把 1.6.1 的默认值当成 1.9.1。
+- **不包含历史本机运行时实验**：`FastICA.whiten` 的类型、`NMF.n_components='auto'`、`MiniBatchDictionaryLearning.batch_size` 按 1.9.1 API 与版本史记录，运行时行为待在 `uv` 目标版本环境中复核。
 
 ## 待解问题
 
-1. **PCA 的 `n_components` 选择**：本节只给「保留大部分方差」的定性说法，没有平行分析、交叉验证重构误差、`n_components='mle'` 的用法。是否应把 `n_components='mle'` 纳入实践页？（本库未验证 1.9.1 行为。）
-2. **`whiten=True` 的下游影响**：本节说对 RBF SVM/KMeans 有用，但没有给「白化前后 CV」的对照。本库只测了方差，没有测下游。
-3. **randomized SVD 的精度**：`n_oversamples=10`、`iterated_power='auto'` 的默认是否足以让反投影误差可忽略？本机 digits 上差 0.567，但缺少「误差 vs `n_oversamples`」的曲线。
-4. **KernelPCA 的 `eigen_solver='auto'` 规则**：官方折叠块说 $n_c<10$ 且 $n>200$ 时用 arpack；本机 1.6.1 没有 `eigen_solver_` 属性可读，无法确认。需要在 1.9.1 上用源码/日志验证。
+1. **PCA 的 `n_components` 选择**：本节只给「保留大部分方差」的定性说法，没有平行分析、交叉验证重构误差、`n_components='mle'` 的用法。是否应把 `n_components='mle'` 纳入实践页？（待目标环境验证。）
+2. **`whiten=True` 的下游影响**：本节说对 RBF SVM/KMeans 有用，但没有给「白化前后 CV」的对照。
+3. **randomized SVD 的精度**：`n_oversamples=10`、`iterated_power='auto'` 的默认是否足以让反投影误差可忽略？需要「误差 vs `n_oversamples`」的曲线。
+4. **KernelPCA 的 `eigen_solver='auto'` 规则**：官方折叠块说 $n_c<10$ 且 $n>200$ 时用 arpack；需要在 1.9.1 上用源码/日志验证。
 5. **TruncatedSVD 的 LSA 等价**：本节只说「中心化后等价 PCA」；文本上 tf-idf 后再 TruncatedSVD 与 LSA 的差别（是否中心化、是否用 `sublinear_tf`）没有覆盖。
-6. **字典学习的 `alpha` 与 `n_components` 选择**：本节给目标函数与五种 transform，但没有给「字典多大」「alpha 多大」的判据；本库只测了 SparsePCA 的 alpha，没有扫 DictionaryLearning。
+6. **字典学习的 `alpha` 与 `n_components` 选择**：本节给目标函数与五种 transform，但没有给「字典多大」「alpha 多大」的判据。
 7. **NMF 的 `beta_loss` 选择**：KL 适合计数、IS 适合频谱，但本节只说三者是同一族；没有给「什么时候用哪个」的工程判据。
 8. **NMF 的 `n_components='auto'`**：1.6 起默认 `'auto'`，但本节完全没解释 `'auto'` 如何选（外部核查只看到签名）。这是一个高影响的默认值。
-9. **LDA 的 `learning_method='online'` 与 `batch` 的质量差**：本节只说 online 依赖 mini-batch 与学习率，没有给对照；本机只跑了 batch。
+9. **LDA 的 `learning_method='online'` 与 `batch` 的质量差**：本节只说 online 依赖 mini-batch 与学习率，没有给对照。
 10. **FA 的 `rotation` 选择**：本节只举 varimax，没有说 oblimin/promax 等其它旋转，也没有说「旋转后载荷的置信区间」。
-11. **ICA 的 `n_components` 与 `whiten=False` 的语义**：本机发现输出维数变成原特征数，但官方文档没有警告；需要在 1.9.1 上复核是否是 1.6.1 的 bug。
-12. **所有分解器的 `Pipeline` 泄漏/成本**：PCA/TruncatedSVD 是无监督的，理论上可在训练集 `fit`、测试集 `transform`；但 `IncrementalPCA` 的 `partial_fit` 若在全量数据上跑，仍然会用测试集信息。本库未实测。
+11. **ICA 的 `n_components` 与 `whiten=False` 的语义**：官方文档没有给出输出维数规则，需要在 1.9.1 上复核。
+12. **所有分解器的 `Pipeline` 泄漏/成本**：PCA/TruncatedSVD 是无监督的，理论上可在训练集 `fit`、测试集 `transform`；但 `IncrementalPCA` 的 `partial_fit` 若在全量数据上跑，仍然会用测试集信息。
 
 ## 行号索引
 

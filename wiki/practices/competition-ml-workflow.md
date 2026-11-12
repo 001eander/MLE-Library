@@ -61,13 +61,13 @@ applies_to:
 
 本库的判断（**综合**）：两种说法并不矛盾，但适用条件不同——「多」适用于**信噪比高、样本量足**的情形；当新增特征与已有特征强交互、或本身噪声大时，树的贪心分裂会先抓到噪声。真正缺的是一条**判断「这批特征该留哪些」的流程**：逐组加入 + 固定 CV 划分 + 记录每组的边际收益，而不是一次性全加再调参。
 
-现代实现对应的是 1.13 节的三类选择器（[[sklearn-feature-selection]]）与 [[feature-selection-workflow]]。两个必须补上的限定：① 来源的「Feature Importance 做选择」是 MDI，而 MDI 有训练集统计与高基数偏好两个缺陷，用在 ID 类列上会保留无用列（[[ensembles]], L518）；② 选择器必须放进 `Pipeline` —— 实测「先在全量数据上选、再 CV」会把纯噪声数据从 0.508 推到 0.900（[[feature-selection-workflow]] 的「五」）。
+现代实现对应的是 1.13 节的三类选择器（[[sklearn-feature-selection]]）与 [[feature-selection-workflow]]。两个必须补上的限定：① 来源的「Feature Importance 做选择」是 MDI，而 MDI 有训练集统计与高基数偏好两个缺陷，用在 ID 类列上会保留无用列（[[ensembles]], L518）；② 选择器必须放进 `Pipeline` —— 先在全量数据上选再 CV 会让测试折参与选择，不能作为独立泛化评估（[[feature-selection-workflow]]）。
 
 **张力二：CV 与排行榜冲突时信谁？**
 
 见 [[leaderboard-vs-cv]]。结论是：信 CV 的前提是 CV 切分复刻了真实划分的结构（L331）。
 
-现代意义上的「复刻结构」在 API 层是三条具体选择（[[cross-validation-design-and-tuning]]，依据 [[sklearn-cross-validation]]）：① 训练集与测试集共享实体 → `GroupKFold`（实测每折「测试组 ∩ 训练组」：`GroupKFold` `[0,0,0]` vs `KFold` `[1,2,1]`）；② 按时间划分 → `TimeSeriesSplit`；③ 稀有类 → `StratifiedKFold`（来源的「5-Fold 提到 10-Fold」本质上是在缓解单次划分的方差，而分层会**人为压小**折间方差，L361–L365）。
+现代意义上的「复刻结构」在 API 层是三条具体选择（[[cross-validation-design-and-tuning]]，依据 [[sklearn-cross-validation]]）：① 训练集与测试集共享实体 → `GroupKFold`（保证同一组不跨训练/测试折，[[sklearn-cross-validation]], L425–L454）；② 按时间划分 → `TimeSeriesSplit`；③ 稀有类 → `StratifiedKFold`（来源的「5-Fold 提到 10-Fold」本质上是在缓解单次划分的方差，而分层会**人为压小**折间方差，L361–L365）。
 
 **张力三：5-Fold 提到 10-Fold 提高了什么？**
 

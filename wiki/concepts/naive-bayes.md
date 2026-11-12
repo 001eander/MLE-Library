@@ -79,7 +79,7 @@ applies_to:
 
 1. **`alpha` 是"按特征数缩放"的**（分母含 $\alpha n$），所以同一个 `alpha` 在 1,000 词表与 50,000 词表上的有效强度不同。**本库综合**：这与 [[linear-models-as-baselines]] 的「alpha 不可跨估计器比较」是同一类陷阱的另一个实例。
 2. **平滑保证的是"不为零"，不是"更准"**。来源的理由写得很明确：`alpha` 用来照顾未见特征并**防止零概率**（L84）。
-3. **`var_smoothing` 与 `shrinkage` 家族的相似性只是形式上的**。`shrinkage` 把协方差拉向一个结构化目标（1.2 节文档说「对角阵」，2.6 节的实现与实测是 $\frac{\mathrm{Tr}}{p}I$，见 [[covariance-estimation]] §2.3），`var_smoothing` 只是给每个方差加一个正的下界——它**不改变非对角项**（`GaussianNB` 本来就没有非对角项）。因此把两者当"同一个超参"是错的；这是**本库判断**，文档未讨论。
+3. **`var_smoothing` 与 `shrinkage` 家族的相似性只是形式上的**。`shrinkage` 把协方差拉向一个结构化目标（1.2 节文档说「对角阵」，2.6 节的文档与实现是 $\frac{\mathrm{Tr}}{p}I$，见 [[covariance-estimation]] §2.3），`var_smoothing` 只是给每个方差加一个正的下界——它**不改变非对角项**（`GaussianNB` 本来就没有非对角项）。因此把两者当"同一个超参"是错的；这是**本库判断**，文档未讨论。
 
 ## 「坏估计量」：三条工程推论
 

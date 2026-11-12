@@ -33,7 +33,7 @@ verified: 2026-11-11
 | 插图 | 无（官方 1.9.1 页本节 `<article>` 内 `<img>` 计数为 0），因此**未新增 `raw/assets/` 目录** |
 | 代码 | 4 段 doctest：`VarianceThreshold`（L24–L35）、`SelectKBest`+`f_classif`（L50–L60）、`LinearSVC(l1)`+`SelectFromModel`（L105–L117）、`ExtraTreesClassifier`+`SelectFromModel`（L129–L144）；1 段非 doctest 的 `Pipeline` 片段（L167–L173） |
 
-入库说明：本页依据本地剪藏撰写，引用写作 `[[sklearn-feature-selection]], L43`。凡超出剪藏内容的部分（API 默认值、多假设检验语义、版本史、运行时行为）都显式标注「外部核查」「官方 1.9.1 页」或「本机实测」。
+入库说明：本页依据本地剪藏撰写，引用写作 `[[sklearn-feature-selection]], L43`。凡超出剪藏内容的部分（API 默认值、多假设检验语义、版本史）都显式标注「外部核查」或「官方 1.9.1 页」；不包含历史本机运行时实验。
 
 > [!warning] 本文件未被修改
 > 与 [[sklearn-svm]]、[[sklearn-naive-bayes]] 不同，本次**没有取得所有者对 `raw/` 回填的授权**，因此剪藏保持抓取时的原始字节（sha256 `45bf420d…`）。丢失的 3 个内容块只在「转换损失」一节里按官方 1.9.1 页逐句记录，**未写回原文件**。所有行号指向原始剪藏。
@@ -44,9 +44,9 @@ verified: 2026-11-11
 
 1. **第一次把「降维」拆成两条互不等价的路**。本节标题叫 feature selection，但引言写的是 "feature selection/dimensionality reduction"（L10）——而页内全部方法都是**保留原始列的子集**，没有一个做线性/非线性组合（那是已入库的 2.5 节，见 [[sklearn-decomposition]] 与 [[matrix-factorization]]）。因此「少了几列」与「换了一套坐标」在可解释性与下游稀疏性上是两件事（[[feature-selection]]）。
 2. **三个家族在一页里全齐，但文档从不点出它们的名字**。1.13.1–1.13.2 是**过滤式**（只看每个特征与 $y$ 的单变量统计量，不看模型）；1.13.3 与 1.13.5 是**包裹式**（用模型的 CV 分数当目标函数）；1.13.4 是**嵌入式**（用模型自己的 `coef_`/`feature_importances_` 当重要性）。三者的成本差一个数量级以上（后文「成本」）。
-3. **「选了哪些」不是数据的性质，而是 (数据, 模型, 超参) 三元组的性质**。同一份 iris 数据：`f_classif` 选 `[2,3]`，`LinearSVC(C=0.01, penalty="l1")` 选 `[0,1,2]`，`RFE(LogisticRegression)` 选 `[2,3]`（本机实测）。文档给了机制但没给这条判据，本页把它写成显式结论。
+3. **「选了哪些」不是数据的性质，而是 (数据, 模型, 超参) 三元组的性质**。过滤式统计量、L1 系数与包裹式评估各自对应不同目标，因此同一数据在不同选择路径下可以留下不同列。文档给了机制但没给这条判据，本页把它写成显式结论。
 4. **本节把「正则化」与「特征选择」接上了**。L119 说明 $C$ 与 `alpha` 是同一根稀疏性旋钮的两个方向（$C$ 越小、$\alpha$ 越大 → 特征越少），这让 [[regularization-and-sparsity]] 里的「稀疏 ≠ 不重要」直接变成选型约束。
-5. **唯一一节把「泄漏」写成推荐做法的**：1.13.6 直接给出 `Pipeline([('feature_selection', ...), ('classification', ...)])`（L165–L173），这是本库第一条**官方明文要求把选择放进 Pipeline**的论述。本机实测：120 样本 × 20,000 纯噪声特征，管线内 5 折 CV 0.508（机会水平），先在全量数据上选择再 CV 0.900。
+5. **唯一一节把「泄漏」写成推荐做法的**：1.13.6 直接给出 `Pipeline([('feature_selection', ...), ('classification', ...)])`（L165–L173），这是本库第一条**官方明文要求把选择放进 Pipeline**的论述。选择器必须使用训练折拟合，不能把全量数据的选择结果带进后续 CV。
 
 ## 文档结构
 
@@ -78,7 +78,7 @@ verified: 2026-11-11
 | 嵌入式 | 全模型拟合后的 $|\beta_j|$ 或 MDI | 是（一次） | 1 | L91、L101、L125 |
 | 包裹式 | 子集在 CV 下的模型分数 | 是（很多次） | $O(d)$–$O(kd)$ | L80、L151 |
 
-这条重排解释了三个实际后果：过滤式**看不见冗余**（两个完全相同的强特征得同一个分数，见「本机实测」5）；嵌入式**继承模型的偏好**（L1 偏好相关组里随机留一个，MDI 偏好高基数，见 [[ensembles]], L518）；包裹式**最贵但最贴近目标**，也最容易过拟合 CV（[[leaderboard-vs-cv]]）。
+这条重排解释了三个实际后果：过滤式**看不见冗余**（两个相同或高度相关的特征可以各自得到相似分数）；嵌入式**继承模型的偏好**（L1 偏好相关组里随机留一个，MDI 偏好高基数，见 [[ensembles]], L518）；包裹式**最贵但最贴近目标**，也最容易过拟合 CV（[[leaderboard-vs-cv]]）。
 
 ### 2. 单变量统计量是**代理**，它的假设写在函数名里（来源论述 + 本库综合）
 
@@ -96,13 +96,13 @@ L119 一句给足两个方向：「With SVMs and logistic regression, the parame
 
 正文只说「below the provided `threshold` parameter」，然后列出三个字符串启发式（"mean"、"median"、"0.1\*mean"，L93）。**正文完全没有说 `threshold=None` 时用哪个**。
 
-外部核查（官方 1.9.1 API 页）：`threshold=None` 时，**若估计器带 L1 惩罚（显式或隐式，如 `Lasso`）→ 阈值取 `1e-5`；否则取 `"mean"`**。本机实测 1.6.1 与该描述一致：`LinearSVC(C=0.01, penalty="l1")` 的 `threshold_` = `1e-05`；`ExtraTreesClassifier` 的重要性 `[0.078, 0.066, 0.420, 0.436]`、`threshold_` = 0.25（= 均值）、保留 2 列。
+外部核查（官方 1.9.1 API 页）：`threshold=None` 时，**若估计器带 L1 惩罚（显式或隐式，如 `Lasso`）→ 阈值取 `1e-5`；否则取 `"mean"`**。
 
 后果：**同一个 `SelectFromModel` 在 L1 模型上等于「保留所有非零系数」，在树上等于「保留高于平均值的一半左右」**——两种完全不同的语义共用一个默认值，而正文没说。
 
-### 5. `prefit=True` 的 doctest 能跑，但 `threshold_` 不能读（本机实测）
+### 5. `prefit=True` 的 doctest 能跑，但 `threshold_` 不能读（外部核查）
 
-L113 与 L140 的 doctest 都用 `SelectFromModel(estimator, prefit=True)` 再直接 `transform`。本机 1.6.1 复现：`transform` 正常（`(150, 3)` / `(150, 2)`），但**不调用 `fit` 就读 `threshold_` 会抛 `AttributeError: 'SelectFromModel' object has no attribute 'estimator_'`**——因为 `threshold_` 走 `self.estimator_`，而 `_get_support_mask` 有 `getattr(self, "estimator_", self.estimator)` 的回退（源码 `feature_selection/_from_model.py`）。
+L113 与 L140 的 doctest 都用 `SelectFromModel(estimator, prefit=True)` 再直接 `transform`。源码显示：`transform` 可以通过 `_get_support_mask` 的 `getattr(self, "estimator_", self.estimator)` 回退工作；但**不调用 `fit` 就读 `threshold_` 会因缺少 `estimator_` 而抛 `AttributeError`**（`feature_selection/_from_model.py`）。
 
 即：文档的写法在**推理路径**上可用，在**诊断路径**上不可用。想知道阈值/保留掩码的数值，要么显式 `fit`，要么从 `get_support()` 反推。
 
@@ -116,7 +116,7 @@ L82 明确：重要性可以来自「any specific attribute (such as `coef_`, `f
 
 L84 三句把机制说全了：在每个 CV 划分上拟合一个 `RFE`、用 `scorer` 评估不同特征数、跨折平均、取最大值的那个数。
 
-**本库综合**：这是本节唯一**把特征数当超参并用 CV 选**的路径，也正因如此它继承了 CV 的全部问题（折数、分层、分组结构，见 [[leaderboard-vs-cv]]）。本机实测 iris + `LogisticRegression`：`cv_results_['mean_test_score']` 从 0.953（1 个特征）单调升到 0.973（4 个特征）→ `n_features_=4`，即**RFECV 可以返回「全部特征」**，这与「特征选择总能减维」的直觉相反。
+**本库综合**：这是本节唯一**把特征数当超参并用 CV 选**的路径，也正因如此它继承了 CV 的全部问题（折数、分层、分组结构，见 [[leaderboard-vs-cv]]）。`RFECV` 的最优点是 argmax，因此也可能返回全部特征，不能预设它一定会减维。
 
 ### 8. 树的重要性是训练期统计量，`SelectFromModel` 直接继承了它的偏差（来源论述 + 本库综合）
 
@@ -130,18 +130,11 @@ L127 把 MDI 与「丢弃无关特征」接起来，L148–L149 两个示例链�
 
 **本库判断**：这是「选择」类目与「模型」类目最大的工程差异——模型有 `random_state` 与集成来降方差，而**选择结果本身没有方差估计**，除非自己套一层重采样。本节的 API 里也没有这个入口（见「待解问题」）。
 
-### 10. 推荐做法是 Pipeline，理由却没写（来源论述 + 本库实测）
+### 10. 推荐做法是 Pipeline，理由却没写（来源论述）
 
 L165 说「The recommended way to do this in scikit-learn is to use a `Pipeline`」，L167–L173 给了两行例子。文档**没有解释为什么**（没有提泄漏、没有提 CV）。
 
-本机实测把这句推荐变成可量化结论（1.6.1，120 样本、20,000 特征）：
-
-| 场景 | 选择放在 CV 外（先选再 CV） | 选择放在 CV 内（`Pipeline`） |
-| --- | --- | --- |
-| 纯噪声标签（$y$ 与 $X$ 独立） | **0.900** | 0.508 |
-| 真实信号（2 个有效特征，$y$ 由它们决定） | 0.950 | 0.792 |
-
-两行的方向相反：噪声上「先选」大幅**高估**（0.508 → 0.900），信号上「先选」也**高估**（0.792 → 0.950）。所以「先选特征再交叉验证」不是保守做法，而是**把选择阶段的信息泄漏进评估**。
+**本库综合**： supervised 选择器使用了 $y$，如果先在全量数据上选列再做 CV，测试折的信息已经参与了列选择，后续分数不再是独立的泛化估计。正确做法是让选择器只在每个训练折内拟合。
 
 ## 版本判定
 
@@ -207,53 +200,36 @@ L165 说「The recommended way to do this in scikit-learn is to use a `Pipeline`
 - `SelectFdr`：Benjamini–Hochberg（排序后 `p_(i) <= alpha/n * i`，再取满足者中的最大 $p$ 对应的全体）。
 - `SelectFwe`：`pvalues_ < alpha / n_features` —— Bonferroni。
 
-因此 `alpha` 在三个类里**同名不同义**：`SelectFpr(alpha=0.05)` 在 200 个特征上（198 个纯噪声 + 2 个真信号）**期望保留约 $0.05\times198\approx10$ 个噪声列**（本机实测：共保留 11 列，其中 9 列是噪声），而 `SelectFdr`/`SelectFwe` 同一数据只保留 2 个（正好是两个真信号）。
+因此 `alpha` 在三个类里**同名不同义**：`SelectFpr(alpha=0.05)` 在 200 个特征上（198 个纯噪声 + 2 个真信号）仅按边际检验就**期望保留约 $0.05\times198\approx10$ 个噪声列**；多重校正方法采用不同的控制目标，不能共用同一直觉。
 
 ### C. `prefit` 相关实现细节（源码 `_from_model.py` @ 1.6.1）
 
 - `_get_support_mask` 用 `getattr(self, "estimator_", self.estimator)` 回退 → `prefit=True` 且未 `fit` 时 `transform` 可用。
-- `threshold_` 属性**不做回退**，直接用 `self.estimator_` → 未 `fit` 时 `AttributeError`（本机实测）。
-- `SelectFromModel(threshold=-np.inf, max_features=k)` 是「只用 `max_features`、不看阈值」的官方写法（API 页原文）；本机实测 `max_features=1` → 保留 1 列。
+- `threshold_` 属性**不做回退**，直接用 `self.estimator_` → 未 `fit` 时 `AttributeError`。
+- `SelectFromModel(threshold=-np.inf, max_features=k)` 是「只用 `max_features`、不看阈值」的官方写法（API 页原文）。
 - `SelectFromModel` 的 `threshold` 与 `max_features` **同时生效时取交集后截断**（API 页：「If … max_features is not None, then all features are kept… To only select based on max_features, set threshold=-np.inf」）。
 
-## 本机实测（scikit-learn 1.6.1；**不是** 1.9.1 的数值）
+## 验证边界
 
-1. **`VarianceThreshold` doctest 逐字复现**（L24–L35）：`threshold=.8*(1-.8)` → 删掉第 0 列；`variances_ = [0.1389, 0.2222, 0.25]`（阈值 0.16）。
-2. **`SelectKBest(f_classif, k=2)` 在 iris 上选 `[2,3]`**，`scores_ = [119.26, 49.16, 1180.16, 960.01]`。注意第 1 个特征的 F 值只有 49，与第 2、3 个差一个量级 → 「k 选 2」与「F 值有断崖」是两件事。
-3. **`chi2` 遇负值直接 `ValueError: Input X must be non-negative.`**（L67 的「non-negative」是硬约束，不是建议）。
-4. **常量特征的 `f_classif` 打分为 `NaN`**：产生 `Features [4] are constant.` 与 `invalid value encountered in divide` 两条警告，`scores_` 该位为 `nan`；`SelectKBest(k=4)` 因此**只保留 4 个有效特征中的 4 个**——NaN 不会被选入，且没有额外提示。
-5. **平票取低索引**：把 iris 的第 2、3 列各复制一份（`[pl,pl,pw,pw]`），`SelectKBest(k=2)` 保留 `[0,1]`（前一份），分数量级相同（1180.16 / 960.01）。**特征顺序会改变选中的列**。
-6. **`mutual_info_classif` 默认 `random_state=None`，两次调用结果不同**：`[0.5235, 0.2164, 0.9795, 0.9762]` vs `[0.5012, 0.2746, 0.9861, 0.9811]`（最大差 0.058）。跨运行比较「MI 选中了谁」必须固定种子。
-7. **`SelectFromModel` + L1 的默认阈值是 `1e-5`**：`threshold_ = 1e-05`，保留 `[0,1,2]`（与 L112–L116 的 `(150, 3)` 一致）。
-8. **`SelectFromModel` + 树的默认阈值是均值**：`threshold_ = 0.25`（= `feature_importances_` 均值），保留 2 列；`ExtraTreesClassifier` 不加 `random_state` 时重要性为 `[0.082, 0.072, 0.386, 0.460]`，**与 L139 的 `[0.04, 0.05, 0.4, 0.4]` 不同**（文档值不可复现，且其和 0.89 ≠ 1）。
-9. **`GenericUnivariateSelect()` 的默认参数几乎删光特征**：`mode='percentile'`、`param=1e-05` → 在 iris 上**只保留 1 列**（索引 2）。这是一个「不传参就近乎全删」的默认值。
-10. **`SelectKBest(k > n_features)` 静默保留全部**（`k=10`、4 个特征 → 形状 `(150, 4)`，不报错）；`k=0` → 形状 `(150, 0)`（合法，下游会炸）。
-11. **`RFE` 的 `n_features_to_select=None` → 保留一半**（iris 4 列 → 2 列，`ranking_` 形如 `[3,2,1,1]`）；`step=2` 时 `ranking_` 变成 `[2,2,1,1]`——**`step` 改变的是排序粒度，不只是速度**。
-12. **`RFECV` 可以选满**（`LogisticRegression` + iris：`n_features_ = 4`）。
-13. **`SequentialFeatureSelector` 默认 `n_features_to_select='auto'` → 一半**（4 → 2），且默认 `cv=5`；`direction='backward'` 得到 `[1,3]`，与前向 `[0,1]` 不同——这是丢失折叠块里「前向/后向一般不等价」的实证。
-14. **`Pipeline` vs 先选后 CV**（120×20,000，5 折）：纯噪声 0.508 vs 0.900；有信号 0.792 vs 0.950（见「关键主张 10」）。
-15. **`feature_names_in_` / `get_feature_names_out()` 在 `SelectKBest` 上可用**：DataFrame 输入 → `feature_names_in_ = ['sl','sw','pl','pw']`，选择后 `['pl','pw']`。这使「选中了哪些列」可以按名字核对，而不必读索引。
-16. **`StandardScaler` 之后 `VarianceThreshold()` 一个都不删**（方差全为 1.0）：方差阈值是**尺度相关**的，放在缩放之后等于失效。
-
-**版本警告**：本机是 1.6.1，只能证明机制存在，不能替代对 1.9.1 的数值核对。以上 16 条中，第 4、9、10、11、12、13 条依赖实现细节（评分函数的 NaN 分支、默认 `param`/`auto` 的启发式、CV 折数），引用时须带版本。
+本页不包含历史本机运行时实验或性能读数。运行时行为只在 `uv` 创建的目标版本环境中重新验证后收录。
 
 ## 分歧与待解问题
 
 ### 分歧
 
 1. **标题与内容的口径不一致**：引言写 "feature selection/dimensionality reduction"（L10），但页内**没有任何降维/抽取方法**（无 PCA、无投影）。「dimensionality reduction」在这里只能是「删列后的维数下降」，与 2.5 节的矩阵分解不是同一件事（本库判断）。
-2. **`SelectFromModel` 的默认阈值两套语义**：L1 模型取 `1e-5`（等于「非零即留」），其余取 `"mean"`（等于「留一半左右」）。正文从未说明，两种语义共用同一个 `threshold=None`（外部核查 + 实测，见「关键主张 4」）。
-3. **文档称 `ExtraTreesClassifier` 示例的重要性是 `[0.04, 0.05, 0.4, 0.4]`**（L139），但该 doctest 没有 `random_state`，本机复跑得到 `[0.082, 0.072, 0.386, 0.460]`，且文档值之和为 0.89（未归一化到 1）。**该 doctest 的数值不可复现**，只能当「量级：两个特征主导」读。
-4. **`prefit=True` 的 doctest 与 `threshold_` 的不可读**：文档写法（L113、L140）在推理路径上成立、在诊断路径上抛 `AttributeError`（本机实测）。属文档与实现的**接口错位**，非矛盾，但会让人以为 `threshold_` 可在未 `fit` 时读。
-5. **`SelectFpr`/`Fdr`/`Fwe` 的 `alpha` 同名不同义**：正文只给三个名字（L45），没有给出「`SelectFpr` 不做多重校正」这一关键差别；`alpha=0.05` 在 200 个特征（198 噪声 + 2 真信号）上期望留约 10 列噪声（实测共 11 列、9 列是噪声），这对「用 `SelectFpr` 做初筛」是一个反直觉的默认行为。
-6. **「特征选择提高准确率」这一前提在本节只有一句无条件的宣称**（L10 "either to improve estimators' accuracy scores or to boost their performance on very high-dimensional datasets"），而本机实测显示：纯噪声上管线内选择只能到机会水平（0.508），即**选择本身不创造信息**。文档没有这个限定。
+2. **`SelectFromModel` 的默认阈值两套语义**：L1 模型取 `1e-5`（等于「非零即留」），其余取 `"mean"`（等于「留一半左右」）。正文从未说明，两种语义共用同一个 `threshold=None`（外部核查，见「关键主张 4」）。
+3. **文档称 `ExtraTreesClassifier` 示例的重要性是 `[0.04, 0.05, 0.4, 0.4]`**（L139），但该 doctest 没有 `random_state`，且文档值之和为 0.89（未归一化到 1）。这组数值不应被当作稳定复现结果，只能当「两个特征主导」的示例。
+4. **`prefit=True` 的 doctest 与 `threshold_` 的不可读**：文档写法（L113、L140）在推理路径上成立、在诊断路径上抛 `AttributeError`（源码外部核查）。属文档与实现的**接口错位**，非矛盾，但会让人以为 `threshold_` 可在未 `fit` 时读。
+5. **`SelectFpr`/`Fdr`/`Fwe` 的 `alpha` 同名不同义**：正文只给三个名字（L45），没有给出「`SelectFpr` 不做多重校正」这一关键差别；`alpha=0.05` 在 200 个特征（198 噪声 + 2 真信号）上按边际检验的期望就会留下约 10 列噪声。
+6. **「特征选择提高准确率」这一前提在本节只有一句无条件的宣称**（L10 "either to improve estimators' accuracy scores or to boost their performance on very high-dimensional datasets"）。选择本身不创造信息，文档没有把收益写成数据与模型依赖的条件。
 
 ### 待解问题
 
-1. `RFECV` 的折内选择是否真的避免了乐观偏差？它的 `cv_results_` 仍是在同一批折上取 argmax（本机实测 `n_features_=4` 时 `mean_test_score` 单调），这与「用 CV 选超参后再报同一个 CV 分数」是同一类问题（[[leaderboard-vs-cv]]）。未做嵌套 CV 对照。
-2. `SelectFromModel` 的 `importance_getter='auto'` 在**多输出**回归（`coef_` 为 2D）与多类分类（`coef_` 为 `(n_classes, n_features)`）上按 `norm_order=1` 取行范数——`norm_order` 的其他取值会怎样改变选择？（未实测）
-3. 稀疏输入下 `VarianceThreshold` / `SelectKBest` 是否也保持稀疏（丢失的 `aside` 只提了 `chi2` 与 `mutual_info_*`）；未实测 `scipy.sparse` 输入下各选择器的返回类型。
-4. `SequentialFeatureSelector` 的 `tol` 语义（「分数不提升至少 `tol` 就停」）在官方 API 页有、剪藏无；与 `n_features_to_select` 同时给出时谁优先？未实测。
+1. `RFECV` 的折内选择是否真的避免了乐观偏差？它的 `cv_results_` 仍是在同一批折上取 argmax，这与「用 CV 选超参后再报同一个 CV 分数」是同一类问题（[[leaderboard-vs-cv]]）。需要嵌套 CV 对照。
+2. `SelectFromModel` 的 `importance_getter='auto'` 在**多输出**回归（`coef_` 为 2D）与多类分类（`coef_` 为 `(n_classes, n_features)`）上按 `norm_order=1` 取行范数——`norm_order` 的其他取值会怎样改变选择？（待验证）
+3. 稀疏输入下 `VarianceThreshold` / `SelectKBest` 是否也保持稀疏（丢失的 `aside` 只提了 `chi2` 与 `mutual_info_*`）；需在目标版本检查 `scipy.sparse` 输入下各选择器的返回类型。
+4. `SequentialFeatureSelector` 的 `tol` 语义（「分数不提升至少 `tol` 就停」）在官方 API 页有、剪藏无；与 `n_features_to_select` 同时给出时谁优先？待验证。
 5. 选择结果的**方差**：本节没有稳定性选择（stability selection）的入口。用 `BaggingClassifier` 包 `SelectFromModel` 或重复 CV 取交集，是否能得到可用的「选择频率」？（未做）
 6. `LassoCV`/`LassoLarsIC` 与「恢复支撑集」的取舍在丢失的折叠块里只有定性描述；本库未读 Baraniuk (2007) 与 Ferri et al.，也未验证「`LassoCV` 欠惩罚」在合成数据上的表现。
 7. 本节示例链接指向 5 个官方示例（`plot_feature_selection.py`、`plot_f_test_vs_mi.py`、`plot_rfe_digits.py`、`plot_rfe_with_cross_validation.py`、`plot_select_from_model_diabetes.py`、`plot_permutation_importance.py`），**均未入库**；其中 F-test vs MI 的对比图是目前唯一能给出「何时 MI 有优势」的定量证据。
@@ -265,7 +241,7 @@ L165 说「The recommended way to do this in scikit-learn is to use a `Pipeline`
 - 本节**没有任何多输出/多标签选择**的讨论，也没有「分组特征（同源）必须整组进出」的机制（例如 one-hot 展开后的整组保留），而这在工程上是 `SelectFromModel` 最常见的需求。
 - 丢失的 3 个内容块（386 词 ≈ 19%）里包含**唯一**关于稀疏输入、Lasso 恢复条件与包裹式成本公式的论述；本页对这些内容的引用都指向官方 1.9.1 页，**不能引剪藏行号**。
 - 官方页**没有给出任何一条「该选多少个特征」的经验规则**，也没有「选择前后模型性能差多少」的示例读数（示例都是外部脚本）。本页因此不提供任何推荐 k 值。
-- 运行时复核只做到 1.6.1（PyPI 当前最高可安装版本）；`GenericUnivariateSelect` 的 `param=1e-5`、`SFS` 的 `n_features_to_select='auto'` 等默认值在 1.9.1 上**未复跑**（签名已核，行为未核）。
+- 不包含历史本机运行时实验；`GenericUnivariateSelect` 的 `param=1e-5`、`SFS` 的 `n_features_to_select='auto'` 等默认值按 1.9.1 API 签名记录，运行时行为待在 `uv` 目标版本环境中复核。
 
 ## 行号索引
 

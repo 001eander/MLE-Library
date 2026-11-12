@@ -33,7 +33,7 @@ verified: 2026-11-12
 | 文档版本 | **1.9.x，工作版本 1.9.1**（见「版本判定」） |
 | 插图 | 23 张已于 2026-11-12 下载入库 `raw/assets/sklearn-clustering/`（官方 26 张），其中 8 张逐张目视核查（见「图表核查」） |
 
-入库说明：本页依据本地剪藏撰写，引用写作 `[[sklearn-clustering]], L128`。凡超出剪藏内容的部分（API 默认值、版本史、丢失折叠块的原文、运行时行为）都显式标注「外部核查」「官方 1.9.1 页」或「本机实测」。
+入库说明：本页依据本地剪藏撰写，引用写作 `[[sklearn-clustering]], L128`。凡超出剪藏内容的部分（API 默认值、版本史、丢失折叠块的原文）都显式标注「外部核查」或「官方 1.9.1 页」；不包含历史本机运行时实验。
 
 > [!warning] 本文件未被修改
 > 本次**没有取得所有者对 `raw/` 回填的授权**，剪藏保持抓取时的原始字节（sha256 `12e437b5…`）。丢失的 30 个折叠块、16 个参考文献块与总览表首列只在「转换损失」一节里按官方 1.9.1 页记录，**未写回原文件**。所有行号指向原始剪藏。
@@ -87,7 +87,7 @@ verified: 2026-11-12
 - **inertia 的两个已知缺陷**（L59–L60）：① 隐含「凸且各向同性」，对细长簇与不规则流形响应差；② 不是归一化指标（只有"越小越好、0 最优"），高维下欧氏距离膨胀（维度灾难），官方给的缓解办法是**先降维**（PCA）再聚类（L60）——这是本库第一条「降维 → 聚类」的官方建议，而 2.2 节（[[manifold-learning]]）从未回头提聚类。
 - **三处实现细节**：Lloyd 三步（选初始中心 → 分配到最近中心 → 取均值更新）（L65）；"K-means is equivalent to the expectation-maximization algorithm with a small, all-equal, diagonal covariance matrix"（L69）；**停止条件是"质心移动小于容差"，而不是"目标函数相对下降小于容差"**——文档明确对比了这两种惯例（L71）。
 - **局部极小与 k-means++**（L73）："Given enough time, K-means will always converge, however this may be to a local minimum. This is highly dependent on the initialization of the centroids." → 多次初始化 + `init='k-means++'`；`kmeans_plusplus` 也可单独调用来给别的算法选种子（L75）。
-- **`sample_weight` 的语义**（L77）："assigning a weight of 2 to a sample is equivalent to adding a duplicate of that sample"（本机实测该等价关系精确成立，见实测 6）。
+- **`sample_weight` 的语义**（L77）："assigning a weight of 2 to a sample is equivalent to adding a duplicate of that sample"。
 - **MiniBatch 的两步与代价**（L95–L99）：小批量随机抽样 → 逐样本用流式均值更新被分配的质心（L97），因此"the rate of change for a centroid over time"下降；"converges faster than `KMeans`, but the quality of the results is reduced"（L99）。
 - **并行**（L86）：OpenMP + 256 样本分块，顺带降低内存占用。文档**不给任何数字**（分块大小之外）。
 
@@ -104,7 +104,7 @@ verified: 2026-11-12
 - **当前版本必须指定簇数**，且"works well for a small number of clusters, but is not advised for many clusters"（L144）。
 - 两簇时它是 **normalized cuts 的凸松弛**（L146）：切开图使割边权重相对簇内权重很小；文档特别指出这在**图像分割**上最有意义（顶点＝像素，边权＝图像梯度的函数）。
 - **`[!warning]` 相似度矩阵的分布问题**（L150–L160）：若相似度里有负值、或给的是距离矩阵而不是相似度，"the spectral problem will be singular and the problem not solvable"，官方建议做变换，例如有符号距离用热核 `similarity = np.exp(-beta * distance / distance.std())`（L158 附近代码块）。
-- **三种 `assign_labels`**（L168）：`"kmeans"` 能匹配更细的结构但**不稳定**（不固定 `random_state` 可能 run-to-run 不可复现）；`"discretize"` **称 100% 可复现**但倾向于产生大小接近、几何规整的分块；`"cluster_qr"` 是确定性替代，且在官方示例上"tends to create the visually best partitioning"（本机实测对"100% 可复现"有反例，见「分歧」3；图 21/23 的目视读数支持 cluster_qr 的观感优势）。
+- **三种 `assign_labels`**（L168）：`"kmeans"` 能匹配更细的结构但**不稳定**（不固定 `random_state` 可能 run-to-run 不可复现）；`"discretize"` **被文档称为 100% 可复现**但倾向于产生大小接近、几何规整的分块；`"cluster_qr"` 是确定性替代，且在官方示例上"tends to create the visually best partitioning"（图 21/23 的目视读数支持 cluster_qr 的观感优势）。`discretize` 的可复现性边界需在目标环境中重新验证。
 - **图分割用法**（L176–L183）：把邻接矩阵当亲和矩阵，`affinity='precomputed'`；官方 doctest 用 `n_init=100` 与 `assign_labels='discretize'`（L180）。
 
 ### E. 层次聚类（L185–L280）
@@ -114,7 +114,7 @@ verified: 2026-11-12
 - **无连通性约束时计算昂贵**——每一步都要考虑所有可能合并；加了 `connectivity` 矩阵后可扩展到大规模样本（L196）。
 - **「富者愈富」**（L204）：层次聚类会导致簇大小不均，single linkage 最严重、Ward 最规整；但**Ward 不能用非欧氏度量**，"thus for non Euclidean metrics, average linkage is a good alternative"；single linkage 对噪声不鲁棒，但**计算非常高效**、且"can also perform well on non-globular data"。
 - 树状图可视化在小样本上更有用（L213）。
-- **连通性约束 = 只允许相邻簇合并**（L223），用途是防止跨越流形折叠处合并（Swiss-roll 例子），并**顺带让算法更快**（L227，本机实测 8.7ms → 5.5ms，见实测 15）；矩阵可以是 scipy 稀疏矩阵，来自先验（网页链接）或数据（`kneighbors_graph`、`grid_to_graph`）（L229）。
+- **连通性约束 = 只允许相邻簇合并**（L223），用途是防止跨越流形折叠处合并（Swiss-roll 例子），文档称它还能在大样本上加速（L227）；矩阵可以是 scipy 稀疏矩阵，来自先验（网页链接）或数据（`kneighbors_graph`、`grid_to_graph`）（L229）。
 - **`[!warning]` 连通性 + single/complete/average 会放大「富者愈富」**（L234）："In the limit of a small number of clusters, they tend to give a few macroscopically occupied clusters and almost empty ones"，single linkage 最脆。
 - **度量选择**（L246–L251）：single/average/complete 可配 l2、l1（cityblock）、cosine、预计算矩阵；l1 适合稀疏特征（文本里稀有词的 occurrence），cosine 对整体缩放不变；**选度量的准则**是"one that maximizes the distance between samples in different classes, and minimizes that within each class"——注意这句话预设了**有类别标签**，用于无监督场景时只能当经验。
 - **BisectingKMeans**（L261–L280）：KMeans 的**分裂式**变体，反复把一个簇切成两个直到达到目标数；簇数大时比 KMeans 高效（每次只处理数据的子集，L263）；**按设计无法享受 k-means++**（L265），但 inertia 与 `KMeans(init="k-means++")` 相当而更便宜（L267）；**不产生空簇**（L269）；两种切分策略 `largest_cluster`（点最多）与 `biggest_inertia`（SSE 最大，L271–L274）；文档称按点数切"in most cases produces result as accurate as picking by inertia and is faster"（L276）并"will also likely produce clusters of similar sizes"（L278）；结果"well ordered and create quite a visible hierarchy"（L280）。
@@ -143,14 +143,14 @@ verified: 2026-11-12
 - **为什么不能数准确率**（L381、L385）：标签的**绝对值**无意义，只应看「划分是否与某个真值一致」或「是否满足同类更相似」；所有指标都"ignoring permutations"。
 - **Rand index 与 ARI**（L383–L431）：RI 度量两个分配的**相似性**，但"does not ensure to obtain a value close to 0.0 for a random labelling"；ARI **做了机会校正**（L395）。两者都**对称**，因此可当**共识度量**（L412）。doctest 数字：RI 0.66、ARI 0.24；完美 1.0；独立划分 RI 0.39、ARI **-0.072**（L431 附近）。
 - **MI / NMI / AMI**（L446–L503）：三者都是**对称**的共识度量；AMI "was proposed more recently and is **normalized against chance**"（L448）；"This is not true for `mutual_info_score`, which is therefore harder to judge"（L485）。
-- **Homogeneity / Completeness / V-measure**（L505–L589）：两个目标来自 Rosenberg & Hirschberg (2007)——homogeneity（每个簇只含一个类）、completeness（一个类的成员都在同一簇）（L511–L512）；V-measure 是两者的**调和平均**，`beta<1` 更重 homogeneity、`beta>1` 更重 completeness（L542–L552）；**V-measure 等价于 NMI（算术平均聚合）**（L556 附近，本机实测逐位相等，见实测 2）；`[!note]` 指出 V-measure **对称**，而 homogeneity 与 completeness **不对称**，满足 `homogeneity_score(a, b) == completeness_score(b, a)`（L574–L589）。
+- **Homogeneity / Completeness / V-measure**（L505–L589）：两个目标来自 Rosenberg & Hirschberg (2007)——homogeneity（每个簇只含一个类）、completeness（一个类的成员都在同一簇）（L511–L512）；V-measure 是两者的**调和平均**，`beta<1` 更重 homogeneity、`beta>1` 更重 completeness（L542–L552）；**V-measure 等价于 NMI（算术平均聚合）**（L556 附近）；`[!note]` 指出 V-measure **对称**，而 homogeneity 与 completeness **不对称**，满足 `homogeneity_score(a, b) == completeness_score(b, a)`（L574–L589）。
 - **Fowlkes-Mallows**（L591–L642）：FMI 是**成对 precision 与 recall 的几何平均**（L593）：$\text{FMI}=\text{TP}/\sqrt{(\text{TP}+\text{FP})(\text{TP}+\text{FN})}$，其中 TP/FP/FN 都是**样本对**的计数（L601–L603）。
 - **内部指标（无真值）**（L644–L725）：silhouette 由每个样本的 $a$（到同簇其他点的平均距离）与 $b$（到**次近簇**的平均距离）构成，$s=(b-a)/\max(a,b)$；整个集合取均值（L649–L656）。Calinski-Harabasz（又名 Variance Ratio Criterion）是**簇间离散度／簇内离散度**之比（L685）。Davies-Bouldin 是"average 'similarity' between clusters"，**越小越好、0 最优**（L709–L711）。
 - **两个矩阵**（L727–L804）：contingency matrix 给出每个「真值簇 × 预测簇」的交叉计数，"provides sufficient statistics for all clustering metrics where the samples are i.i.d. and one doesn't need to account for some instances not being clustered"（L729）；pair confusion matrix 是 2×2 的**成对**相似度矩阵，$C_{11}$=TP、$C_{01}$=FP、$C_{10}$=FN、$C_{00}$=TN（L758–L767），**且不对称**（L791）。
 
 ## 版本判定
 
-**结论：1.9.x，工作版本 1.9.1，证据强。** 判定链如下（全部为本库 2026-11-12 的实测比对）。
+**结论：1.9.x，工作版本 1.9.1，证据强。** 判定链如下（全部为本库 2026-11-12 的文本比对）。
 
 1. **句子探针**：把剪藏散文切成 126 条 ≥14 词的句子（取前 12 词），在官方 1.6/1.7/1.8/1.9 四版页正文中查找。命中数：1.6 = **107**、1.7 = **108**、1.8 = **110**、1.9 = **111**。15 条未命中项逐条核为公式渲染差异（`$…$`、`\left(`、`\*`），**无一条是内容缺失**。
 2. **1.6 → 1.7 的措辞判据（剪藏全部含有 → ≥1.7）**："The first row of the output array"（1.6 作 "of output array"）、"Furthermore, both `rand_score` and `adjusted_rand_score` are"（1.6 缺"Furthermore"）、"Davies-**Bouldin**"（1.6 拼作 Boulding）、"density-based clusters"（1.6 作 "density based"）、"of an **inductive** clustering model for handling new data"（1.6 只有 "handling new data"）。
@@ -169,9 +169,9 @@ verified: 2026-11-12
 | 总览表第一列（12 行） | — | 官方表首列是方法名：K-Means、Affinity propagation、Mean-shift、Spectral clustering、Ward hierarchical clustering、Agglomerative clustering、DBSCAN、HDBSCAN、OPTICS、Gaussian mixtures、BIRCH、Bisecting K-means | **表在剪藏里不可读**：每行只剩参数/可扩展性/用途/几何，方法名要靠上下文倒推（见「分歧」6） |
 | `Affinity Propagation` → Algorithm description | 250 | responsibility $r(i,k)$ 与 availability $a(i,k)$ 的迭代式、`damping` 如何混合新旧值、`convergence_iter` 的判据 | 剪藏只能给"消息传递"这个比喻，**无法解释 `preference` 与簇数的定量关系** |
 | `Mean Shift` → Mathematical details | 190 | 核密度估计、hill climbing、`estimate_bandwidth` 的推导 | "密度众数漂移"只剩一句话 |
-| `DBSCAN` → Implementation | 202 | 算法**确定性**但有例外：边界点归属依赖**数据顺序**；`sample_weight` 的处理；不同 `algorithm` 后端的差异 | 剪藏只字未提"顺序依赖"，而这正是复现实验时的第一个坑（本机已复现，见实测 7） |
+| `DBSCAN` → Implementation | 202 | 算法**确定性**但有例外：边界点归属依赖**数据顺序**；`sample_weight` 的处理；不同 `algorithm` 后端的差异 | 剪藏只字未提"顺序依赖"，需要目标环境验证其具体影响 |
 | `DBSCAN` → Memory consumption for large sample sizes | 165 | 稀疏矩阵 + `metric='precomputed'` 的内存行为 | 大数据内存规划无依据 |
-| `OPTICS` → Comparison with DBSCAN | 146 | `cluster_optics_dbscan` 与 DBSCAN 结果"very similar, but not always identical"，差异在边界点 | "等价"被过度简化（本机在 iris 上测得**完全一致**，见实测 9） |
+| `OPTICS` → Comparison with DBSCAN | 146 | `cluster_optics_dbscan` 与 DBSCAN 结果"very similar, but not always identical"，差异在边界点 | 不能把两者写成无条件等价 |
 | `OPTICS` → Computational Complexity | 116 | 空间索引树避免全距离矩阵 | 复杂度无从引用 |
 | `BIRCH` → Algorithm description | 200 | 新样本如何插入 CF 树、如何分裂节点、`partial_fit` 的插入路径 | 剪藏只描述"CF 子簇保存什么"，不描述**怎么用** |
 | `BIRCH` → BIRCH or MiniBatchKMeans? | 67 | "if `n_features` is greater than twenty, it is generally better to use MiniBatchKMeans"（外部核查原文） | **本节唯一的 BIRCH 选型判据丢失** |
@@ -239,47 +239,20 @@ verified: 2026-11-12
 - **`Birch`** 0.16 新增，**1.0 起 `n_features_out` 语义固定**；1.4 增补 `set_output`。
 - **`OPTICS`** 0.24 新增；1.0 增补参数。
 
-## 本机实测（scikit-learn 1.6.1，20 条）
+## 验证边界
 
-**版本警告**：本机是 1.6.1（PyPI 当前可安装的最高版本），文档是 1.9.1。以下只证明**机制存在**，不能替代对 1.9.1 的数值核对；凡是 1.7–1.9 改过的默认值，引用时必须带版本。
-
-1. **剪藏里的 doctest 数字在 1.6.1 上逐条复现**（RI/ARI、置换不变性、完美 1.0、poor 0.3929/-0.0721、FMI 0.4714/1.0/0.0、silhouette 0.5512、CH 561.59、DB 0.6660、contingency 矩阵 `array([2, 1, 0], [0, 1, 2])`、pair confusion 四个例子、V-measure `(1.0, 0.6853, 0.8133)`）。**唯一不复现的是 §2.3.11.2 的两个 AMI 值**（见「分歧」1）。
-2. **V-measure ≡ NMI（算术平均）**（L556 的主张）：同一组标签 `v_measure_score` 与 `normalized_mutual_info_score(average_method='arithmetic')` 都返回 **0.5158037429793889**（逐位相同）；换成 `average_method='geometric'` 则为 0.52954，不再相等。
-3. **`beta` 的方向与文档一致**（L542–L552）：$v(\beta=0.6)=0.5467$、$v(1.0)=0.5158$、$v(1.8)=0.4845$——$\beta<1$ 偏向 homogeneity。
-4. **`KMeans.tol` 是「相对」且按数据方差缩放**（实测 + 1.6.1 源码）：`_tolerance(X, tol) = tol * mean(var(X, axis=0))`，比较量是各质心位移的平方和。iris 上 `tol=1e-4` → 7 轮；`tol=1.0` → **1 轮**（inertia 78.86 → 82.26）；把 X 乘 1000 后 `tol=1e-4` 仍是 **7 轮**、inertia 除以 $10^6$ 完全不变——所以它是**尺度不变**的，文档 L71 的"centroids move less than the tolerance"省略了「按方差归一」这一层。
-5. **`n_init='auto'` 真的等于 1 次**：同一份 iris、$k=8$、10 个种子，`n_init=1` 的 inertia 为 32.77 ± 2.06（最差 35.76），`n_init=10` 为 30.21 ± 0.19（最差 30.66）。**默认值等于"只跑一次 k-means++"**，这与"多次初始化"的老直觉不同。
-6. **`sample_weight` 与"复制样本"精确等价**（L77）：给前 5 个样本权重 2 与把前 5 个样本追加一份，inertia 都是 79.53498688069146。
-7. **DBSCAN 的边界点归属依赖样本顺序**（这条只在**丢失的 Implementation 折叠块**里）：构造两条间隔 0.1 的链（$[0,0.4]$ 与 $[1.1,1.5]$）+ 一个位于 0.75 的边界点，`eps=0.35`、`min_samples=4`。顺序 `A,M,B` → 边界点并入簇 0；顺序 `B,M,A` → 并入簇 1。**同一份数据、同一组参数，标签不同。**
-8. **DBSCAN 的 `eps` 敏感性可量化**（L290 的主张）：iris（150×4）、`min_samples=5`，`eps=0.05` → **0 个簇、150 个噪声**；`eps=0.5`（默认）→ 2 个簇 + 17 个噪声；`eps=1.0` → 2 个簇、0 噪声；`eps=10` → **1 个簇**。
-9. **`cluster_optics_dbscan(eps=0.5)` 与 `DBSCAN(eps=0.5, min_samples=5)` 在 iris 上完全一致**（都是 2 个簇 + 17 个噪声）：L353 的"可对任意 `eps` 反复抽取"在数值上成立；但官方折叠块强调的是"very similar, but not always identical"（边界点），所以只能说**这份数据上一致**。
-10. **OPTICS 默认 `max_eps=inf` 时在 iris 上给 6 个簇**（`cluster_method='xi'`、`xi=0.05`）；`max_eps=2.0` 仍 6 个；`cluster_method='dbscan'` + `eps=1.0` → 2 个。`cluster_hierarchy_` 在 1.6.1 是 **ndarray**（L357 称"parameter"，实为属性）。
-11. **`HDBSCAN.min_samples=None` 确实等价于 `min_cluster_size`**（外部核查 + 实测）：`min_cluster_size=10, min_samples=None` 与 `min_cluster_size=10, min_samples=10` 的标签逐位相同；但在这份两团数据上 `min_samples=5` 也给同一结果，**所以本测试不能区分两者**。
-12. **`min_cluster_size` 是唯一可控的"噪声旋钮"**：两个各 100 点的高斯团，`min_cluster_size` 5/20/50 → 噪声点 0/11/24（簇数始终 2）。
-13. **`HDBSCAN.store_centers='centroid'` 才产生 `centroids_`**（默认 `None` 不产生）：两个团上返回 `(2, 2)`。
-14. **`AgglomerativeClustering(linkage='ward')` 与曼哈顿距离直接报错**：`ValueError: manhattan was provided as metric. Ward can only work with euclidean distances.`——L204 的"affinity cannot be varied with Ward"是硬约束，不是建议。
-15. **四种 linkage 的"富者愈富"可量化**（iris、$k=3$）：Ward `[64,50,36]`、average `[64,50,36]`、complete `[72,50,28]`、**single `[98,50,2]`**；silhouette 分别为 0.5543 / 0.5542 / 0.5136 / 0.5121。single 最不均，与 L204 一致。
-16. **连通性约束确实更快**（L227）：iris、3 次 `fit` 的平均耗时，无约束 **8.68ms** → `kneighbors_graph(X,10)` 约束 **5.49ms**（$n=150$ 的小数据；官方说的是"especially when the number of the samples is high"）。
-17. **`assign_labels='discretize'` 并非"100% 可复现"**（与 L168 冲突，见「分歧」3）：同一份嵌入、`random_state=0` 与 `=1` 给出**不同标签**；均匀噪声、$k=8$、6 个种子 → **3 种不同划分**（$k=3$ → 2 种）。`'cluster_qr'` 在 10 次重复中给出**逐位相同的标签值**，`'kmeans'` 给出相同划分但标签值会变（因为它只保证划分，不保证编号）。
-18. **MiniBatchKMeans 的"质量略降"可量化**（L99）：digits（1797×64）、$k=10$，KMeans（`n_init=10`）inertia 1,165,189、0.266s、17 轮；MiniBatch（`n_init=3`）1,209,649（**+3.8%**）、**0.011s**、20 步；$k=20$ 时 +5.4%、0.049s vs 0.015s。小数据上 MiniBatch 快 3–24×，差的 inertia 个位数百分比。
-19. **BisectingKMeans 的两个主张一半成立**（L267–L278）：digits、$k=10$，BKMeans inertia 1,238,977（`biggest_inertia`，0.104s）与 1,237,640（`largest_cluster`，**0.086s**），都**比 KMeans 差 ~6%**；"largest_cluster 更准更快"成立（1,237,640 < 1,238,977 且更快），但"likely produce clusters of similar sizes"**不成立**——3 个种子上 BKMeans 的簇大小标准差为 37.0／47.5／44.4，KMeans 为 41.0／37.7／40.1，**方向不稳定**。
-20. **BIRCH 的 `n_clusters=None` 与默认 `n_clusters=3` 是两个世界**（L377 只讲前者）：iris 上 `n_clusters=None` → **13 个子簇**，默认（3）→ 3 个全局簇；`subcluster_centers_` 形状 `(13, 4)`。
-
-另附三条 API 级观察（非数值，但会踩）：
-
-- **`MeanShift` 没有 `bandwidth_` 属性**（1.6.1 的属性只有 `cluster_centers_`、`labels_`、`n_features_in_`、`n_iter_`）：估出来的带宽**无法事后读取**，只能自己调 `estimate_bandwidth` 存下来。iris 上 `bandwidth=None` → `estimate_bandwidth` 默认（`quantile=0.3`）得 **1.2021** → 2 个簇；`quantile=0.5` → 2.3404；显式 `bandwidth=3` → **1 个簇**。
-- **`AffinityPropagation(preference=None)` = 相似度的中位数**：iris 上 `preference=-2.3302`（= `np.median(-euclidean_distances)`），得到 **7 个簇**、`n_iter_=28`；`preference=-10` → 5 个簇。
-- **`SpectralClustering` 在 1.6.1 没有 `n_components_` 属性**（只有 `affinity_matrix_`、`labels_`、`n_features_in_`）；剪藏与 API 都没承诺这个属性名。
+本页不包含历史本机运行时实验或性能读数。运行时行为只在 `uv` 创建的目标版本环境中重新验证后收录。
 
 ## 分歧
 
-1. **§2.3.11.2 的两个 AMI doctest 值是 0.22 之前的口径。** 文档给 `adjusted_mutual_info_score([0,0,0,1,1,1],[0,0,1,1,2,2]) = 0.22504`（L456）与独立划分 `-0.10526`（L498）。在 1.6.1（默认 `average_method='arithmetic'`）上分别是 **0.29879** 与 **-0.16667**；用 `average_method='max'` 才能得到 0.22504。外部核查：0.22 把默认从 `'max'` 改为 `'arithmetic'`，而剪藏这两行数字**没有跟着更新**。**引用本节 AMI 数字等于引用 0.21 及更早的行为。**
-2. **§2.3.11.3 的 doctest 在页内自相矛盾。** 同一组标签，`homogeneity_score` 显示 **0.66**（L528）、`completeness_score` 显示 **0.42**（L530），而 `homogeneity_completeness_v_measure` 的三元组显示 **(0.67, 0.42, 0.52)**（L563）。1.6.1 上三者都是 `(0.6666666666666669, 0.420619835714305, 0.5158037429793889)`——即"0.66"是被截断的 0.6667，"0.67"是四舍五入，**两行不可能同时正确**。同理 `v_measure_score` 的 0.516（L532）与三元组里的 0.52。
-3. **`assign_labels="discretize"` 不是"100% reproducible"**（L168）。1.6.1 的 `discretize(vectors, *, random_state=None)` **吃 `random_state`**：同一份正交嵌入、`random_state=0` 与 `=1` 得到不同标签；均匀噪声、$k=8$、6 个 `random_state` 得到 3 种不同划分。原因是嵌入本身正交时 SVD 退化、触发随机重启（`max_svd_restarts=30`）。**正确说法是"给定 `random_state` 时可复现"**，而 `SpectralClustering` 的 `random_state` 默认是 `None`。
-4. **"`BisectingKMeans` can't benefit from k-means++ by design"（L265）与 API 不符。** 1.9.1 签名有 `init={'k-means++','random'}`（默认 `'random'`），`n_init=1`。文档既没提这个参数，也没提默认 `bisecting_strategy='biggest_inertia'`；而 L278 的"largest_cluster 会产生更均匀的簇"在本机 3 个种子上**方向不稳定**（BKMeans 37.0/47.5/44.4 vs KMeans 41.0/37.7/40.1）。
-5. **KMeans 停止条件的描述不完整。** L71 说"iteration stops when centroids move less than the tolerance"，API 页说"Relative tolerance with regards to Frobenius norm of the difference in the cluster centers"，源码比较的是**各质心位移的平方和**与 `tol × mean(var(X))`。三者不是同一句话：**平方** vs 范数、**绝对** vs 相对。实测（X 乘 1000 后轮数不变）支持"按方差归一"的读法。
+1. **§2.3.11.2 的 AMI doctest 是旧默认口径。** 文档给 `adjusted_mutual_info_score([0,0,0,1,1,1],[0,0,1,1,2,2]) = 0.22504`（L456）与独立划分 `-0.10526`（L498）；外部核查显示 0.22 已把默认 `average_method` 从 `'max'` 改为 `'arithmetic'`。这些数字不应直接用于当前版本。
+2. **§2.3.11.3 的 doctest 在页内自相矛盾。** 同一组标签，`homogeneity_score` 显示 **0.66**（L528）、`completeness_score` 显示 **0.42**（L530），而 `homogeneity_completeness_v_measure` 的三元组显示 **(0.67, 0.42, 0.52)**（L563）；`v_measure_score` 的 0.516（L532）也与三元组里的 0.52 采用了不同舍入。
+3. **`assign_labels="discretize"` 的可复现性边界待验证。** L168 称其为 "100% reproducible"，但历史运行时反例已按所有者决定移除；在 `uv` 目标版本环境中复核前，不把该表述扩展为无条件保证。
+4. **"`BisectingKMeans` can't benefit from k-means++ by design"（L265）与 API 不符。** 1.9.1 签名有 `init={'k-means++','random'}`（默认 `'random'`），`n_init=1`。文档既没提这个参数，也没提默认 `bisecting_strategy='biggest_inertia'`；L278 的"largest_cluster 会产生更均匀的簇"仍需独立验证。
+5. **KMeans 停止条件的描述不完整。** L71 说"iteration stops when centroids move less than the tolerance"，API 页说"Relative tolerance with regards to Frobenius norm of the difference in the cluster centers"，源码比较的是**各质心位移的平方和**与 `tol × mean(var(X))`。三者不是同一句话：**平方** vs 范数、**绝对** vs 相对。
 6. **总览表的第一列在剪藏里整列丢失。** 官方表的每一行以方法名开头（K-Means、Affinity propagation…），剪藏 12 行的第一格**全空**（L18–L29）。后果：这张"选型主表"在本地无法独立阅读，必须配合图 1 或后文小节倒推；引用该表时应改成引用小节（L45、L109、L124…）而非引用表行。
-7. **BIRCH 的默认 `n_clusters=3` 从未出现在正文里。** L377 只说"`n_clusters` 设为 None 时直接读叶子子簇"，读起来像"默认不做全局聚类"，实际默认**会**做全局聚类且簇数为 3（`Birch()` 在 iris 上给 3 个簇，而 `n_clusters=None` 给 13 个子簇）。这是本节最容易沉默改变结果的默认值。
-8. **MeanShift 那句话的因果是反的。** L128："The algorithm automatically sets the number of clusters, instead of relying on a parameter `bandwidth`, which dictates the size of the region to search through." 实际机制是**它完全依赖 `bandwidth`**（决定核大小 → 决定簇数），只是可以在 `bandwidth=None` 时用 `estimate_bandwidth` 估一个（默认 `quantile=0.3`）。实测 iris 上 `quantile=0.3` → 2 个簇、`bandwidth=3` → 1 个簇：**"自动"只是"自动估带宽"**。
+7. **BIRCH 的默认 `n_clusters=3` 从未出现在正文里。** L377 只说"`n_clusters` 设为 None 时直接读叶子子簇"，读起来像"默认不做全局聚类"，但 1.9.1 API 签名明确默认 `n_clusters=3`，即默认会做全局聚类。
+8. **MeanShift 那句话的因果是反的。** L128："The algorithm automatically sets the number of clusters, instead of relying on a parameter `bandwidth`, which dictates the size of the region to search through." 实际机制依赖 `bandwidth` 决定核大小，只是可以在 `bandwidth=None` 时用 `estimate_bandwidth` 估一个（默认 `quantile=0.3`）：**"自动"只是"自动估带宽"**。
 
 ## 局限
 
@@ -291,20 +264,20 @@ verified: 2026-11-12
 - **没有 `sklearn.mixture`**：GMM 只以一行表项 + 一句"KMeans 是特例"出现（L37），完整内容在 2.1 节（未入库）。
 - **没有 `sklearn.metrics.pairwise`**：`affinity='precomputed'` 的矩阵该用什么度量构造，本节不讨论。
 - **示例脚本一个都没运行**（`plot_cluster_comparison`、`plot_kmeans_assumptions`、`plot_dbscan`、`plot_hdbscan`、`plot_optics`、`plot_linkage_comparison` 等 20 余个）。图 1 面板的时间只能当"同机同版本的相对量级"。
-- **版本核对的运行时只做到 1.6.1**。`HDBSCAN.copy` 的 1.10 变更、`KMeans.algorithm` 的 `elkan` 语义、1.9 的 `set_output` 行为都未在 1.9.1 上跑。
+- **运行时行为尚未在 `uv` 目标版本环境中复核**。`HDBSCAN.copy` 的 1.10 变更、`KMeans.algorithm` 的 `elkan` 语义与 1.9 的 `set_output` 行为都只保留文档或版本史记录。
 
 ## 待解问题
 
 1. **`eps` 的 knee 启发式**（L290）在剪藏里只有一句"文献里讨论过"。具体怎么做（k-距离排序曲线的最大曲率？分位数？）本节不给，本库也没有来源覆盖——这是本页最想补的一条。
 2. **`silhouette_score` / `calinski_harabasz_score` / `davies_bouldin_score` 随 $k$ 的行为**：文档不说单调性，本库也未系统测。若 CH 随 $k$ 单调上升，那它选 $k$ 就是错的。
-3. **`HDBSCAN.copy='warn'` 在 1.9.1 上的实际警告文本与 1.10 的破坏面**未核（本机 1.6.1 的 `copy` 默认仍是 `False`）。
-4. **`discretize` 的随机性来自 SVD 重启**这一解释只在本机观察上成立，未读 1.9.1 源码确认 `max_svd_restarts` 的路径是否相同。
-5. **`OPTICS` 与 `DBSCAN` 的"边界点差异"**：本机在 iris 上完全一致，构造出不一致的算例需要专门的边界点数据（类似实测 7 的链式数据）。未做。
-6. **BisectingKMeans 在 $k$ 大时的优势**（L263 说"只处理子集"）：iris/digits 上都比 KMeans 慢或持平，需要 $k\gg 10$ 与更大 $n$ 才能验证。
-7. **`SpectralClustering(affinity='rbf')` 是默认**，而正文的警告说相似度分布不好会让问题奇异（L153）。默认 `gamma=1.0` 在未缩放数据上是否经常触发这个警告？本库未测。
+3. **`HDBSCAN.copy='warn'` 在 1.9.1 上的实际警告文本与 1.10 的破坏面**待目标环境复核。
+4. **`discretize` 的随机性来源与触发条件**需在目标版本源码和运行环境中共同核对。
+5. **`OPTICS` 与 `DBSCAN` 的"边界点差异"**需要专门的边界点数据才能验证，不能用一般示例替代。
+6. **BisectingKMeans 在 $k$ 大时的优势**（L263 说"只处理子集"）需要更大 $k$ 与 $n$ 的目标环境对照。
+7. **`SpectralClustering(affinity='rbf')` 是默认**，而正文的警告说相似度分布不好会让问题奇异（L153）。默认 `gamma=1.0` 在未缩放数据上的触发条件待验证。
 8. **`AgglomerativeClustering` 的 `distance_threshold`**（外部核查：0.21 新增）在剪藏里**完全没出现**——"用距离阈值代替簇数"这条路线在本节缺席，需要时只能查 API。
 9. **BIRCH 的 `partial_fit`** 与"数据缩减后再全局聚类"的组合（丢失折叠块里）在 1.9.1 上的行为未核。
-10. **聚类结果的不稳定性**（种子、样本顺序、`eps` 微小变化）在本节完全没有量化讨论；本库只在 DBSCAN 顺序依赖（实测 7）与 `n_init='auto'`（实测 5）两处给了数字。
+10. **聚类结果的不稳定性**（种子、样本顺序、`eps` 微小变化）在本节没有量化讨论；后续应在固定版本的 `uv` 环境中统一验证。
 
 ## 行号索引
 

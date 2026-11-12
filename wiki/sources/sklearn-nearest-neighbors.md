@@ -2,7 +2,7 @@
 title: "scikit-learn 用户指南 1.6「Nearest Neighbors」：非泛化学习、三种搜索结构与学到的度量（stable 文档剪藏）"
 type: source
 created: 2026-11-11
-updated: 2026-11-11
+updated: 2026-11-12
 tags:
   - mle
   - scikit-learn
@@ -28,7 +28,7 @@ verified: 2026-11-11
 | 原文 | <https://scikit-learn.org/stable/modules/neighbors.html>（剪藏 frontmatter `source`，未钉版本） |
 | 本地文件 | `raw/articles/sklearn/1.6. Nearest Neighbors.md`（324 行、40,126 字节、约 3,770 词；**未做任何回填**） |
 | SHA-256 | `f2e24dbd4e002e3cbdf42eb163aee35ce40190525c5474b789fccf37a0172084` |
-| 完整性 | **6 个折叠块缺 5 个（正文 959 词 + References 下拉块 34 词 ≈ 官方正文 20%）、[1] Goldberger 2005 一条文献、5 处页内锚点文字与 1 个引用标记**；公式有转换噪声。全文未回填（未获授权），详见「转换损失」；本次另做了本机 1.6.1 运行时复核（E 节） |
+| 完整性 | **6 个折叠块缺 5 个（正文 959 词 + References 下拉块 34 词 ≈ 官方正文 20%）、[1] Goldberger 2005 一条文献、5 处页内锚点文字与 1 个引用标记**；公式有转换噪声。全文未回填（未获授权），详见「转换损失」 |
 | 剪藏时间 | frontmatter `created: 2026-11-11`；`published` 为空，故本页不写发布日期 |
 | 文档版本 | **1.7.x – 1.9.x（无法再细分）**，依据是 1 处拼写差异，见「版本判定」 |
 | 插图 | 9 张，已入库 `raw/assets/sklearn-nearest-neighbors/`（全部目视核查，读数见表） |
@@ -111,9 +111,7 @@ L107（分类）与 L121（回归）给出同一套三档 `weights`：
 - `'distance'`：权重 $\propto 1/d$，"nearer neighbors contribute more to the fit"；
 - 可调用对象：接收距离数组、返回权重数组。
 
-**外部核查（不在剪藏内）＋本机实测**：`weights='distance'` 遇到**零距离**时不是 $\infty$ 而是「命中点权重 1、其余权重 0」——`sklearn/neighbors/_base.py` @ 1.9.1 的 `_get_weights` 先算 $1/d$，再把含 $\infty$ 的行整体替换成「是否等于 0」的布尔掩码（分类与回归共用该函数）。**含义**：如果查询点与某个训练点完全重合，`weights='distance'` 会退化成 1-NN，且**静默发生**。
-
-**本机实测（1.6.1，见 E 节）**：分类与回归都复现了退化行为——分类在训练点处 `predict_proba` 变成 one-hot，回归返回该点标签而非邻域均值。所以「静默发生」不再只是源码推断。
+**外部核查（不在剪藏内）**：`weights='distance'` 遇到**零距离**时不是 $\infty$ 而是「命中点权重 1、其余权重 0」——`sklearn/neighbors/_base.py` @ 1.9.1 的 `_get_weights` 先算 $1/d$，再把含 $\infty$ 的行整体替换成「是否等于 0」的布尔掩码（分类与回归共用该函数）。**含义**：如果查询点与某个训练点完全重合，`weights='distance'` 会退化成 1-NN，且**静默发生**。
 
 **本库综合（假设，待验证）**：这条规则正是图 2 右下角那几个尖峰的来源——当查询点靠近某个训练点时 $1/d$ 很大，预测曲线被拉到该点标签上。剪藏没有任何一句提示这件事。
 
@@ -137,7 +135,7 @@ L25 的警告是本节唯一与「可复现性」直接相关的论述：
 
 > Regarding the Nearest Neighbors algorithms, if two neighbors $k + 1$ and $k$ have identical distances but different labels, the result will depend on the ordering of the training data.
 
-**外部核查**：并列**投票**（而非并列距离）时也有确定但同样隐蔽的规则——`weighted_mode` 按升序遍历唯一标签、只在计数**严格大于**时替换（`sklearn/utils/extmath.py` @ 1.9.1），因此平票时**最小标签获胜**；`weights='uniform'` 走 `scipy.stats.mode`，同样是「平票取最小」。本机实测（1.6.1）：两个等距邻居标签为 $\{1,0\}$ 与 $\{0,1\}$ 时都返回 `0`。
+**外部核查**：并列**投票**（而非并列距离）时也有确定但同样隐蔽的规则——`weighted_mode` 按升序遍历唯一标签、只在计数**严格大于**时替换（`sklearn/utils/extmath.py` @ 1.9.1），因此平票时**最小标签获胜**；`weights='uniform'` 走 `scipy.stats.mode`，同样是「平票取最小」。
 
 **本库综合（修正）**：两条合起来意味着 KNN 的预测对**训练集行顺序**（L25）与**标签编码**（平票规则）都敏感，但两种敏感性的性质不同：前者是距离并列、后者是计数并列。测试「结果是否稳定」的成本很低（打乱行顺序、随机重映射标签各跑一次），但文档不会提醒你去做。
 
@@ -191,7 +189,7 @@ $$\underset{L}{\arg\max}\sum_{i=0}^{N-1}p_i,\qquad p_i=\sum_{j\in C_i}p_{ij},\qq
 
 ### 11. 「学到的度量」不保证更好（图读数，本库）
 
-L240 的措辞是 "aims to improve the accuracy"，L250 是 "has been shown to work well in practice"——都是**目标**，不是保证。官方示例图给出的实测数字反而是一次反例：
+L240 的措辞是 "aims to improve the accuracy"，L250 是 "has been shown to work well in practice"——都是**目标**，不是保证。官方示例图给出的图内数字反而是一次反例：
 
 - 图 8（`plot_nca_classification_001`）：`KNN (k = 1)`，准确率 **0.90**；
 - 图 9（`plot_nca_classification_002`）：`NCA, KNN (k = 1)`，准确率 **0.89**。
@@ -285,26 +283,9 @@ L240 的措辞是 "aims to improve the accuracy"，L250 是 "has been shown to w
 
 图表参数（外部核查，用于解释读数）：图 1 用 `Pipeline(StandardScaler(), KNeighborsClassifier(n_neighbors=11))`，两格分别为 `weights='uniform' / 'distance'`；图 2 用 `KNeighborsRegressor(5)`；图 3–4 用 `NearestCentroid(shrink_threshold=None / 0.2)`；图 5–6 用 `NeighborhoodComponentsAnalysis(max_iter=30, random_state=0)`；图 7–9 用 iris 的 `X[:, [0, 2]]`（花萼长、花瓣长）、`test_size=0.7`、`k=1`、`StandardScaler`。
 
-### E. 本机运行时复核（scikit-learn 1.6.1，本次 ingest 新增）
+### E. 验证边界
 
-上面 D 节的三条实现层规则此前只从 **1.9.1 源码**读出。本次 ingest 在本机环境（`sklearn.__version__ == 1.6.1`）**执行验证**了其中四条，用于确认定性行为。**版本差 3 个小版本**，所以这些读数只能证明「机制存在」，不能替代对 1.7–1.9 的核对；结论已同步到 [[nearest-neighbors-selection-and-tuning]]。
-
-| 待验证项 | 本机执行 | 实际结果 | 结论 |
-| --- | --- | --- | --- |
-| 默认值一览（D 节表） | 逐估计器 `get_params()` | `n_neighbors=5`、`weights='uniform'`、`algorithm='auto'`、`leaf_size=30`、`p=2`、`metric='minkowski'`、`radius=1.0`、`outlier_label=None`；`NearestCentroid(metric='euclidean', priors='uniform', shrink_threshold=None)`；`KNeighborsTransformer(mode='distance', n_neighbors=5)`；`NCA(n_components=None, max_iter=50, tol=1e-5, init='auto')` | **与 D 节表逐项一致** |
-| `weights='distance'` 的零距离规则（**分类**） | $X=[0,1,2,3]$、$y=[0,1,1,0]$、$k=3$，查询 $x=0.0$ | `predict → [0]`、`predict_proba → [[1., 0.]]`。等权下邻居标签为 $\{0,1,1\}$，多数票应为 **1** | 确认：命中训练点即退化为 1-NN，**静默发生** |
-| 同上（**回归**） | $X=[0,1,2]$、$y=[0,10,20]$、$k=3$，查询 $x=0.0$ | `predict → 0.0`（等权均值应为 `10.0`） | 确认：回归共用同一规则；**待解问题 2 闭合** |
-| 投票平票规则 | 两个等距邻居，标签 $\{1,0\}$ 与 $\{0,1\}$ | 两次都返回 `0`，`predict_proba → [[0.5, 0.5]]` | 确认：**最小标签获胜**，与标签编码有关、与行顺序无关 |
-| `auto` 的维度阈值 | $n\_features \in \{15,16\}$，$N=40$ | 15 → `kd_tree`；16 → `brute` | 确认 $D>15$ 拐点；**与 L144 的 $D<20$ 不是同一个数** |
-| `auto` 的大 $k$ 规则 | $N=40$、`n_neighbors=20` | `_fit_method == 'brute'` | 确认 $k \ge N/2$ 拐点 |
-| `KNeighborsTransformer` 多算 1 个邻居 | $N=3$、`mode='distance'`、`n_neighbors=3` | `transform` 抛 `ValueError: ... n_neighbors = 4, n_samples_fit = 3` | 确认 L232 note：`distance` 模式**实际多请求 1 个**，边界样本上会失败 |
-| `NearestCentroid` 的度量限制 | `NearestCentroid(metric='cosine')` | `InvalidParameterError: ... must be a str among {'manhattan', 'euclidean'}` | 确认 1.5 起的双度量限制 |
-| `NearestCentroid.priors` 的 docstring 矛盾 | 读 1.6.1 docstring | `default="uniform"` 后紧跟「By default, the class proportions are inferred from the training data.」 | 矛盾在 1.6.1 **已存在**；另注 `versionadded:: 1.6` |
-| `outlier_label` 分支 | 脚本未导入 `RadiusNeighborsClassifier`（`NameError`） | **未验证** | 保留为外部核查 |
-
-图表读数复检：本次重新打开了 `sphx_glr_plot_nca_classification_001.png` 与 `_002.png` 两张图（640×480），标题分别为「KNN (k = 1)」与「NCA, KNN (k = 1)」，右下角数字分别为 **0.90** 与 **0.89**，与此前图表核查记录一致；两图均**没有坐标轴标签**，只有刻度。其余 7 张图本次未重新打开，沿用首次 ingest 的记录。
-
-一条附带观察（不属于本节，但影响本库的版本标注）：本机装的是 **1.6.1**，而本页版本判定为 1.7–1.9.x。因此**不能**用「本机跑通了」推出「1.9 也这样」；反之，1.6.1 与 1.9.1 在这几条默认值上一致，说明这些默认值至少跨 1.6→1.9 稳定。
+本页不包含历史本机运行时实验或性能读数。运行时行为只在 `uv` 创建的目标版本环境中重新验证后收录。
 
 ## 分歧
 
@@ -371,20 +352,20 @@ L77 的 doctest 写着 `KDTree(X, leaf_size=30, metric='euclidean')`，但**整�
 - **没有缩放警告**。整节没有一句提到特征缩放（对比 [[sklearn-svm]], L203 的 "highly recommended to scale"），而**官方示例自己给 KNN 套了 `StandardScaler`**（图 1、图 8/9 的 pipeline）。这是本节最值得记录的「文档缺口」，但缺口不等于反例：不能说「文档认为不需要缩放」。
 - 本节**不覆盖**缺失值（`nan_euclidean`）、`sklearn.metrics.pairwise` 的距离函数细节、`sklearn.cluster.DBSCAN` / `SpectralClustering` / `sklearn.manifold` 的实际用法——它们只是被点名为下游消费者（L10、L18、L198）。
 - 本页**未读** [1]（Goldberger et al. 2005，NCA 原文）、Bentley 1975、Omohundro 1989。因此「NCA 最大化 LOO-KNN 的随机变体」在本库中仍是**来源转述**。
-- 本页首版的运行时行为（`outlier_label` 报错、平票取最小、零距离权重 1/0）原本只从源码与 docstring 推断；本次 ingest 已在本机 scikit-learn **1.6.1** 上实测其中四条（见「转换损失」E 节）。**版本不同**，只确认定性行为，不确认 1.7–1.9 的数值。`outlier_label` 的分支仍未实测（本机脚本未导入该类）。
+- 运行时行为只保留 1.9.1 源码与 docstring 层面的外部核查，不包含历史本机实验。`outlier_label` 等分支需在 `uv` 目标版本环境中另行验证。
 - 图 3 的「哪个更干净」是**目视定性**，没有 PSNR 之类的量化读数。
 
 ## 待解问题
 
 1. **NCA 的增益到底有多大？** 图 8/9 是 $k=1$、两个特征、单次切分的反例（0.89 < 0.90）；doctest（L269）是四特征、$k=3$ 的 0.9619 但**没有对照**。需要同一脚本里跑 KNN 与 NCA+KNN 的多折对比才能给量级。
-2. ~~**`weights='distance'` 在回归路径上如何处理零距离？**~~ **已解答（实测，1.6.1）**：回归同样退化为「只取距离 0 的点」。构造 $X=[0,1,2]$、$y=[0,10,20]$、`n_neighbors=3, weights='distance'`，在 $x=0.0$ 处 `predict` 返回 `0.0`（等权均值应为 `10.0`）。因此分类与回归共用同一条零距离规则，`[[nearest-neighbors]]` 与 `[[nearest-neighbors-selection-and-tuning]]` 中的相关表述已按此更新。
+2. **`weights='distance'` 在回归路径上如何处理零距离？** 1.9.1 源码显示分类与回归共用 `_get_weights` 的零距离掩码；具体运行时表现仍需在 `uv` 目标版本环境中复核。
 3. **KD 树的维度拐点**：正文说 $D<20$（L144），`auto` 规则用 $D>15$。**修正**：`auto` 的 15 不是「外部核查」——它写在官方 1.9 页的 *Choice of Nearest Neighbors Algorithm* 折叠块里（剪藏丢失），原文为「$D > 15$」并注明假设「when $D>15$, the intrinsic dimensionality of the data is generally too high for tree-based methods」。两个阈值的来源仍不清楚。
 4. **`leaf_size` 的最优值**：丢失的折叠块只说 30 是「good compromise」、并指出两端都差。在 $N=10^5$ 量级上这个默认值是否仍然合理，无数据。
 5. **ball tree 相对 brute 的收益条件**：折叠块称「highly structured data, even in very high dimensions」，但没有给量化的维度/稀疏度门槛。
 6. **`NearestCentroid.priors` 的实际用途**：1.6 新增的参数，用户指南完全不提；$2\log(\text{prior})$ 的修正与 LDA 的 `priors` 是否同一口径、默认 `'uniform'` 是不是有意的（与 docstring 矛盾），都需要 changelog 或 issue 佐证。
 7. **预计算图的 `k+1` 兼容规则**：L232 只说「for compatibility reasons with other estimators」，没有说明是哪几个估计器需要多一个邻居。若要写自定义 ANN 变换器，这条必须知道。
 8. **NCA 的 `max_iter=50` 是否足够**：示例图用 `max_iter=30`，doctest 用默认值且收敛到 0.9619。L-BFGS-B 的收敛判据（`tol=1e-5`）在小样本上是否总是达到，未验证。
-9. **平票取最小标签是否在 `weights` 为 callable 时仍成立**：`weights='uniform'` 下的「最小标签获胜」已实测（1.6.1，见「转换损失」E 节）；callable 权重下 `weighted_mode` 的相等判断未逐行核对，未实测。
+9. **平票取最小标签是否在 `weights` 为 callable 时仍成立**：`weighted_mode` 的相等判断与自定义权重路径需在目标版本源码和运行环境中共同核对。
 
 ## 行号索引
 

@@ -30,13 +30,13 @@ verified: 2026-11-12
 | 原文 | <https://scikit-learn.org/stable/modules/model_evaluation.html>（剪藏 frontmatter `source`，未钉版本） |
 | 本地文件 | `raw/articles/sklearn/3.4. Metrics and scoring quantifying the quality of predictions.md`（**163 行**、18,587 字节、`wc -w` 2,434 词，其中约 750 词是同一段被脚注重复两次的副本；末行无换行，停在半句 "as described in"） |
 | SHA-256 | `d2e889f4c4cc58ba7aee62795e2f64c90611494248598681ae93312407f247c2` |
-| 完整性 | **只保留 §3.4.1 – §3.4.3.1 四节（官方 54 个编号小节中的 4 节）**：官方正文 18,573 词里约 17,063 词（92%）不在剪藏内。已覆盖的四节里，最关键的 **`scoring or loss function` 整列、43 行字符串评分表、`Usage examples` doctest、4 条参考文献**仍然丢失。全文未回填（未获授权），详见「转换损失」；本次另做了本机 1.6.1 运行时复核（「本机实测」节） |
+| 完整性 | **只保留 §3.4.1 – §3.4.3.1 四节（官方 54 个编号小节中的 4 节）**：官方正文 18,573 词里约 17,063 词（92%）不在剪藏内。已覆盖的四节里，最关键的 **`scoring or loss function` 整列、43 行字符串评分表、`Usage examples` doctest、4 条参考文献**仍然丢失。全文未回填（未获授权），详见「转换损失」 |
 | 剪藏时间 | frontmatter `created: 2026-11-11`；`published` 为空，故本页不写发布日期 |
 | 文档版本 | **1.8.0 – 1.9.1，工作版本 1.9.1**，依据见「版本判定」 |
 | 插图 | **0 张**（官方 1.9.1 页有 6 张 `<img>`），故 `raw/assets/sklearn-metrics/` 不存在 |
 | 代码 | **0 段**（官方 1.9.1 页有 122 个 `highlight` 代码块、382 处 `>>>` doctest 提示符） |
 
-入库说明：本页依据本地剪藏撰写，引用写作 `[[sklearn-metrics]], L56`。凡超出剪藏内容的部分（API 签名、未保留章节的原文、运行时行为）都显式标注「外部核查」或「本机实测」。
+入库说明：本页依据本地剪藏撰写，引用写作 `[[sklearn-metrics]], L56`。凡超出剪藏内容的部分（API 签名、未保留章节的原文）都显式标注「外部核查」；不包含历史本机运行时实验。
 
 > [!warning] 本文件未被修改
 > 本次**没有取得所有者对 `raw/` 回填的授权**，剪藏保持抓取时的原始字节（sha256 `d2e889f4…`）。丢失内容只在「转换损失」一节里按官方 1.9.1 页记录，**未写回原文件**。所有行号指向原始剪藏。
@@ -49,7 +49,7 @@ verified: 2026-11-12
 
 1. **它把「评分」拆成三层不同东西**：估计器的 `score` 方法（一个默认准则）、`scoring` 参数（一套**统一的「越大越好」约定**加上符号翻转）、`sklearn.metrics` 里的函数（原样返回真实量纲）。三者的返回值与符号完全不同，而 L62 的「There are 3 different APIs」是全节唯一一句把这件事说清的话——剪藏正好保住了它（L62–L66）。
 2. **它给出本库第一个「分数可判定正确性」的判据**：先声明**目标泛函**（均值 / 中位数 / 分位数 / 众数），再选**严格一致（strictly consistent）**于该泛函的评分函数（L25、L33）。文档称这类评分函数是 *truth serum*，并给出「训练损失与评估指标应当用同一个」这条建议（L27）。这是本库第一次看到「指标选择」有可证伪的形式化标准，而不是经验清单。
-3. **它把「预测」与「决策」明确分开**（L18、L20–L21、L31）：预测是给出分布的一个泛函，决策是把 `predict_proba` 压成一个动作。二者各有各的评分函数族，而混淆它们会得到「指标看起来很好、业务上不可用」的模型（本机实测：同一个逻辑回归在四个阈值下的准确率 0.946/0.954/0.802/0.546，正类召回 0.460→0.840）。
+3. **它把「预测」与「决策」明确分开**（L18、L20–L21、L31）：预测是给出分布的一个泛函，决策是把 `predict_proba` 压成一个动作。二者各有各的评分函数族，而混淆它们会得到「指标看起来很好、业务上不可用」的模型。
 4. **它是本库目前转换损失比例最高的一份来源**：官方 54 个编号小节里只有 4 节进来，`sklearn.metrics` 的 40 多个函数（准确率、混淆矩阵、F1、ROC/AUC、log loss、Brier、MAE/MSE/RMSE/MAPE、pinball、$D^2$、聚类四指标、`dummy` 基线）**一个都没有正文**。因此本库关于「某个具体指标怎么算」的结论**不能引这一页**，只能引这一页保留的那条方法论主张。
 5. **它给 [[cross-validation]] 与 [[hyperparameter-search]] 补上缺失的输入端**：那两页反复说「分数是估计量」，但从未定义「分数是哪个函数」。本节之后，本库的评估链条才闭合——目标泛函 → 评分函数 → CV 估计 → 搜索取最大值 → 决策阈值。
 
@@ -68,7 +68,7 @@ verified: 2026-11-12
 
 | 官方节 | 词数 | 本库现有覆盖位置 |
 | --- | --- | --- |
-| 3.4.3.2 Callable scorers / .1 `make_scorer` / .2 自定义 scorer 对象 | 34 + 228 + 468 | 无（本页只在「本机实测」记录实测行为） |
+| 3.4.3.2 Callable scorers / .1 `make_scorer` / .2 自定义 scorer 对象 | 34 + 228 + 468 | 无（运行时行为待 `uv` 目标环境验证） |
 | 3.4.3.3 Using multiple metric evaluation | 273 | [[cross-validation]]（`cross_validate` 的键） |
 | 3.4.4 Classification metrics（20 个小节：accuracy、top-k、balanced accuracy、kappa、混淆矩阵、classification report、hamming、precision/recall/F、Jaccard、hinge、log loss、MCC、多标签混淆矩阵、ROC、DET、0-1、Brier、likelihood ratio、$D^2$） | ≈7,900 | 只有 [[clustering]]、[[anomaly-detection]] 里零散用到 ARI/AMI/ROC AUC |
 | 3.4.5 Multilabel ranking metrics（coverage error、LRAP、ranking loss、NDCG） | ≈1,230 | 无 |
@@ -96,25 +96,25 @@ verified: 2026-11-12
 
 **关键**：剪藏把第二列（评分函数名）整列吞掉了（L38–L48 的第二格只剩 `<sup>1</sup>`/空），所以从剪藏里读不出「均值对应 Brier/平方误差、分位数对应 pinball」这些对应关系，只能从 L56 的假想例反推出一条（99% 分位数 → pinball loss）。完整表在「外部核查」节按官方 1.9.1 页重建。
 
-**本库综合**：脚注 2 与脚注 3 是这张表的两个「排序不变性」声明，性质完全不同——0-1 损失不是严格一致，所以它**无法在同一侧的概率预报之间排序**（本机实测：真实 $p=0.3$ 时报告 0.2/0.3/0.4/0.5 的四个预报，log loss 0.6378/**0.6101**/0.6321/0.6931，而准确率全部 1.0000）；而 $R^2$ 与 MSE 是**单调变换**，所以在同一数据集内的排序必然相同（本机实测 5 个 `alpha` 的 MSE 376.076→2249.484 与 $R^2$ 0.9798→0.8793 完全同序）。前者是「损失选错，信息全丢」，后者是「换单位，排序不变」。
+**本库综合**：脚注 2 与脚注 3 是这张表的两个「排序不变性」声明，性质完全不同——0-1 损失不是严格一致，只看 argmax，所以它**无法在同一侧的概率预报之间排序**；而 $R^2$ 与 MSE 是**单调变换**，所以在同一数据集内的排序必然相同。前者是「损失选错，信息全丢」，后者是「换单位，排序不变」。
 
-### 3. 三套 API 的返回值与符号不同（来源论述 + 本库实测）
+### 3. 三套 API 的返回值与符号不同（来源论述 + 外部核查）
 
 L62–L66 把评分分成三处入口：
 
-| 入口 | 返回什么 | 符号 | 本机实测（1.6.1） |
-| --- | --- | --- | --- |
-| 估计器的 `score` | 该估计器的默认准则 | 依估计器 | `SVC().score(iris)` = 0.9733（= accuracy）；`check_scoring(est, None)` 返回 `_PassthroughScorer`，直接转调 `score` |
-| `scoring=` 参数（字符串 / callable） | 统一为**越大越好**，distance 类指标被取负（L87） | 已按约定翻转 | `get_scorer('neg_mean_squared_error')._sign = -1`、`_score_func = mean_squared_error`；`get_scorer('r2')._sign = +1` |
-| `sklearn.metrics` 函数 | 原始量纲（误差越小越好） | **未翻转** | `mean_squared_error` 直接返回 376.08 这样的正数 |
+| 入口 | 返回什么 | 符号约定 |
+| --- | --- | --- |
+| 估计器的 `score` | 该估计器的默认准则 | 依估计器；`check_scoring(est, None)` 直接转调 `score` |
+| `scoring=` 参数（字符串 / callable） | 统一为**越大越好**，distance 类指标被取负（L87） | 由 scorer 对象负责符号转换 |
+| `sklearn.metrics` 函数 | 原始量纲（误差通常越小越好） | **不做 `neg_*` 翻转** |
 
-L87 的约定句是剪藏里唯一保住「符号」这件事的地方：「All scorer objects follow the convention that **higher return values are better than lower return values**. Thus metrics which measure the distance between the model and the data … are available as ‘neg_mean_squared_error’ which return the negated value」。**本库综合**：这条约定是本节最贵的一条——它把「符号」从「用户记忆」变成了「API 保证」，但也意味着**任何自定义 `make_scorer` 都必须自己声明 `greater_is_better`**，而它的默认值是 `True`（实测），于是把 MSE 直接包进去就等于告诉搜索器「误差越大越好」。
+L87 的约定句是剪藏里唯一保住「符号」这件事的地方：「All scorer objects follow the convention that **higher return values are better than lower return values**. Thus metrics which measure the distance between the model and the data … are available as ‘neg_mean_squared_error’ which return the negated value」。**本库综合**：这条约定把「符号」从「用户记忆」变成了「API 保证」，但也意味着**任何自定义 `make_scorer` 都必须自己声明 `greater_is_better`**；官方 1.9.1 API 签名的默认值是 `True`，于是把 MSE 直接包进去就等于告诉搜索器「误差越大越好」。
 
 ### 4. 预测与决策是两个评分族，混用会让指标与业务同时失真（来源论述）
 
 L31 把决策定义成「the result of `predict_proba` is turned into a single outcome」，并指出「most of them are covered with or derived from the `metrics.confusion_matrix`」，同时把阈值调优指向另一节（官方 §3.3 *Tuning the decision threshold for class prediction*，**该节未入库**）。
 
-**本库综合 + 实测**：阈值是**模型之外**的参数，`predict` 只是「在 0.5 处切一刀」的别名。本机实测（500 样本、10% 正类的逻辑回归）：`predict` 与 `proba >= 0.5` 逐位相同；把阈值移到 0.3，准确率 0.946 → **0.954**、正类召回 0.460 → 0.540；移到 0.1，召回 0.720 但准确率掉到 0.802、报出正例 23 → 121。**同一个模型、同一份预测概率，四个决策**。这正是「用 accuracy 选模型、再用另一个阈值上线」时指标与业务脱节的机制。
+**本库综合**：阈值是**模型之外**的参数，分类器的 `predict` 通常对应在默认阈值处把概率或分数转成动作。改变阈值会同时改变误报、漏报与业务成本，因此「用某个指标选模型、再用另一个阈值上线」时必须重新评估最终决策，而不能只报告概率质量。
 
 ### 5. 本节保住了「方法论」，丢掉了「指标本体」（本库判断）
 
@@ -212,39 +212,9 @@ L31 把决策定义成「the result of `predict_proba` is turned into a single o
 | `classification_report` | `(y_true, y_pred, *, labels=None, target_names=None, sample_weight=None, digits=2, output_dict=False, zero_division='warn')` | `zero_division` 默认仍为 `'warn'`（1.9.1 未变） |
 | `balanced_accuracy_score` | `(y_true, y_pred, *, sample_weight=None, adjusted=False)` | 默认**不是** adjusted |
 
-## 本机实测（scikit-learn **1.6.1**、NumPy 2.0.2、SciPy 1.13.1，18 条）
+## 验证边界
 
-> **版本警告**：目标文档是 1.9.1，本机最高可安装 1.6.1，以下只证明机制存在。
-
-1. **3.4.3.1 的 doctest 复现**（丢在剪藏外，按官方 1.9.1 页抄写）：`cross_val_score(SVC(random_state=0), iris, cv=5, scoring='recall_macro')` → `[0.9667, 0.9667, 0.9667, 0.9333, 1.0000]`，官方打印 `array([0.96, 0.96, 0.96, 0.93, 1. ])`（四舍五入一致）。
-2. **`get_scorer_names()` = 56**，而 1.9.1 的表是 43 个名字行。两个方向的不一致：
-   - **表里有、1.6.1 运行时没有（2 个）**：`d2_log_loss_score`（函数 `from sklearn.metrics import d2_log_loss_score` **可导入**，但 `get_scorer('d2_log_loss_score')` 抛 `ValueError: 'd2_log_loss_score' is not a valid scoring value`）、`d2_brier_score`（1.6.1 连导入都 `ImportError`）。
-   - **运行时有、1.6–1.9 四版表里都没有（3 个）**：`matthews_corrcoef`、`positive_likelihood_ratio`、`neg_negative_likelihood_ratio`。另有 12 个名字（`precision_*`/`recall_*`/`jaccard_*` 各 4 个）由表里的「etc.」后缀行覆盖。
-   - 也就是说，「the table below shows all possible values」（L87）在两个方向上都不严格成立。
-3. **符号约定是 scorer 对象的私有属性**：`get_scorer('neg_mean_squared_error')` 的 `_sign = -1`、`_score_func = mean_squared_error`、`_response_method = 'predict'`；`get_scorer('r2')`/`get_scorer('accuracy')` 的 `_sign = +1`；`neg_log_loss` 的 `_response_method = 'predict_proba'`；**`roc_auc` 的 `_response_method = ('decision_function', 'predict_proba')`**（按序取第一个存在的）。
-4. **`make_scorer` 的默认符号陷阱**：`make_scorer(mean_squared_error)` 的 `_sign = +1`（`greater_is_better=True` 是默认）。5 点 `alpha` 网格上它选出 **`alpha=1e4`**、`best_score_` = 6380.4、最终 MSE **6290.0**；换成 `scoring='neg_mean_squared_error'` 选出 `alpha=1e-4`、MSE **774.9**。相差 8.1 倍，且**没有任何警告**。
-5. **`make_scorer` 的 `response_method` 默认值对自定义概率指标是错的**：`make_scorer(log_loss)`（1.6.1 默认 `'default'`）在 iris 三折上给出 `[nan, nan, nan]`；显式 `response_method='predict_proba'` 才给 `[0.142, 0.152, 0.156]`；显式 `'predict'` 回到 `nan`。内部原因是 `ValueError: y_true and y_pred contain different number of classes 3, 2`，被 `error_score=np.nan` 吞成警告。**1.8 起默认值变成 `'predict'`，即新版本仍然错。**
-6. **字符串名字写错 → `InvalidParameterError`**（1.6.1），错误消息里直接列出全部合法字符串。剪藏缺少这条 Note。
-7. **丢掉的字符串名不会抛错，只会变 `nan`**：`scoring='neg_log_loss'` 用在无 `probability=True` 的 `SVC` 上，返回 `[nan, nan, nan]` + 3 条 `UserWarning: Scoring failed … set to nan`（内部 `AttributeError: SVC has none of the following attributes: predict_proba`）。同样 `scoring='roc_auc'` 在三类 iris 上也是 `nan`（内部 `ValueError: multi_class must be in ('ovo', 'ovr')`）——**表里的 `roc_auc` 行在多类上不能直接用**。
-8. **阈值是模型外的参数**：500 样本、10% 正类的逻辑回归，`predict` 与 `proba >= 0.5` 逐位相同；t = 0.50/0.30/0.10/0.05 → 准确率 **0.946/0.954/0.802/0.546**、正类召回 **0.460/0.540/0.720/0.840**、报出正例数 **23/27/121/261**。
-9. **严格一致性的数值演示**（真实 $p=0.3$、20 万样本）：报告 q = 0.2/0.3/0.4/0.5 时 log loss = 0.6378/**0.6101**/0.6321/0.6931、Brier = 0.2195/**0.2096**/0.2198/0.2500，而四者的 argmax 准确率**都是 1.0000**。→ 脚注 2 的「0-1 损失只 consistent」在这里变成可读的数字。
-10. **`zero_one_loss = 1 − accuracy_score`**：200 样本 3 类随机标签上 0.725 = 0.725（脚注 2 的等价性成立）。
-11. **$R^2$ 与 MSE 同序**：同一数据集 5 个 `alpha` 的 MSE 376.076/376.080/376.487/413.764/2249.484 对应 $R^2$ 0.9798/0.9798/0.9798/0.9778/0.8793，排序完全一致（脚注 3 成立）。
-12. **目标泛函错配会反转排名**（§3.4.1 假想例的实体版）：同一训练集（5 维、Laplace 噪声）、三个目标各训一个 `HistGradientBoostingRegressor`（`squared_error`/`absolute_error`/`quantile 0.9`），在 2,000 个测试样本上：
-
-    | 模型 | RMSE | MAE | MedAE | $R^2$ | pinball 0.5 | pinball 0.9 |
-    | --- | --- | --- | --- | --- | --- | --- |
-    | squared_error（均值） | 0.7409 | 0.5397 | 0.3940 | 0.4136 | 0.2698 | 0.2727 |
-    | absolute_error（中位数） | **0.7314** | **0.5232** | **0.3706** | **0.4286** | **0.2616** | 0.2605 |
-    | quantile 0.9（0.9 分位数） | 1.0154 | 0.8284 | 0.7260 | **−0.1012** | 0.4142 | **0.1401** |
-
-    分位数模型的 pinball 0.9 是 0.1401（比另两个好 1.9 倍），而在其余五个口径上全部最差（$R^2$ 为负）。**「哪个模型更好」完全由泛函决定**。
-13. **`mean_pinball_loss` 的参数名是 `alpha`**（签名 `(y_true, y_pred, *, sample_weight=None, alpha=0.5, multioutput='uniform_average')`），而 HGB/`QuantileRegressor` 用 `quantile`——正是 L56 那句「we apologize for the different argument names」的内容。实测 300 样本上 `mean_pinball_loss(alpha=0.99)`：HGB(quantile=.99) **1.0367** vs `QuantileRegressor(quantile=.99)` **1.9742**（同一个损失，拟合质量差 1.9 倍）。
-14. **`balanced_accuracy_score` 默认 `adjusted=False`**：90/10 不平衡、正类全部错判时默认给 **0.4**，`adjusted=True` 给 **−0.2**。剪藏 L139 的残片说官方定义「adopt the adjusted version」，但 API 默认是**不**校正的版本 → 想对齐 1.9 的「机会水平 = 0」口径必须显式传参。
-15. **`classification_report` 的退化情形被静默定义**：某类从未被预测时给 3 条 `UndefinedMetricWarning`，并把 precision/recall/f1 都置 **0.0**（`zero_division='warn'` 是 1.6.1 与 1.9.1 的共同默认）。
-16. **callable scorer 没有签名校验**：3 参数 `(est, X, y)` 正常（iris 三折 `[0.96, 0.98, 0.94]`）；带第 4 个可选参数 `(est, X, y, extra=None)` 也被静默接受并返回常数 0.5——**写错的 scorer 不会报错，只会给常数**。
-17. **多指标返回的键带前缀**：`cross_validate(..., scoring=['accuracy','f1_macro'])` 的键是 `test_accuracy`/`test_f1_macro`（另有 `fit_time`/`score_time`），没有裸 `accuracy`。
-18. **`top_k_accuracy_score` 的 `k` 可以大于类别数**：3 列分数矩阵上 `k=2` 给 0.8、`k=4` 给 **1.0**（不报错）。该行为属于丢失的 §3.4.4.3，本页只记录实测现象，不作文档归属。
+本页不包含历史本机运行时实验或性能读数。运行时行为只在 `uv` 创建的目标版本环境中重新验证后收录。
 
 ## 图表核查
 
@@ -254,32 +224,32 @@ L31 把决策定义成「the result of `predict_proba` is turned into a single o
 
 1. **4 处引用标记被吞，句子成病句**：L25 的「… for that (target) functional, see.」（← `see [Gneiting2009]`）、L25 的「see [Wikipedia entry for Scoring rule] and, coincide with…」（← `and [Gneiting2007]`）、L33 的「see.」（← `see [Fissler2022]`）、L27 的 *truth serum* 引语后无出处（← `[Gneiting2014]`）。文献条目本身可从官方页补全，但**剪藏内没有任何一条**。
 2. **表的关键列丢失**：第二列（评分函数名）整列没了（L38–L48），而 L33 的正文承诺「Here, we list … corresponding strictly consistent scoring functions」。
-3. **「the table below shows all possible values」（L87）与实现不一致（双向）**：见本机实测 2——表外有 3 个可用名字，表内有 2 个在 1.6.1 上不可用（其中 `d2_log_loss_score` 甚至连 1.6/1.7 的表里都列了）。
-4. **脚注 2 的「等价」与它自己的「不严格一致」是同一件事的两面**，文档没有把这个联系说破：0-1 损失只在乎 argmax，所以它**结构上**无法区分同一侧的概率预报（实测四个预报的准确率全 1.0000，log loss 0.61–0.69）。
-5. **L139 说官方定义「adopt the adjusted version」，但 `balanced_accuracy_score` 的默认是 `adjusted=False`**——文档措辞与默认值口径不一致（实测 0.4 vs −0.2）。
+3. **「the table below shows all possible values」（L87）需要按版本复核**：字符串表本身未入剪藏；1.9.1 注册表与文档表的完整差异应在 `uv` 目标版本环境中重新核对。
+4. **脚注 2 的「等价」与它自己的「不严格一致」是同一件事的两面**，文档没有把这个联系说破：0-1 损失只在乎 argmax，所以它**结构上**无法区分同一侧的概率预报。
+5. **L139 说官方定义「adopt the adjusted version」，但 `balanced_accuracy_score` 的默认是 `adjusted=False`**——文档措辞与 API 默认值口径不一致。
 6. **L56 的假想例要求「训练与评估用同一个评分」，但它自己承认两个 API 的参数名不同**（`quantile` vs `alpha`），且 `mean_pinball_loss` 的 `alpha` 默认 **0.5**——漏传就静默变成中位数损失。
-7. **L87 的 `neg_*` 约定只覆盖字符串名**：自定义 `make_scorer` 必须自己声明 `greater_is_better`，而默认是 `True`（实测第 4 条，误差被当成收益，选出最差模型）。文档在保留的四节里**从不提这个默认值**。
-8. **`scoring` 的失败被 `error_score=np.nan` 静默**：`neg_log_loss` 用在无 `predict_proba` 的模型上、`roc_auc` 用在多类上，都变成 `nan` 而不是异常（实测 7）。这与 3.1 节记录的失败折语义是同一机制，但 3.4 的保留部分完全不提。
+7. **L87 的 `neg_*` 约定只覆盖字符串名**：自定义 `make_scorer` 必须自己声明 `greater_is_better`，而 API 默认是 `True`，误差函数若照默认包装就会被当成收益。文档在保留的四节里**从不提这个默认值**。
+8. **`scoring` 的失败可能被 `error_score=np.nan` 静默**：3.1 节与 API 签名给出失败折的默认语义，而 3.4 的保留部分完全不提指标与模型输出不匹配时的后果。
 9. **L64 的「Most commonly this is for classifiers」漏了 `accuracy` 一词**（链接文字被吞）：官方是「Most commonly this is **accuracy** for classifiers and the $R^2$ for regressors」——恰好漏掉的是三套 API 里最常用的那一个指标名。
 10. **L23 的公式保留了旧 MathJax 展开**（`$Y = g \left(X\right)$` vs 官方 `\(Y = g(X)\)`）：属于剪藏管线的渲染噪声，但会让公式与正文的 `$…$` 记法混用，复制到代码时会带上 `\left`/`\right`。
 
 ## 局限
 
-1. **本页只覆盖官方 3.4 节的 4/54 小节**。分类/回归/聚类指标的**定义、参数与退化行为**（`average` 的五种、`zero_division`、`multioutput`、`labels`、阈值化）在本页**没有**来源支撑，只能引 API 页或实测。
-2. **本页的「本机实测」全部在 1.6.1 上**。目标文档是 1.9.1，而 1.6.1 与 1.9.1 之间至少有：`make_scorer` 的 `response_method` 默认值（1.8 变）、`d2_brier_score`/`d2_log_loss_score` 的注册状态、`positive_likelihood_ratio` 一族的存在性。凡涉及这些的结论都必须带版本。
-3. **没有运行时证据说明「严格一致性」在真实模型选择上的收益**：第 12 条只证明「泛函错配会反转排名」，没有证明「用一致评分训练 + 一致评分评估」比「用平方误差训练 + 用 MAE 评估」更好。
+1. **本页只覆盖官方 3.4 节的 4/54 小节**。分类/回归/聚类指标的**定义、参数与退化行为**（`average` 的五种、`zero_division`、`multioutput`、`labels`、阈值化）在本页**没有**来源支撑，只能引 API 页或在 `uv` 目标版本环境中复核。
+2. **不包含历史本机运行时实验**。`make_scorer` 的 `response_method` 默认值、`d2_*` 的注册状态与 scorer 名称集合都按 1.9.1 文档或签名记录；运行时差异待复核。
+3. **没有目标环境证据说明「严格一致性」在真实模型选择上的收益**：需要比较「训练与评估使用一致评分」和混用不同泛函的结果，不能只凭定义推断实际收益。
 4. **`sklearn.metrics.pairwise` 与 `metrics.cluster` 的部分语义在别处**：`pairwise` 指向未入库的 `metrics.html`（剪藏 L71 的 See also 只提到它存在），聚类指标本体在已入库的 2.3 节（见 [[clustering]]）。
 
 ## 待解问题
 
-1. **`get_scorer_names()` 在 1.9.1 上是否包含 `positive_likelihood_ratio` 一族？** 1.6.1 有、而 1.6–1.9 四版文档表都没有——需要在新版本上直接跑一次，才能判定「表不全」还是「名字后来被移除」。
-2. **`d2_log_loss_score` 为何在 1.6.1 上「函数存在但未注册」**？这决定了它是 1.6 的注册遗漏还是 1.7 才正式加入 scoring 面。
-3. **`make_scorer(response_method='predict')`（1.8+ 默认）对哪些内置函数有实际影响**？本次只测了 `log_loss` 一个。
+1. **`get_scorer_names()` 在 1.9.1 上的完整集合是什么？** 需要在 `uv` 目标版本环境中直接核对，不能用旧环境注册表推断。
+2. **`d2_log_loss_score` 的注册历史**：需用版本史与目标环境确认它何时正式进入 scoring 面。
+3. **`make_scorer(response_method='predict')`（1.8+ 默认）对哪些内置函数有实际影响**？需按响应方法逐类验证。
 4. **多类 ROC AUC 的 `ovo` 与 `ovr_weighted` 在类别不平衡下的差别**：剪藏 L149–L163 的公式残片没有上下文，本库无法判断官方推荐哪一个。
 5. **3.4.1 的「决策」与 §3.3 阈值调优如何衔接**？§3.3（`TunedThresholdClassifierCV`）未入库，而 3.4.1 只给了一个链接。
-6. **「用同一个严格一致评分训练与评估」在树模型/集成上是否成立**？本次只做了 3 个目标泛函的对照，没有做「训练损失 A + 评估损失 A」与「训练 A + 评估 B」的四格对照。
-7. **`zero_division` 从 `'warn'` 改默认值的计划**：1.6.1 与 1.9.1 都是 `'warn'`，未来版本的行为未知。
-8. **`top_k_accuracy_score` 的 `k > n_classes` 静默返回 1.0** 是否是刻意设计（丢失的 §3.4.4.3 可能有说明）。
+6. **「用同一个严格一致评分训练与评估」在树模型/集成上是否成立**？需要「训练损失 A + 评估损失 A」与「训练 A + 评估 B」的对照。
+7. **`zero_division` 从 `'warn'` 改默认值的计划**：1.9.1 API 仍是 `'warn'`，未来版本的行为未知。
+8. **`top_k_accuracy_score` 的 `k > n_classes` 行为**是否是刻意设计（丢失的 §3.4.4.3 可能有说明）。
 9. **`classification_report` 的 `output_dict=True` 在退化类上返回 0.0 而非 `nan`**：这条选择会让「某类完全没预测到」在汇总时被平均掉，官方是否有讨论在丢失的 §3.4.4.7。
 10. **本库是否需要单独一份「指标定义」来源**：如果后续不引入 §3.4.4/§3.4.6，本库将长期无法对「F1 的 macro/micro 差额」「MAPE 在 0 附近爆炸」这类常见问题给出带出处的答案。
 
