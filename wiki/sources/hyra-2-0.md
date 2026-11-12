@@ -2,7 +2,7 @@
 title: "Hyra 2.0：从解题到造工具（腾讯混元官方博客）"
 type: source
 created: 2026-11-11
-updated: 2026-11-11
+updated: 2026-11-12
 tags:
   - mle
   - research-agent
@@ -25,10 +25,10 @@ status: draft
 | 原始链接 | <https://hy.tencent.com/research/hyra2?langVersion=zh> |
 | 形态 | 官方技术博客 / 版本发布公告 |
 | 剪藏文件 | `raw/articles/Hyra 2.0.md`（215 行） |
-| 剪藏 SHA-256 | `248d46eaa3de80f6ed5ddea5113c329924e6a3735e0e5c45eb33017b12570ad2` |
+| 剪藏 SHA-256 | `be09ef49bd6536215def8d36c6e2bf388d184fd138a6c761e0928092c8d69ef4` |
 | 发布时间 | 剪藏 `published` 字段为空；`created` 为 2026-11-10（仅为剪藏时间，不等于发布时间）。原文自称距 Hyra 1.0 发布「三个月」（`raw/articles/Hyra 2.0.md:18`），但 1.0 的发布时间同样未记录，故不写具体日期 |
 
-剪藏为中文原文，含 23 条脚注与 7 张图（外加 1 段视频），图片与视频均为**外链**（带签名参数）。2026-11-11 已将 7 张图与视频抓取入库到 `raw/assets/hyra-2-0/`（`figure-1.png`–`figure-7.png`、`hand-video.mp4`），并逐张目视核查（视频抽 3 帧）；核查结果另见「图表核查」一节，文件尺寸与 SHA-256 见该节。
+剪藏为中文原文，含 23 条脚注与 7 张图（外加 1 段视频）。2026-11-11 已将 7 张图与视频抓取入库到 `raw/assets/hyra-2-0/`（`figure-1.png`–`figure-7.png`、`hand-video.mp4`），并逐张目视核查（视频抽 3 帧）；2026-11-12 将剪藏中的签名外链改为本地相对路径，以避免签名参数中的访问密钥 ID 进入远程仓库。核查结果另见「图表核查」一节，文件尺寸与 SHA-256 见该节。
 
 ## 概要
 

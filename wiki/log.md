@@ -457,3 +457,10 @@
 - 渲染：Marp CLI 4.5.1（Marp Core 4.4.0），`.cache/marp/tabular-model-families/deck.html` + `deck.001–018.png`，不入库。
 - 版式核查（逐页目视 18 张 PNG）：`section` 26px、`h2` 40px、blockquote 26px 色条结论；Feature Tokenizer 的公式改为 display math（`$T_j=b_j+f_j(x_j)$`），行内 `x_j`/`b_j`/`S_j×d` 一并改为数学体；全部页面无溢出、无裁切、公式正常。
 - 复核：变更全部**未提交**，等待所有者复核 diff 后再决定是否提交 `deck: 表格模型家族`。
+
+## [2026-11-12] fix | Hyra 2.0 媒体链接本地化
+
+- 文件：`raw/articles/Hyra 2.0.md`、`wiki/sources/hyra-2-0.md`、`wiki/log.md`
+- 摘要：将剪藏中的 7 张签名图片与 1 段签名视频改为指向 `raw/assets/hyra-2-0/` 的本地相对路径，避免腾讯云 COS 签名参数中的访问密钥 ID 触发 GitHub Push Protection；同步更新来源页剪藏哈希与媒体说明。8 个媒体文件沿用 2026-11-11 已入库副本，未重复下载。
+- 来源：`raw/articles/Hyra 2.0.md`（本地化后 sha256 `be09ef49bd6536215def8d36c6e2bf388d184fd138a6c761e0928092c8d69ef4`）、`raw/assets/hyra-2-0/`
+- 复核：8 个本地媒体的 SHA-256 均与既有核查记录一致；所有者已确认备份当前分支、清理历史中的签名 URL 并推送。
