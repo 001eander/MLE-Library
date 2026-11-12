@@ -10,17 +10,20 @@ tags:
   - regularization
   - baseline
   - svm
+  - nearest-neighbors
   - workflow
 sources:
   - "[[sklearn-linear-models]]"
   - "[[sklearn-lda-qda]]"
   - "[[sklearn-svm]]"
+  - "[[sklearn-nearest-neighbors]]"
 status: draft
 verified: 2026-11-11
 applies_to:
   - scikit-learn 1.8.x – 1.9.x（linear_model；推断，见 [[sklearn-linear-models]] 的版本判定）
   - scikit-learn 1.9.x（discriminant_analysis，见 [[sklearn-lda-qda]] 的版本判定）
   - scikit-learn 1.7.x – 1.9.1（svm 的线性部分，见 [[sklearn-svm]]）
+  - scikit-learn 1.7.x – 1.9.x（`NearestCentroid`，见 [[sklearn-nearest-neighbors]]）
   - 表格型中小规模数据上的线性/生成式基线
 ---
 
@@ -93,6 +96,24 @@ applies_to:
 
 **本库综合**：`svd` 路径的主要成本是一次 SVD，没有迭代与 CV 循环的重复拟合，因此在同一特征集上，LDA 单次 `fit` 通常比带内置 CV 的 `LogisticRegression` 便宜；但这是定性推理，本库无可引的计时数据。
 
+## 零参数基线：`NearestCentroid`（不属于线性模型，但可以当第一行）
+
+在跑上面任何一行之前，有一个连 `alpha` 与 `C` 都没有的选项：`NearestCentroid`（[[sklearn-nearest-neighbors]], L168）。它是**默认构造下真的零超参**的基线：
+
+- 每类一个质心，`fit` 就是算均值；没有惩罚项、没有求解器、没有随机性（L168）；
+- 官方直接称它“has no parameters to choose, making it a good baseline classifier”（同）；
+- 决策面是线性的（本库推导：到两类质心等距即超平面），所以它是线性族的一个**无正则特例**（详见 [[gaussian-discriminant-analysis]]）。
+
+**什么时候用**（本库判断）：
+
+1. 想要一个**保留全部特征、不调任何参数**的下界。它比 logistic 更弱（没有方差差异的建模，假设各向同性），所以分数低于逻辑回归是正常的；关键是看**差距多大**。
+2. 想判断“非凸类/异方差”是不是主要难点。`NearestCentroid` 差很多而 LDA 好 → 问题在等方差假设；两者都差 → 问题不在这个谱系里。
+
+**两个必做前提**：
+
+- **先缩放**。它本质是比欧氏距离，与 KNN 同一类尺度依赖（用户指南未提，对比 L203 对 SVM 的明确要求）。
+- **一旦设 `shrink_threshold` 就不再是基线**。它变成最近收缩质心，需要 CV 选阈值，官方示例的收益只有 0.81 → 0.82（L186），不值得当默认步骤。详见 [[regularization-and-sparsity]] 的第五个正则化面。
+
 ## 线性核 SVM：规模上界更高的第三个选择
 
 线性基线不只 logistic 与 Ridge 两家。[[sklearn-svm]] 给出第三条路：`LinearSVC`（liblinear 实现）在**线性情形下**比核 SVM 高效得多，且“can scale almost linearly to millions of samples and/or features”（[[sklearn-svm]], L194）。它的定位不是“更准”，而是**在 $n$ 很大时仍能跑完**。
@@ -142,6 +163,8 @@ applies_to:
 | MultiTask 系列 | 按任务共享支撑，非零是整列 | L231、L235 |
 
 **直接后果（本库综合）**：用 Lasso 的系数做"哪个特征重要"的结论时，相关特征组内的选择是**不稳定**的——换种子或换折就可能换特征。要判断"这组特征有没有用"，看 EN 或看整组的 CV 边际收益，而不是看 Lasso 选中了哪一个。
+
+这条不稳定性的直接下游是**特征选择**：`SelectFromModel(LinearSVC(penalty="l1"))` 把「系数 ≠ 0」翻成「保留这一列」后重拟合，等于把 L1 的随机选择固定下来（[[sklearn-feature-selection]], L119；[[feature-selection]]）。因为 $ℓ_1$ 惩罚作用在原始尺度上，**不缩放就用 L1 选列，等于按数值大小选列**（[[feature-selection-workflow]] 的 16 条坑之 10）。
 
 同理，哑变量全保留（dummy variable trap）会让 OLS 奇异；Ridge 能容忍（收缩救回），Lasso 会在组内随机选一个。这一点来源未讨论，属**本库综合**。
 
@@ -232,7 +255,7 @@ applies_to:
 
 ## 关联页面
 
-- 来源：[[sklearn-linear-models]]、[[sklearn-lda-qda]]、[[kaggle-getting-started]]、[[sklearn-svm]]
+- 来源：[[sklearn-linear-models]]、[[sklearn-lda-qda]]、[[kaggle-getting-started]]、[[sklearn-svm]]、[[sklearn-nearest-neighbors]]、[[sklearn-feature-selection]]
 - 工具：[[scikit-learn]]
-- 概念：[[regularization-and-sparsity]]、[[gaussian-discriminant-analysis]]、[[support-vector-machines]]、[[leaderboard-vs-cv]]
-- 实践：[[competition-ml-workflow]]（七段流程与阶段自动化程度）、[[evaluator-design-and-reward-hacking]]（验证切分与代理指标）、[[svm-selection-and-tuning]]（SVM 侧的选择与调参）
+- 概念：[[feature-preprocessing]]（缩放为什么是正则化前的硬前提：惩罚等价于先验尺度；分位数/幂变换会改变系数含义）、[[preprocessing-pipeline-design]]（顺序与 14 个必须写出的默认值）、[[regularization-and-sparsity]]、[[gaussian-discriminant-analysis]]、[[support-vector-machines]]、[[nearest-neighbors]]、[[feature-selection]]、[[leaderboard-vs-cv]]
+- 实践：[[competition-ml-workflow]]（七段流程与阶段自动化程度）、[[evaluator-design-and-reward-hacking]]（验证切分与代理指标）、[[svm-selection-and-tuning]]（SVM 侧的选择与调参）、[[nearest-neighbors-selection-and-tuning]]（非参数一侧的选型）、[[feature-selection-workflow]]（把线性模型当智能筛选器时的缩放与阈值）

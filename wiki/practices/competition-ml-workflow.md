@@ -2,7 +2,7 @@
 title: 竞赛型 MLE 工作流（Kaggle 类任务）
 type: practice
 created: 2026-11-11
-updated: 2026-11-11
+updated: 2026-11-12
 tags:
   - mle
   - kaggle
@@ -12,11 +12,13 @@ tags:
 sources:
   - "[[kaggle-getting-started]]"
   - "[[aide]]"
+  - "[[sklearn-cross-validation]]"
 status: draft
-verified: 2026-11-11
+verified: 2026-11-12
 applies_to:
   - 表格型 / 中小规模数据竞赛（Kaggle Home Depot 类任务，2016–2017 经验）
   - scikit-learn 0.17 时代 API（片段已过时，见 [[kaggle-getting-started]]）
+  - scikit-learn 1.7.x–1.9.1 的 `model_selection`（本页只用于「张力二」的现代对应写法）
 ---
 
 # 竞赛型 MLE 工作流（Kaggle 类任务）
@@ -30,7 +32,7 @@ applies_to:
 | 1 | 数据探索 EDA | pandas 载入 + matplotlib/seaborn 画图：目标分布、数值变量箱线图、坐标散点图、按标签着色的散点、两两相关图 | L11–L29 | **仍成立**；但见下方「EDA 的可自动化程度」 |
 | 2 | 统计检验 | 用检验验证假设的显著性；非 i.i.d. 时注意检验类型选择与显著性解释 | L31–L35 | 方法论仍成立；未给具体检验 |
 | 3 | 预处理 | 多表 Join、缺失值、离群点、类别变量表示、浮点精度噪声 | L37–L47 | **仍成立**；浮点精度噪声一条在今天的表格数据里已少见 |
-| 4 | 特征工程 | 领域直觉驱动的特征；Feature Importance 做选择；高基数类别用「前 95% + 其他」编码 | L67–L91 | 原则仍成立；工具已换代 |
+| 4 | 特征工程 | 领域直觉驱动的特征；Feature Importance 做选择；高基数类别用「前 95% + 其他」编码 | L67–L91 | 原则仍成立；工具已换代（现代写法见 [[feature-selection-workflow]]） |
 | 5 | 模型选择 | 树模型优先（GBDT/RF/ExtraTrees），非树模型作 Ensemble 多样性来源 | L93–L110 | **已过时**：这是 2016 年表格赛事的格局；文本/图像任务今天的默认是神经网络 |
 | 6 | 调参 | 划出验证集 → 粗 `eta` → 搜其余参数 → 降 `eta` → 早停 | L112–L162 | 流程仍成立；参数名与 API 已变（`reg:linear`→`reg:squarederror`、`silent`→`verbosity`） |
 | 7 | CV → Ensemble → Pipeline | 见 [[leaderboard-vs-cv]]；Stacking 见下节 | L164–L240 | CV 与 Stacking 部分仍成立；Pipeline 部分已被现代框架覆盖 |
@@ -59,9 +61,13 @@ applies_to:
 
 本库的判断（**综合**）：两种说法并不矛盾，但适用条件不同——「多」适用于**信噪比高、样本量足**的情形；当新增特征与已有特征强交互、或本身噪声大时，树的贪心分裂会先抓到噪声。真正缺的是一条**判断「这批特征该留哪些」的流程**：逐组加入 + 固定 CV 划分 + 记录每组的边际收益，而不是一次性全加再调参。
 
+现代实现对应的是 1.13 节的三类选择器（[[sklearn-feature-selection]]）与 [[feature-selection-workflow]]。两个必须补上的限定：① 来源的「Feature Importance 做选择」是 MDI，而 MDI 有训练集统计与高基数偏好两个缺陷，用在 ID 类列上会保留无用列（[[ensembles]], L518）；② 选择器必须放进 `Pipeline` —— 实测「先在全量数据上选、再 CV」会把纯噪声数据从 0.508 推到 0.900（[[feature-selection-workflow]] 的「五」）。
+
 **张力二：CV 与排行榜冲突时信谁？**
 
 见 [[leaderboard-vs-cv]]。结论是：信 CV 的前提是 CV 切分复刻了真实划分的结构（L331）。
+
+现代意义上的「复刻结构」在 API 层是三条具体选择（[[cross-validation-design-and-tuning]]，依据 [[sklearn-cross-validation]]）：① 训练集与测试集共享实体 → `GroupKFold`（实测每折「测试组 ∩ 训练组」：`GroupKFold` `[0,0,0]` vs `KFold` `[1,2,1]`）；② 按时间划分 → `TimeSeriesSplit`；③ 稀有类 → `StratifiedKFold`（来源的「5-Fold 提到 10-Fold」本质上是在缓解单次划分的方差，而分层会**人为压小**折间方差，L361–L365）。
 
 **张力三：5-Fold 提到 10-Fold 提高了什么？**
 
@@ -104,5 +110,5 @@ applies_to:
 ## 关联页面
 
 - 来源：[[kaggle-getting-started]]、[[aide]]
-- 概念：[[leaderboard-vs-cv]]
-- 实践：[[evaluator-design-and-reward-hacking]]、[[research-agent-harness]]、[[linear-models-as-baselines]]
+- 概念：[[leaderboard-vs-cv]]、[[cross-validation]]
+- 实践：[[evaluator-design-and-reward-hacking]]、[[research-agent-harness]]、[[linear-models-as-baselines]]、[[feature-selection-workflow]]（特征工程阶段的现代写法：三类选择器 + 泄漏判据）、[[cross-validation-design-and-tuning]]（splitter 选型、嵌套 CV 与 18 条坑）

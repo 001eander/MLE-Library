@@ -218,5 +218,5 @@ SVC(class_weight="balanced", C=...)   # 然后重扫 C
 
 - 来源：[[sklearn-svm]]（本页的事实基础）、[[sklearn-linear-models]]（`C = 1/α` 与线性基线）
 - 概念：[[support-vector-machines]]（机制）、[[regularization-and-sparsity]]（`C` 作为正则化面）、[[leaderboard-vs-cv]]（指标层级）
-- 实践：[[linear-models-as-baselines]]（基线顺序与尺度约束）、[[competition-ml-workflow]]（模型选择在流程中的位置）、[[evaluator-design-and-reward-hacking]]（确定性模型的噪声估计）
+- 实践：[[linear-models-as-baselines]]（基线顺序与尺度约束）、[[outlier-detection-selection-and-tuning]]（`OneClassSVM`：同一个 `nu` 换成「训练集异常率」）、[[competition-ml-workflow]]（模型选择在流程中的位置）、[[evaluator-design-and-reward-hacking]]（确定性模型的噪声估计）
 - 工具：[[scikit-learn]]（`svm` 估计器矩阵与默认值清单）

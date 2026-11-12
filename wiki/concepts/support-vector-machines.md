@@ -2,7 +2,7 @@
 title: "支持向量机（Support Vector Machines）：最大间隔、hinge 损失、核技巧与两种参数化"
 type: concept
 created: 2026-11-11
-updated: 2026-11-11
+updated: 2026-11-12
 tags:
   - mle
   - svm
@@ -14,6 +14,7 @@ sources:
   - "[[sklearn-svm]]"
   - "[[sklearn-linear-models]]"
   - "[[sklearn-naive-bayes]]"
+  - "[[sklearn-outlier-detection]]"
 status: draft
 verified: 2026-11-11
 applies_to:
@@ -122,6 +123,18 @@ $$C = \frac{1}{\alpha}\quad(\text{对 Ridge 回归})$$
 
 还有一层耦合（L146、L150）：`class_weight` 与 `sample_weight` 都是**把该样本/类别的 `C` 乘一个系数**，所以加权之后有效正则强度变了，必须重扫 `C`。
 
+## 同一个族、另一种任务：One-Class SVM
+
+`OneClassSVM` 用同一个 libsvm 求解器与同一个 $\nu$，但**没有 $y$**：它估计「高维分布的支撑集」，输出一条包住训练点的边界（[[sklearn-outlier-detection]], L74–L90）。
+
+三条必须区分的事实（它们与上面几节直接相关）：
+
+1. **$\nu$ 的语义被重写了，而且两种写法不一致**：1.4 节把 $\nu$ 写成「训练误差与支持向量比例的上界/下界」，2.7 节把它写成「**新来的、但仍正常的观测落在边界外的概率**」（[[sklearn-outlier-detection]], L80）。本机实测支持前者：$\nu$=0.01/0.1/0.3/0.5 → 训练集异常率 **6.8/11.4/30.2/50.2%**、支持向量比例 6.8/12.8/31.0/50.8%。$\nu$ 是**训练集统计量**，不是泛化概率。
+2. **`gamma` 在这里变成核心旋钮**：本页 L190 的「no exact formula」在单类问题里代价更大——固定 `gamma=0.5` 时单列 ×100 使 **51.5%** 的标签翻转；`gamma='scale'` 降到 11%（[[sklearn-outlier-detection]]「本机实测」11）。因此缩放在这里不是「建议」而是硬前提。
+3. **它没有 `contamination` 参数**：阈值语义完全由 $\nu$ 承担，`offset_ = -intercept_`（且 1.6.1 里是 `(1,)` 数组而非 float）。与 IF/LOF/EE 的阈值接口不统一，所以跨估计器比较默认输出没有意义。
+
+**本库综合**：`One-Class SVM` 是「同一个几何（最大间隔）、两个目标（分开两类 / 包住一类）」的最干净例证。代价是它**继承了 SVM 对异常敏感与对尺度敏感的全部缺点**：在污染训练集上未调 $\nu$ 的 AUC 0.9610，调成 $\nu$=0.5 后 0.9809，仍低于同题的 IF（0.9866）与 EE（0.9872）（[[sklearn-outlier-detection]]「本机实测」12）。这与 2.7 节 L67 自己的说法一致（「known to be sensitive to outliers」）。大规模场景用 `SGDOneClassSVM` + 核近似，实测与核化版标签一致率 98.7%，$n=10^5$ 时拟合快约 130×。
+
 ## 复杂度：为什么这个族要按规模选实现
 
 | 实现 | 求解器 | 复杂度 | 适用 |
@@ -162,14 +175,14 @@ $$\sum_{i\in SV}(\alpha_i-\alpha_i^*)K(x_i,x)+b$$
 
 - **hinge 的"零梯度区"与 `squared_hinge` 的差异能否量化？** 本页称它是图 2 中支持向量分布不同的原因，但这是推断，未做实验（[[sklearn-svm]] 待解问题 6 相关）。
 - **$O(n_f n_s^2)$ 与 $O(n_f n_s^3)$ 之间的实际位置由什么决定？** 来源只说"取决于缓存用得多有效"。若能给出"$n_s$ / `cache_size`"的经验阈值，规模判据就能变成数字。
-- **ν 与 C 的等价映射能否解析给出？** 来源说"数学等价"（L356），但没给换算式；若能给出，就能把两个实现的网格互相复用。
+- **ν 与 C 的等价映射能否解析给出？** 来源说"数学等价"（L356），但没给换算式；若能给出，就能把两个实现的网格互相复用。另：**ν 在单类问题里不是同一个量**——那里它是「训练集异常率/支持向量比例」的上界式统计量，实测 $\nu$=0.01 给 6.8%（[[anomaly-detection]]）。
 - **`dual_coef_` 能否作为多类样本重要性的可靠来源？** 本页判断"不能"，但没找到替代方案的来源。
 - **校准后的概率保序性有多差？** 来源只给"argmax 可能不一致"（L135），没给发生率。这是一个可以用合成数据测量的问题。
 - 核近似（`sklearn.kernel_approximation`，L238 指向但未入库）与真核的差距在什么规模上可接受？本库无来源。
 
 ## 关联页面
 
-- 来源：[[sklearn-svm]]（本页的事实基础）、[[sklearn-linear-models]]（`C = 1/α` 的对照侧）、[[sklearn-naive-bayes]]（"分数 ≠ 概率"的另一来源）
-- 概念：[[regularization-and-sparsity]]（`C` 作为第四个正则化面）、[[gaussian-discriminant-analysis]]（另一种"从假设出发"的决策面）、[[leaderboard-vs-cv]]（指标该在哪一层算）
+- 来源：[[sklearn-svm]]（本页的事实基础）、[[sklearn-linear-models]]（`C = 1/α` 的对照侧）、[[sklearn-naive-bayes]]（"分数 ≠ 概率"的另一来源）、[[sklearn-outlier-detection]]（同类不同任务：单类 SVM）
+- 概念：[[regularization-and-sparsity]]（`C` 作为第四个正则化面）、[[gaussian-discriminant-analysis]]（另一种“从假设出发”的决策面）、[[leaderboard-vs-cv]]（指标该在哪一层算）、[[anomaly-detection]]（One-Class SVM 作为异常检测的四条假设之一）
 - 实践：[[svm-selection-and-tuning]]（选型、缩放、网格与坑）、[[linear-models-as-baselines]]（线性核 SVC 在基线序列里的位置）
 - 工具：[[scikit-learn]]（`svm` 模块的估计器矩阵与默认值）

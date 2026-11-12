@@ -2,7 +2,7 @@
 title: "高斯判别分析（Gaussian Discriminant Analysis）：Mahalanobis 几何、LDA/QDA/GaussianNB 的嵌套与参数代价"
 type: concept
 created: 2026-11-11
-updated: 2026-11-11
+updated: 2026-11-12
 tags:
   - mle
   - discriminant-analysis
@@ -12,10 +12,13 @@ tags:
 sources:
   - "[[sklearn-lda-qda]]"
   - "[[sklearn-naive-bayes]]"
+  - "[[sklearn-nearest-neighbors]]"
+  - "[[sklearn-covariance]]"
 status: draft
-verified: 2026-11-11
+verified: 2026-11-12
 applies_to:
   - scikit-learn 1.9.x 的 discriminant_analysis 与 naive_bayes 模块（推断）
+  - scikit-learn 1.7.x – 1.9.x 的 neighbors 模块（`NearestCentroid` 的等方差极限，见 [[sklearn-nearest-neighbors]]）
 ---
 
 # 高斯判别分析
@@ -34,7 +37,7 @@ applies_to:
 
 **本库综合**：这个差别的工程含义是——生成式的"超参"作用在**协方差估计**上，判别式的"超参"作用在**系数**上，两者不可互相替代，也不能用同一套调参直觉（见 [[regularization-and-sparsity]] 的「第二个正则化面」）。
 
-## 一个模型，三层嵌套
+## 一个模型，三层嵌套（外加一个交点）
 
 三者是同一个高斯生成模型的三级约束（[[sklearn-lda-qda]], L60–L67）：
 
@@ -49,6 +52,27 @@ applies_to:
 约束越少、自由度越多，但**每一层多出的自由度都要用样本去买**。下图是官方示例的读数（**本库目视核查** `raw/assets/sklearn-lda-qda/sphx_glr_plot_lda_qda_001.png`）：第 1 行（球状等协方差）与第 2 行（等协方差、非球状）里 QDA 的边界与 LDA 几乎重合；只有第 3 行协方差不同时，QDA 才出现真正不同的双曲线边界。
 
 **本库判断**：这是"更灵活的模型不一定更好"的最干净的反例——**当 $\Sigma_k$ 真的相等时，QDA 学到的二次项只是噪声**。
+
+## 再往下一层：`NearestCentroid`（$\Sigma=\sigma^{2}I$ 的极限）
+
+`sklearn.neighbors.NearestCentroid` 每类只存一个质心，效果“similar to the label updating phase of the `KMeans` algorithm”，且官方称其“has no parameters to choose, making it a good baseline classifier”（[[sklearn-nearest-neighbors]], L168）。它同时给出了失效条件：“suffer on non-convex classes, as well as when classes have drastically different variances, as equal variance in all dimensions is assumed”（同）。
+
+**本库推导（非来源）**：把 LDA 的共享协方差取成 $\Sigma=\sigma^{2}I$，判别函数里出现的 $\Sigma^{-1}$ 变成 $\sigma^{-2}I$，而 $\sigma^{2}$ 在类间比较时约掉，剩下就是“比到类质心的欧氏距离”。因此 `NearestCentroid` 是这条假设链的**最强端**，但它与 `GaussianNB` 不是同一条线：
+
+| 包含关系 | 被约束的假设 |
+| --- | --- |
+| QDA $\supset$ LDA | 各类协方差由“各自任意”收紧为“共享任意” |
+| LDA $\supset$ `NearestCentroid` | 共享协方差由“任意”收紧为“球状 $\sigma^{2}I$” |
+| `GaussianNB` $\supset$ `NearestCentroid` | 对角协方差由“各自不等”收紧为“全部相等” |
+
+即 `NearestCentroid` 是 LDA 的一个特例，同时也是 `GaussianNB` 的一个特例（它是两条约束线的交点）。
+
+两个可操作的后果：
+
+1. **决策面是线性的**。到两类质心等距的点集是一个超平面，所以它是线性分类器，只是没有“权重”这个概念——质心之差就是权重方向。
+2. **它是一把干净的手术刀**：若 `NearestCentroid` 已经与 LDA/QDA 差不多，说明数据近似各向同性；若差很多，要么是非凸类、要么是方差差异大，而**不是正则强度没调好**。这是本库将它与 LDA/QDA 并置的实际理由（来源未如此使用，属**本库综合**）。
+
+另注（来源同页，L184）：`NearestCentroid` 还有一个 `shrink_threshold` 参数，实现最近收缩质心，因此“无参数”只对**默认构造**成立——这与本库在 LDA 那边记下的“have no hyperparameters to tune”是同一类内部张力（见 [[regularization-and-sparsity]] 的第五个正则化面）。
 
 ## 几何：Mahalanobis 距离与线性决策面
 
@@ -125,7 +149,7 @@ LDA 同时是一个降维器，其几何链条（[[sklearn-lda-qda]], L87–L93�
 
 ## 关联页面
 
-- 来源：[[sklearn-lda-qda]]、[[sklearn-naive-bayes]]
+- 来源：[[sklearn-lda-qda]]、[[sklearn-naive-bayes]]、[[sklearn-nearest-neighbors]]
 - 工具：[[scikit-learn]]
-- 概念：[[naive-bayes]]（朴素贝叶斯族与平滑）、[[regularization-and-sparsity]]（系数惩罚 vs 协方差收缩）、[[leaderboard-vs-cv]]（收缩强度该怎么选，最终仍是验证问题）
-- 实践：[[linear-models-as-baselines]]（线性/生成式基线的定位）
+- 概念：[[naive-bayes]]（朴素贝叶斯族与平滑）、[[regularization-and-sparsity]]（系数惩罚 vs 协方差收缩 vs 原型收缩）、[[nearest-neighbors]]（`NearestCentroid` 在最近邻族里的位置）、[[leaderboard-vs-cv]]（收缩强度该怎么选，最终仍是验证问题）
+- 实践：[[linear-models-as-baselines]]（线性/生成式基线的定位）、[[nearest-neighbors-selection-and-tuning]]（零参数基线的用法）

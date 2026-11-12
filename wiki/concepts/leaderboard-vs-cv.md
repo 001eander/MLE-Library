@@ -2,7 +2,7 @@
 title: 排行榜与本地验证（Leaderboard vs CV）
 type: concept
 created: 2026-11-11
-updated: 2026-11-11
+updated: 2026-11-12
 tags:
   - mle
   - cross-validation
@@ -15,13 +15,15 @@ sources:
   - "[[autoresearch]]"
   - "[[sklearn-linear-models]]"
   - "[[sklearn-svm]]"
+  - "[[sklearn-cross-validation]]"
 status: draft
-verified: 2026-11-11
+verified: 2026-11-12
 applies_to:
   - 竞赛型 MLE（Kaggle 类公开榜，2016–2019 的经验）
   - AIDE（arXiv:2502.13138v1）
   - karpathy/autoresearch（README 剪藏 2026-03-07）
   - scikit-learn 的 `*CV` 估计器与 `LassoLarsIC`（1.8.x–1.9.x，推断）
+  - `sklearn.model_selection` 的 splitter 与 `cross_*` 函数（1.7.x–1.9.1，行为在 1.6.1 实测）
 ---
 
 # 排行榜与本地验证（Leaderboard vs CV）
@@ -97,9 +99,23 @@ applies_to:
 
 三者的共同点是**代理指标被大规模反复优化**，差别只在优化速度。人类一个赛季能提交的次数有限，Public LB 因此天然起到「限流」作用；智能体可以在一夜之间跑 100 次（[[autoresearch]], L75），代理指标被过拟合的速度比人类快几个数量级。这是为什么本库把「评估器设计」单列为实践页（[[evaluator-design-and-reward-hacking]]），而不是把它当作竞赛技巧的一部分。
 
+## 代理指标的第四种来源：手写 CV 本身也是一个估计量
+
+上节的三种都藏在 `fit` 里。第四种是**最常被当成「标准答案」的那种**：自己写 `cross_val_score`。[[sklearn-cross-validation]] 把它的性质写清楚了，而这三条直接改变了本页的结论：
+
+1. **CV 报出的不是一个数，而是一列折内分数**（L52）。「本地 CV 提升 0.3%」在没有折间 std 的情况下不是断言。
+2. **切分器 = 关于依赖结构的假设**。本页第二节说的「CV 切分必须复刻真实划分结构」，在 API 层面对应的是 `GroupKFold`/`TimeSeriesSplit`/`StratifiedKFold` 三组选择；实测「每折测试组 ∩ 训练组」的个数：`KFold` `[1,2,1]`、`GroupKFold` `[0,0,0]`——**前者衡量的是同一个人身上插值**。
+3. **同数据「选 + 报」有乐观偏差，但幅度是条件性的**：6 点 `C` 网格上，breast cancer（569×30）的非嵌套与嵌套 CV 都是 **0.9754**（偏差 +0.0000），而 80 样本 × 1500 纯噪声特征上非嵌套 0.6125 vs 嵌套 0.5625（**+0.0500**）。因此本页的「信 CV」不是无条件信任，而是要问「这个 CV 分数自己有没有被选过」。
+
+一个便宜而难以被 reward hacking 的护栏来自同一节：`permutation_test_score` 的 $p$ 值只回答「模型是否**稳定优于随机猜测**」（L627–L636），不回答「模型好不好」；它不依赖排行榜、也不依赖绝对分数的高低。实测 50 次置换的分辨率下限是 $1/51 = 0.0196$，所以「$p<0.01$」需要 ≥100 次置换（L638 的成本公式是 $(n_{\text{perm}}+1)\cdot n_{\text{cv}}$ 次拟合）。
+
+> [!note] 一个仍然开着的口子
+> 「折间 std」到「CV 均值的标准误」需要一个换算，[[sklearn-cross-validation]] 也没有给。所以本页检查单里的「小于标准差的改动记为未判定」仍然只是**启发式**，不是统计推断。
+
 ## 一份可复用的检查单（综合）
 
-- **先问 CV 在衡量什么**：验证集与测试集是否共享实体（用户、产品、时间、分组）？若共享，比例是否与真实划分一致？
+- **先问 CV 在衡量什么**：验证集与测试集是否共享实体（用户、产品、时间、分组）？若共享，比例是否与真实划分一致？（具体到 API：`GroupKFold` / `TimeSeriesSplit` / `StratifiedKFold`，见 [[cross-validation-design-and-tuning]]）
+- **问这个 CV 分数自己有没有被选过**：用同一套折选超参又报分数，偏差幅度取决于候选数 × 有效样本量（实测 0.0000 到 +0.0500）；候选多、样本少时上嵌套。
 - **给「提升」定义噪声底**：同一配置换种子重复 3–5 次，把小于标准差的改动记为「未判定」，而不是「更好」或「更差」（来源的影子案例：20 个种子的加权平均只带来约 0.0004，作者自己无法判断真假，[[kaggle-getting-started]], L315）。
 - **同时记录两个分数**：只留 running best 的日志无法区分「代理指标提升」与「目标提升」；CV 与 LB 的方向性背离本身就是一条需要解释的信号。
 - **优先相信跨折稳定的改动**：在折间方差大的改动上做选择，等价于在噪声上做选择。
@@ -114,10 +130,13 @@ applies_to:
 4. **「统计检验建阈值」具体怎么做？** 来源提到但未展开（L35）；L315 的 +0.0004 正是这类阈值的用例，却停在「说不清」。
 5. **智能体场景下 CV 的折数选择是否还有意义？** 5-Fold 提到 10-Fold 是为了降低单次划分的方差（L168、L298），但当搜索预算足够跑上百次时，增加折数是否比增加种子更划算，来源未讨论。
 6. **内置 CV 的 LOO 与 K 折在真实数据上差多少？** [[sklearn-linear-models]] 只说 LOO「efficient」（L122），没给方差比较；`RidgeCV` 默认 LOO 而 `LassoCV` 默认 K 折，这两个默认值是否合理来源未论证。
+7. **折间 std → 标准误的换算**：[[sklearn-cross-validation]] 同样没给（见该页待解问题 1），因此本页「噪声底」的阈值没有理论依据。
+8. **智能体条件下「嵌套 CV」的性价比**：嵌套把拟合次数乘上「外层折数 × 候选数」，而 AIDE/autoresearch 的预算本就以实验次数计；是否应该改为「固定一份不参与搜索的 holdout」而非嵌套，两份来源都未讨论（AIDE 的做法接近后者，[[aide]], p. 5）。
 
 ## 关联页面
 
-- 来源：[[kaggle-getting-started]]（核心）、[[aide]]（分位指标与外置 holdout）、[[autoresearch]]（单指标 + 高频迭代）、[[sklearn-linear-models]]（内置 CV 与信息准则）、[[sklearn-svm]]（分数/判决/概率的三层与平局规则）
-- 实践：[[evaluator-design-and-reward-hacking]]（含「第六类：验证切分与真实划分结构不一致」）、[[competition-ml-workflow]]、[[linear-models-as-baselines]]（正则强度选择的三条路）
-- 概念：[[regularization-and-sparsity]]（信息准则的假设强度）、[[support-vector-machines]]（同一模型的三个可评估对象）
+- 来源：[[kaggle-getting-started]]（核心）、[[aide]]（分位指标与外置 holdout）、[[autoresearch]]（单指标 + 高频迭代）、[[sklearn-linear-models]]（内置 CV 与信息准则）、[[sklearn-svm]]（分数/判决/概率的三层与平局规则）、[[sklearn-cross-validation]]（CV 作为估计量的机制与实测）
+- 实践：[[evaluator-design-and-reward-hacking]]（含「第六类：验证切分与真实划分结构不一致」）、[[competition-ml-workflow]]、[[linear-models-as-baselines]]（正则强度选择的三条路）、[[cross-validation-design-and-tuning]]（splitter 选型、嵌套与 18 条坑）
+- 概念：[[regularization-and-sparsity]]（信息准则的假设强度）、[[support-vector-machines]]（同一模型的三个可评估对象）、[[cross-validation]]、[[evaluation-metrics]]（代理指标的最上游：每个指标只对一个目标泛函负责）
+- 实践补充：[[metric-selection-and-thresholding]]（阈值是模型外的第二步，`predict` 只是 0.5 的别名）
 - 研究：[[automated-research-open-questions]]
