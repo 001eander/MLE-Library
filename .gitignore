@@ -1,6 +1,5 @@
 node_modules/
 .cache/
-.pi/
 *.tmp
 .obsidian/graph.json
 .obsidian/workspace
