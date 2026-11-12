@@ -1,0 +1,15 @@
+flowchart LR
+  classDef full fill:#fdf1e3,stroke:#b26a00
+  classDef mask fill:#eef3fb,stroke:#4a6fa5
+  classDef gate fill:#f6f7f9,stroke:#5c6773
+
+  F["Fₙ"]:::mask --> M["Mₙ"]:::mask --> XN["Xₙ"]:::mask
+  X["X"]:::full --> XN
+  XN --> G["zₙ, rₙ"]:::gate
+  H["Hₙ₋₁"]:::gate --> G
+  H --> C["候选 H̃ₙ"]:::full
+  X --> C
+  G --> C
+  G --> D["Hₙ"]:::gate
+  C --> D
+  H --> D

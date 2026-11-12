@@ -1,0 +1,12 @@
+flowchart LR
+  classDef block fill:#f6f7f9,stroke:#5c6773
+  classDef io fill:#fdf1e3,stroke:#b26a00
+  classDef mask fill:#eef3fb,stroke:#4a6fa5
+
+  X["X<br/>d 列"]:::io --> G["GFLU × N<br/>逐阶段换掩码"]:::block
+  G --> H["H"]:::block
+  H --> HEAD["MLP 头<br/>32 → 16"]:::block
+  HEAD --> Y["ŷ"]:::io
+
+  M["每阶段一张 Mₙ<br/>t-softmax 生成"]:::mask -.-> G
+  M -.-> I["重要性 I = Σ Mₙ"]:::mask

@@ -487,3 +487,15 @@
 - 决策：所有者指定 ① GFLU/t-softmax **独立成概念页**，`tabular-deep-learning` 只留一条；② 矛盾**按原文文本**记录，不引入原文之外的推断；③ `pytorch_tabular` 官方实现核查**本轮留空**（本机对 api.github.com 请求返回 403），只在待解问题里登记。
 - 未做：未核查 GitHub 仓库、未跑任何示例或基准、未安装环境；未把 `.cache/pdf/46fa3d94/` 的 19 个临时文件（11 页 130 dpi、3 页 300 dpi、5 张裁切）入库；未改 `raw/`；未补 [[ft-transformer]] 与本文在 covertype/Higgs 等重叠数据集上的逐数字对照（两篇协议不同，留作待解问题）。
 - 复核：变更全部**未提交**，等待所有者复核 diff 后再决定是否提交 `ingest: GANDALF`。
+
+## [2026-11-12] deck | 讲解版 deck：GANDALF 与 GFLU
+
+- 文件：`wiki/views/decks/gandalf-deck.md`（新建，22 页）、`raw/assets/gandalf-deck/`（2 张结构图及 Mermaid 源码）、`wiki/index.md`（「演示」节新增条目）、`wiki/log.md`
+- 摘要：把 [[gandalf]] 与 [[gated-feature-learning-unit]] 压缩成一条讲解线：为什么表格网络需要显式选列（TabNet 是 instance level、DANet 要 BatchNorm）→ 把 GRU 的时间步换成阶段 → 三个与 GRU 的差异（含表格式对照）→ GFLU 前向三式 → 「掩码只进两个门、候选用全特征」的取舍与后果 → t-softmax 的三条读数 → `Init Sparsity` 到置零比例 $r$ 的等价（标注为本库推导）→ Beta 初始化的多样性与稀疏 → 组装与 $6d^2+d$ 每阶段参数账本（标注为推算）→ $I=\sum_n M_n$ 的性质与「不能当因果归因」的边界 → 顺序计算的结构性代价 → 两套基准给出不同名次（0.829 第一 vs 0.945 第三）→ 证据边界四条（不重跑基线、无显著性检验、筛选子集、无默认配置）→ 调参五个维度与 FANOVA → 解释性实验的 ground truth 问题 → 四个准入问题 → 延伸阅读。
+- 命名：deck 文件取 `gandalf-deck` 而非 `gandalf`，避免与 `wiki/sources/gandalf.md` 在 Obsidian 中同名冲突；同规则适用于其它以实体短名为 slug 的 deck。
+- 事实纪律：内容页不放来源与页码脚注，精确页码留在被引用的 wiki 页面；两处非原文内容（`Init Sparsity` 等价、参数账本）在页内直接标注；未把 TabSurvey 的「两胜两负」写成「全面落后」，也未把 13/18 与「5 trials 收敛」混为一谈。
+- 结构图：Mermaid 写在 Marp 里不会被渲染（实测输出为代码块），故预渲染为 SVG 后嵌入，页面显示为 2 张图：整条链路（`gandalf-overview.svg`，sha256 `930b494f…1045cfc`）、单个 GFLU 的三份输入与两条支路（`gflu-internal.svg`，sha256 `182847a7…4b9aa5ec1176db`）。源码与渲染参数留在同目录（`gandalf-overview.mmd`、`gflu-internal.mmd`、`cfg.json`，`mmdc` 12.2.0 + Marp CLI 4.5.1），改图时同参数重渲即可。
+- 制图要点：节点刻意压到 4–5 个（保留 `Mₙ = t-softmax(Fₙ, t)`、`Xₙ = Mₙ⊙X`、两个门、候选 H̃ₙ），因为 Mermaid 的图宽决定成品字号——自然宽度 820 px 时在 1140 px 版面上字号约 19 px，此前带完整公式的版本宽 1168 px，落到版面上只剩约 13 px。完整公式仍由相邻的公式页承担。
+- 渲染：Marp CLI 4.5.1（Marp Core 4.4.0），`--allow-local-files`，`.cache/marp/gandalf/deck.html` + `deck.001–022.png`，不入库。
+- 版式核查（逐页目视 22 张 PNG）：`math: mathjax` 下 6 页公式正常，无溢出与裁切；两张结构图在 1140 px 宽度下标签可读；引号统一为「」；调参页搜索空间改为四条列表以消除 `0–0.5` 断行；延伸阅读页把页面名改为完整路径以消除 slug 歧义。
+- 复核：所有者已确认 diff 并提交 `deck: GANDALF`。

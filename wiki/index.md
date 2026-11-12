@@ -120,6 +120,7 @@ tags:
 ## 演示
 
 - [[tabular-model-families|表格模型家族：每一类在赌什么]] — Marp deck（18 页，讲解版），按「结构从哪来」讲透树、MLP/ResNet、FT-Transformer、NODE/TabNet/AutoInt、TFM 与 LLM 两条接法的机制、代价与失败方式；不摆表格、不逐页列来源。
+- [[gandalf-deck|GANDALF：把 GRU 的门控搬来选特征]] — Marp deck（22 页，含 2 张 Mermaid 结构图）从「该不该少看几列」讲到 GFLU 四步前向、t-softmax 与 Init Sparsity、Beta 初始化、参数账本、掩码式解释性与两套基准的证据边界。
 
 ## 研究
 
