@@ -3,6 +3,7 @@ node_modules/
 .pi/
 .DS_Store
 *.tmp
+.obsidian/graph.json
 .obsidian/workspace
 .obsidian/workspace.json
 .obsidian/workspace-mobile.json
