@@ -428,3 +428,32 @@
 - 决策：所有者指定 **① 三张图入库；② 不做「本机复核」节，不记录任何本地运行读数**（这是文档，不做本机复现记录）；**③ Stacking/OOF 独立成页**（故新建 `concepts/stacking.md`，而非并入 `ensembles`）；**④ 差异只记原文说过的，不做过度解读**（原拟的「断点处平滑代价」一项已删除，仅保留来源自身两个组成部分之间的口径差）。按④，来源页的「分歧与口径」只收录页面内部可对照的说法，不引入外部实测。
 - 未做：未跑该示例、未安装任何环境（`.cache/stack-verify/` 为本轮分析过程中的临时脚本目录，已删除，且 `.cache/` 不提交）；未实现 `SuperLearner` 的自定义估计器；未验证 `cv="prefit"` 的过拟合警告；未对照 1.6/1.7/1.8 版示例的教学意图差异；未读 `[Polley2010]`（条目随剪藏丢失，也未从外部补）；未改任何 `raw/` 原文件。
 - 复核：变更全部**未提交**，等待所有者复核 diff 后再决定是否提交 `ingest: scikit-learn 示例 Combine predictors using stacking`。
+
+## [2026-11-12] deck | 表格数据：五张表读懂 GBDT 与表格深度模型
+
+- 文件：`wiki/views/decks/tabular-data-tables.md`（新建，11 页）、`wiki/index.md`（新增「演示」节）、`wiki/log.md`
+- 摘要：按所有者要求做一份**表格型数据的 Marp deck**。内容全部从既有页面转述，未新增任何事实：指标方向（[[ft-transformer]] p. 8）、单模型每列最佳（p. 7 表 2）、默认 vs 调参（p. 8 表 4）、成本倍数（p. 16 表 10 抽 6 行）、合成 α 实验（p. 9 图 3）、同赛题五类模型阶梯（[[kaggle-tfms-llms-tabular]] L176–L219）、选型判据与证据边界（[[gbdt-vs-tabular-dl]]）。每页标注来源页与页码，末页给来源清单与标注约定（来源论述 / 综合 / 假设）。
+- 渲染：Marp CLI 4.5.1（Marp Core 4.4.0），输出 `.cache/marp/tabular-data-tables/deck.html` 与 `deck.001–011.png`；`.cache/` 不提交。
+- 版式核查（逐页目视 11 张 PNG）：初版表 1（11 行）与表 3 溢出、证据边界页贴底、来源页断行；修正为 `section` 25px、表 21px、表 1 用 `tight` 类（17px、2px 内边距）、表格 `display: table; width: 100%` 撑满版面，并压缩两处长句。复检后 11 页均无裁切、无溢出、无公式渲染失败。
+- 局限：deck 只覆盖 FT-T 那套以数值特征为主的基准与一个 Kaggle 赛题的对照，不含高基数类别、缺失值、分布偏移与在线延迟证据；这与来源页的「证据边界」一致，deck 内已显式声明。
+- 复核：变更全部**未提交**，等待所有者复核 diff 后再决定是否提交 `deck: 表格数据五张表`。
+
+## [2026-11-12] deck | 叙事版重写：表格数据模型选型
+
+- 文件：`wiki/views/decks/tabular-data-model-selection.md`（新建，15 页）、删除同名旧版 `tabular-data-tables.md`、`wiki/index.md`（「演示」节改指新页）
+- 所有者反馈：**每页不要放来源**；**不要用表格直接呈现结果**，要像讲故事一样把脉络讲完；目标读者是没接触过本库的人，只看这份 deck 也能学到东西。因此上一条日志里的表格版 deck 被整体替换，旧条目保留不改写（append-only）。
+- 新结构（五幕 + 收束）：① 为什么表格难做 DL（没有免费归纳偏置，必须先造结构）→ ② 树与 FT-T 的两种世界观 → ③ 第一幕：同协议比武，默认配置 9/11 → ④ 第二幕：调参后翻转 6:4，并说明「平均排名第一 ≠ 每列第一」（FT-T 平均排名 1.8，Epsilon 却垫底 0.8982）→ ⑤ 第三幕：α 插值实验（ResNet 0.36→0.645 退化、CatBoost 0.47→0.19 反向、FT-T 0.38→0.23 稳定）标为**假设** → ⑥ 特征供给的替代性（GBDT +1.6e-3 vs transformer +4e-4，n=1）→ ⑦ 成本（0.9×–13.8×、$O(k^2)$）→ ⑧ LLM 两条路线（文本化 / token 化 + LoRA）→ ⑨ 第四幕：赛题阶梯 0.95931→0.96242，「方向 > 规模」→ ⑩ 第五幕：冷水（单赛题、合成数据、TFM 未超调参 GBDT、基线同一性存疑、11 个数据集 10 个纯数值）→ ⑪ 落幕三问 → ⑫ 延伸阅读（只给页面名，不给页码）。
+- 数字口径与上一版一致，仍全部取自 [[gbdt-vs-tabular-dl]]、[[ft-transformer]]、[[kaggle-tfms-llms-tabular]]、[[kaggle-q-ft]]；按所有者要求**页面上不出现页码与引用标记**，provenance 只保留在本日志与来源页。
+- 渲染：Marp CLI 4.5.1（Marp Core 4.4.0），`.cache/marp/tabular-data-model-selection/deck.html` + `deck.001–015.png`，不入库。
+- 版式核查（逐页目视 15 张 PNG）：`section` 26px、`h2` 40px、`blockquote` 26px + 左侧色条作「一句话结论」；无表格。初版第四幕括号里的「越低/越高看指标」表述含混，已改为「指标全是 AUC，越高越好」；复检全部页面无溢出、无裁切、公式正常。
+- 复核：变更全部**未提交**，等待所有者复核 diff 后再决定是否提交 `deck: 叙事版表格数据选型`。
+
+## [2026-11-12] deck | 讲解版重写：表格模型家族
+
+- 文件：`wiki/views/decks/tabular-model-families.md`（新建，18 页）、删除 `tabular-data-model-selection.md`、`wiki/index.md`（「演示」节改指新页）
+- 所有者反馈：**榜单比拼不是重点，重点是把这些模型讲明白**。因此去掉整段「同赛题台阶」页（0.95931→0.96242 那页），把篇幅让给机制讲解；前两版条目保留不改写（append-only）。
+- 新结构：① 开场：表格没有免费结构，四种结构来源（切分/逐列嵌入/预训练/语言序列）→ ② 树：加法模型 + 阈值切分，为什么尺度/缺失/分段规律都免费 → ③ 树的代价：分段常数不会插值、不可微、要人工特征 → ④ MLP 拼向量 → ResNet 的 BatchNorm+残差（给出实现式子），并给平均排名作为复杂度不自动换分数的证据 → ⑤–⑥ FT-Transformer 两页：Feature Tokenizer 代数（逐列专属偏置）、`[CLS]`、无位置编码 → 置换等变、PreNorm 与首层去 norm、默认 3 层/192 维/929K、逐列偏置消融 7/8 → ⑦ NODE/TabNet/AutoInt 三种「把树塞进网络」的尝试与它们的排名（3.9/5.7/7.5 vs MLP 4.8、ResNet 3.3）→ ⑧ 默认 9/11 与调参 6:4 → ⑨ α 插值（标注为假设）→ ⑩ 特征供给（+1.6e-3 vs +4e-4，n=1）→ ⑪ 成本（0.9×–13.8×、O(k²)、Linformer 的代价）→ ⑫ TFM 的 in-context 机制与其不确定性（含「有没有再微调，来源未对齐」）→ ⑬ 文本化 LLM（行→句子、target 位置、证据可加性）→ ⑭ token 化 LLM（三段式嵌入、inputs_embeds、LoRA、重排、order-free + RTD）→ ⑮ 家族地图（四种结构来源 × 各自失败方式）→ ⑯ 三问收束 → ⑰ 延伸阅读。
+- 事实纪律：TabPFN 一节只保留「把训练行当上下文」这种来源可支撑的说法，删掉了「在合成表上预训练」「无需调参」等本库无出处的表述；比赛里 TabPFN 是否微调，按来源页的分歧如实写成「来源之间都还没对齐」。
+- 渲染：Marp CLI 4.5.1（Marp Core 4.4.0），`.cache/marp/tabular-model-families/deck.html` + `deck.001–018.png`，不入库。
+- 版式核查（逐页目视 18 张 PNG）：`section` 26px、`h2` 40px、blockquote 26px 色条结论；Feature Tokenizer 的公式改为 display math（`$T_j=b_j+f_j(x_j)$`），行内 `x_j`/`b_j`/`S_j×d` 一并改为数学体；全部页面无溢出、无裁切、公式正常。
+- 复核：变更全部**未提交**，等待所有者复核 diff 后再决定是否提交 `deck: 表格模型家族`。

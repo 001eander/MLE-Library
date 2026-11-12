@@ -115,6 +115,10 @@ tags:
 - [[hyra-1-0-vs-2-0|Hyra 1.0 与 2.0 对照：解题范式 vs 工具范式]] — 目标、组织、记忆、验证、结果形态与证据强度对照。
 - [[gbdt-vs-tabular-dl|GBDT 与表格深度模型：没有普适赢家]] — 默认 vs 调参、逐数据集胜负、成本、机制、基准偏差，以及人工特征收益的 4 倍差（n=1）。
 
+## 演示
+
+- [[tabular-model-families|表格模型家族：每一类在赌什么]] — Marp deck（18 页，讲解版），按「结构从哪来」讲透树、MLP/ResNet、FT-Transformer、NODE/TabNet/AutoInt、TFM 与 LLM 两条接法的机制、代价与失败方式；不摆表格、不逐页列来源。
+
 ## 研究
 
 - [[automated-research-open-questions|自动化研究待验证问题]] — AIDE、AlphaEvolve、autoresearch 与 Hyra 的可信度、机制假设、工程风险和待补资料。
