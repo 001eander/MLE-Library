@@ -2,7 +2,7 @@
 title: 知识索引
 type: index
 created: 2026-11-11
-updated: 2026-11-12
+updated: 2026-11-13
 tags:
   - mle
   - index
@@ -119,6 +119,7 @@ tags:
 
 ## 演示
 
+- [[generative-tabular-models-deck|生成式表格建模：从 FT-Transformer 到 TFMs 与 LLMs]] — Marp deck（58 页，14 张来源图），从逐列 token、Q-FT 嵌入与 order-free 讲到 target-first 的 Bayes 反转、证据分解、推理成本与 TFM 对照；明确区分生成式分类和表格数据生成。
 - [[tabular-model-families|表格模型家族：每一类在赌什么]] — Marp deck（18 页，讲解版），按「结构从哪来」讲透树、MLP/ResNet、FT-Transformer、NODE/TabNet/AutoInt、TFM 与 LLM 两条接法的机制、代价与失败方式；不摆表格、不逐页列来源。
 - [[gandalf-deck|GANDALF：把 GRU 的门控搬来选特征]] — Marp deck（22 页，含 2 张 Mermaid 结构图）从「该不该少看几列」讲到 GFLU 四步前向、t-softmax 与 Init Sparsity、Beta 初始化、参数账本、掩码式解释性与两套基准的证据边界。
 

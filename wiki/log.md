@@ -499,3 +499,13 @@
 - 渲染：Marp CLI 4.5.1（Marp Core 4.4.0），`--allow-local-files`，`.cache/marp/gandalf/deck.html` + `deck.001–022.png`，不入库。
 - 版式核查（逐页目视 22 张 PNG）：`math: mathjax` 下 6 页公式正常，无溢出与裁切；两张结构图在 1140 px 宽度下标签可读；引号统一为「」；调参页搜索空间改为四条列表以消除 `0–0.5` 断行；延伸阅读页把页面名改为完整路径以消除 slug 歧义。
 - 复核：所有者已确认 diff 并提交 `deck: GANDALF`。
+
+## [2026-11-13] deck | 生成式表格建模：从 FT-Transformer 到 TFMs 与 LLMs
+
+- 文件：`wiki/views/decks/generative-tabular-models-deck.md`（新建，58 页）、`wiki/index.md`、`wiki/log.md`。
+- 摘要：按所有者要求制作一份详细、信息量充足的长 deck，主线为 FT-Transformer → Q-FT → Q-FT v2 → TFMs and LLMs。先澄清“生成式分类”与“表格数据生成”两种含义，明确 FT-T、Q-FT 与 v2 都是判别式监督模型；随后依次讲 Feature Tokenizer、无位置集合注意力与成本，Q-FT 的三段式嵌入、逐列双编码、`inputs_embeds`、因果顺序、重排、LoRA 参数账本与训练配方，v2 的 order-free、局部注意力外推边界、side features、RTD 与传导式评估，文本化 GPT 的 target-last / target-first、Bayes 打分、replica、30 阶平均、归一化边界、逐字段证据恒等分解与数值精度，最后以 TFM 的 in-context 路线、单赛题读数、stack 互补性、选型约束、八项复现契约和证据强度收束。
+- 事实纪律：全部内容转述并综合自 [[ft-transformer]]、[[kaggle-q-ft]]、[[kaggle-q-ft-v2]]、[[kaggle-tfms-llms-tabular]]、[[tabular-deep-learning]]、[[generative-classification]] 与 [[gbdt-vs-tabular-dl]]；未引入新论文、未重跑训练。对 GReaT 生成器身份、语言预训练无用、target-first 外推到真实数据等均明确标为来源假设或尚未证实；保留 target-anywhere 略高、v2 消融不单调、TFM 未超过调参 XGBoost、fold-0 与 OOF 口径不同等冲突。内容页不放引用脚注，精确页码与行号仍留在来源页，末页列延伸阅读。
+- 图片：复用 14 张已入库且此前逐张核查的来源图，未新增或修改 `raw/` 资产。包括 Q-FT 的 pipeline / feature_to_token / sequence_attention / lora，Q-FT v2 的 pipeline / order_free / rtd，以及总写来源的 model_family / two_directions / target_last / target_first_recipe / orders_curve / row0_evidence / stack_history。
+- 渲染：Marp CLI 4.5.1（Marp Core 4.4.0），`math: mathjax`，`--allow-local-files`；输出 `.cache/marp/generative-tabular-models/deck.html` 与 `deck.001–058.png`，`.cache/` 不提交。
+- 版式核查：逐页目视 58 张 PNG。初版第 20、29、45、51 页有底部裁切，分别缩小因果掩码图、order-free 图、证据瀑布图，并将赛题读数页改为 `small`；另将一处中英混杂措辞改为中文。重渲后全部 58 页无裁切、无溢出、无公式渲染失败、无缺失图片。
+- 复核：变更全部未提交，等待所有者复核 diff 后再决定是否提交 `deck: 生成式表格模型`。
