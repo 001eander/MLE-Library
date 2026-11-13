@@ -201,7 +201,7 @@ case "$command" in
     ;;
   ask)
     [[ $# -gt 0 ]] || fail "usage: mle ask <question ...>"
-    run_read_only_pi -- "Answer this question using the library. Search and read full relevant pages, cite actual paths, state uncertainty, and do not modify files or Git state. Question: $*"
+    run_read_only_pi --thinking off -- "Answer this question using the library. Search and read full relevant pages, cite actual paths, state uncertainty, and do not modify files or Git state. Question: $*"
     ;;
   ingest)
     run_ingest "$@"

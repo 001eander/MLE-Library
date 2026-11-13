@@ -226,6 +226,7 @@ function askLibrarian(args) {
   const prompt = `Answer the following question using MLE-Library. Read wiki/index.md, search and read full relevant pages, consult raw sources when needed, and cite actual paths with line, section, or page locators. State uncertainty and conflicting evidence. You are strictly read-only: do not modify files, render pages, invoke other MCP servers, or change Git state.\n\nQuestion: ${args.question}`;
   const piArgs = [
     "--no-session",
+    "--thinking", "off",
     "--no-context-files",
     "--append-system-prompt", path.join(ROOT, "AGENTS.md"),
     "--no-skills",

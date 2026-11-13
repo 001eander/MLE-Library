@@ -52,6 +52,8 @@ Pi 沿用当前用户的模型与认证配置。本项目不保存 API Key，也
 ./bin/mle ask "这个库目前有哪些关于推理优化的知识？"
 ```
 
+`ask` 子命令默认关闭 thinking。
+
 实时关键词检索：
 
 ```bash
@@ -157,6 +159,6 @@ Pi 提交前检查工作区，只暂存本次任务文件，不包含 `node_modu
 | `get_context` | 检索并回读原文，按 `max_chars` 返回有上限的证据包 |
 | `ask_librarian` | 启动只读、无会话 Pi，综合回答并给出引用 |
 
-MCP 不提供写入、摄取、页面渲染、索引更新或 Git 提交能力。`ask_librarian` 只能使用 `read/grep/find/ls`，禁用扩展和其他 MCP；默认超时 120 秒，输出上限 1 MB。
+MCP 不提供写入、摄取、页面渲染、索引更新或 Git 提交能力。`ask_librarian` 只能使用 `read/grep/find/ls`，禁用扩展和其他 MCP，并默认关闭 thinking；默认超时 120 秒，输出上限 1 MB。
 
 AutoResearch 的研究成果留在它自己的研究区。需要进入正式 Wiki 时，由你通过 Pi 图书管理员审阅、整理和提交。
